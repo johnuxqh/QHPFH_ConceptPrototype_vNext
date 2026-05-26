@@ -1,0 +1,578 @@
+@page "/bed-management"
+@using QHPFH_ConceptPrototype.Data
+@using MudBlazor
+@using QHPFH_ConceptPrototype.Components.Shared
+
+<section class="page-shell-card bed-mgmt-page bm-overview-page" @onclick="CloseKpiInfo" @onkeydown="HandleKeydown" tabindex="0">
+    @if (IsQchAccess)
+    {
+        <section class="bm-notification-banner">
+            <div class="bm-notification-banner-head">
+                <strong>Facility notifications</strong>
+                <button type="button" class="bm-ghost bm-mini-btn" @onclick="StartCreateNotification">Create notification</button>
+            </div>
+            @if (IsCreatingNotification)
+            {
+                <div class="bm-notification-editor">
+                    <input @bind="DraftNotification.Title" placeholder="Title/status" />
+                    <textarea @bind="DraftNotification.Message" placeholder="Operational message"></textarea>
+                    <select @bind="DraftNotification.Severity">
+                        <option value="green">Tier 1 / BAU</option>
+                        <option value="amber">Tier 2 / Amber</option>
+                        <option value="red">Tier 3 / Extreme</option>
+                        <option value="dark">Incident Management</option>
+                        <option value="blue">Standard Info</option>
+                    </select>
+                    <div class="bm-notification-actions"><button type="button" class="bm-ghost bm-mini-btn" @onclick="SaveCreateNotification">Save</button><button type="button" class="bm-ghost bm-mini-btn" @onclick="CancelCreateNotification">Cancel</button></div>
+                </div>
+            }
+            @if (QchNotifications.Count == 0)
+            {
+                <div class="bm-notification-empty">No active facility notifications</div>
+            }
+            else
+            {
+                @foreach (var note in QchNotifications)
+                {
+                    <div class="bm-notification-row @($"sev-{note.Severity}")">
+                        @if (EditingNotificationId == note.Id)
+                        {
+                            <div class="bm-notification-editor inline">
+                                <input @bind="DraftNotification.Title" />
+                                <textarea @bind="DraftNotification.Message"></textarea>
+                                <select @bind="DraftNotification.Severity">
+                                    <option value="green">Tier 1 / BAU</option><option value="amber">Tier 2 / Amber</option><option value="red">Tier 3 / Extreme</option><option value="dark">Incident Management</option><option value="blue">Standard Info</option>
+                                </select>
+                                <div class="bm-notification-actions"><button type="button" class="bm-ghost bm-mini-btn" @onclick="() => SaveUpdateNotification(note.Id)">Save</button><button type="button" class="bm-ghost bm-mini-btn" @onclick="CancelUpdateNotification">Cancel</button></div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="bm-notification-content"><strong>@note.Title</strong><span>@note.Message</span></div>
+                            <div class="bm-notification-actions"><button type="button" class="bm-ghost bm-mini-btn" @onclick="() => StartUpdateNotification(note.Id)">Update</button><button type="button" class="bm-ghost bm-mini-btn" @onclick="() => RemoveNotification(note.Id)">Remove</button></div>
+                        }
+                    </div>
+                }
+            }
+        </section>
+    }
+
+    <section class="bm-filter-row bm-filter-row-compact">
+        <div class="bm-filter-group">
+            @if (!IsQchAccess)
+            {
+                <div class="bm-filter"><label>HHS</label><select @bind="SelectedHhs" @bind:after="OnHhsChanged">@foreach (var hhs in HhsOptions){<option value="@hhs">@hhs</option>}</select></div>
+                <div class="bm-filter"><label>Facility</label><select @bind="SelectedFacility">@foreach (var facility in FacilityOptions){<option value="@facility">@facility</option>}</select></div>
+            }
+            <div class="bm-filter"><label>Ward</label><select @bind="SelectedWard">@foreach (var ward in WardOptions){<option value="@ward">@ward</option>}</select></div>
+        </div>
+        <div class="bm-access-selector">
+            <label>Access view</label>
+            <select @bind="SelectedAccessView" @bind:after="OnAccessViewChanged">
+                <option value="statewide">Statewide</option>
+                <option value="qch-bed-manager">QCH Bed Manager</option>
+            </select>
+        </div>
+    </section>
+
+    @if (SelectedVersion == "V2")
+    {
+        <section class="bm-v2-operational-shell">
+            <section class="bm-overview-cards bm-v2-status-row bm-v2-pane @(ShowInsightsPanel ? "is-hidden" : "is-active")">
+                @foreach (var kpi in (IsQchAccess ? QchKpis : Kpis))
+                {
+                    <SituationalKpiTile
+                        Title="@kpi.Title"
+                        Value="@kpi.Value"
+                        Subtitle="@kpi.Subtitle"
+                        IconName="@kpi.IconName"
+                        ColorClass="@kpi.ColorClass"
+                        InfoText="@kpi.InfoText"
+                        TileType="@kpi.TileType"
+                        ShowInfoIcon="@kpi.ShowInfoIcon"
+                        IsInfoOpen="@(OpenKpiInfoTitle == kpi.Title)"
+                        OnInfoClick="() => ToggleKpiInfo(kpi.Title)"
+                        BreakdownItems="@kpi.BreakdownItems"
+                        Tabs="@kpi.Tabs"
+                        ActiveTab="@QchActivityView"
+                        OnTabChanged="OnQchActivityTabChanged"
+                        AdditionalClasses="bm-kpi-card" />
+                }
+                <button type="button" class="bm-system-insights-trigger" @onclick="() => ShowInsightsPanel = true">
+                    <span class="bm-system-insights-count">@ActiveInsights.Count</span>
+                    <span>System Insights</span>
+                </button>
+            </section>
+            <section class="bm-insight-panel-drawer bm-v2-pane @(ShowInsightsPanel ? "is-active" : "is-hidden")">
+                <div class="bm-insight-inline-row">
+                    <button type="button" class="bm-system-insights-trigger" @onclick="() => ShowInsightsPanel = false">
+                        <span class="bm-system-insights-count">←</span>
+                        <span>Back to System Status</span>
+                    </button>
+                    <section class="bm-insight-grid actionable">
+                        @foreach (var insight in ActiveInsights.Take(10))
+                        {
+                            <article class="bm-insight-card @insight.SeverityClass @(IsInsightActive(insight.InsightKey) ? "selected" : null)" @onclick='() => ApplyInsightFilter(insight.InsightKey)'>
+                                <div class="bm-insight-main">
+                                    <div class="bm-insight-icon"><MudIcon Icon="@insight.Icon" Size="Size.Small" /></div>
+                                    <div class="bm-insight-text">
+                                        <h4>@insight.Title</h4>
+                                        <p>@insight.Description</p>
+                                        <div class="bm-insight-foot">
+                                            <strong>Wards: @insight.Count</strong>
+                                            <button type="button" class="bm-insight-action" @onclick:stopPropagation="true" @onclick='() => ApplyInsightFilter(insight.InsightKey)'>@insight.ActionLabel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                    </section>
+                </div>
+            </section>
+        </section>
+    }
+    else
+    {
+        <section class="bm-overview-cards">
+            @foreach (var kpi in (IsQchAccess ? QchKpis : Kpis))
+            {
+                <SituationalKpiTile
+                    Title="@kpi.Title"
+                    Value="@kpi.Value"
+                    Subtitle="@kpi.Subtitle"
+                    IconName="@kpi.IconName"
+                    ColorClass="@kpi.ColorClass"
+                    InfoText="@kpi.InfoText"
+                    TileType="@kpi.TileType"
+                    ShowInfoIcon="@kpi.ShowInfoIcon"
+                    IsInfoOpen="@(OpenKpiInfoTitle == kpi.Title)"
+                    OnInfoClick="() => ToggleKpiInfo(kpi.Title)"
+                    BreakdownItems="@kpi.BreakdownItems"
+                    Tabs="@kpi.Tabs"
+                    ActiveTab="@QchActivityView"
+                    OnTabChanged="OnQchActivityTabChanged"
+                    AdditionalClasses="bm-kpi-card" />
+            }
+        </section>
+        <section class="bm-insight-grid actionable">
+        @foreach (var insight in ActiveInsights)
+        {
+            <article class="bm-insight-card @insight.SeverityClass @(IsInsightActive(insight.InsightKey) ? "selected" : null)" @onclick='() => ApplyInsightFilter(insight.InsightKey)'>
+                <div class="bm-insight-main">
+                    <div class="bm-insight-icon"><MudIcon Icon="@insight.Icon" Size="Size.Small" /></div>
+                    <div class="bm-insight-text">
+                        <h4>@insight.Title</h4>
+                        <p>@insight.Description</p>
+                        <div class="bm-insight-foot">
+                            <strong>Wards: @insight.Count</strong>
+                            <button type="button" class="bm-insight-action" @onclick:stopPropagation="true" @onclick='() => ApplyInsightFilter(insight.InsightKey)'>@insight.ActionLabel</button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        }
+    </section>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(ActiveInsightTitle))
+    {
+        <section class="bm-active-insight-bar">
+            <span>Showing wards: @ActiveInsightTitle (@ActiveInsightWardIds.Count)</span>
+            <button type="button" class="bm-ghost" @onclick="ClearInsightFilter">Clear</button>
+        </section>
+    }
+
+
+    @if (SelectedVersion == "V2" && IsQchAccess)
+    {
+        <section class="bm-orchestration-panel">
+            <header>
+                <div>
+                    <h4>Operational Orchestration Panel</h4>
+                    <p>Coordinate flow across admissions, transfers, staffing and predicted capacity windows.</p>
+                </div>
+                <div class="bm-orch-actions">
+                    <button type="button" class="bm-ghost">Open Bed Managers Chat</button>
+                    <button type="button" class="bm-ghost">On-call &amp; escalation</button>
+                </div>
+            </header>
+            <div class="bm-orch-grid">
+                <article>
+                    <h5>Forward Look (next 6h)</h5>
+                    <ul>
+                        @foreach (var insight in GetPredictiveInsights())
+                        {
+                            <li><span class="bm-pressure-pill @insight.PressureClass">@insight.Window</span> @insight.Message</li>
+                        }
+                    </ul>
+                </article>
+                <article>
+                    <h5>Staffing Impact</h5>
+                    <ul>
+                        @foreach (var staffing in GetStaffingImpacts())
+                        {
+                            <li><strong>@staffing.Ward:</strong> @staffing.Message</li>
+                        }
+                    </ul>
+                </article>
+                <article>
+                    <h5>Transfer Coordination Queue</h5>
+                    <ul>
+                        @foreach (var transfer in GetTransferRisks())
+                        {
+                            <li><strong>@transfer.Ward</strong> — @transfer.Status <em>@transfer.WaitingState</em></li>
+                        }
+                    </ul>
+                </article>
+            </div>
+        </section>
+    }
+
+    <section class="bm-ward-table-wrap bm-overview-table-wrap">
+        <div class="bm-table-toolbar">
+            <div class="bm-view-row">
+                @foreach (var view in new[] { "List", "Grid", "Compact" })
+                {
+                    <button class="bm-ghost view @(SelectedView == view ? "active" : null)" @onclick="() => SetView(view)">@view</button>
+                }
+            </div>
+            <div class="bm-toolbar-actions">
+                <button class="bm-ghost version @(SelectedVersion=="V1"?"active":null)" @onclick='() => SetVersion("V1")'>V1 Overview</button>
+                <button class="bm-ghost version @(SelectedVersion=="V2"?"active":null)" @onclick='() => SetVersion("V2")'>V2 Operational</button>
+            </div>
+        </div>
+
+        @if (SelectedView == "Grid")
+        {
+            <div class="bm-overview-gridcards @(SelectedVersion=="V2"?"v2":null)">
+                @foreach (var row in PagedRows)
+                {
+                    <article class="bm-overview-gridcard">
+                        <header><strong title="@row.WardType">@row.Ward (@row.PhysicalBeds)</strong><span>@row.PostcodeCatchment</span></header>
+                        <p>Open @row.OpenBeds • Occupied @row.OccupiedBeds • Elective @row.Elective • ED @row.EdAddons</p>
+                        <p>Add-on @row.AddOnPatients • Outliers @row.Outliers • Predicted discharges @row.PredictedDischarges</p>
+                        @if (SelectedVersion == "V2" && IsQchAccess)
+                        {
+                            var orchestration = GetWardOrchestrationSnapshot(row.Ward);
+                            <div class="bm-grid-orchestration">
+                                <span class="bm-state-chip">Now: @orchestration.CurrentState</span>
+                                <span class="bm-state-chip">Discharge window: @orchestration.DischargeWindow</span>
+                                <span class="bm-state-chip">Next: @orchestration.NextPlannedPatient</span>
+                                <span class="bm-state-chip warning">Transfer: @orchestration.TransferState</span>
+                                <span class="bm-state-chip critical">Staffing: @orchestration.StaffingState</span>
+                            </div>
+                        }
+                        <div class="bm-grid-foot"><span>Delayed @row.DelayedDischarge</span><span>Actual discharges @row.ActualDischarges</span><span class="bm-action-icon-wrap"><img src="images/icons/show-blackish.png" alt="View" class="bm-action-icon" /></span></div>
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="bm-responsive-table">
+            <table class="bm-ward-table bm-overview-table @(SelectedView == "Compact" ? "compact" : null)">
+                <thead>
+                    <tr>
+                        @foreach (var col in CurrentColumns)
+                        {
+                            <th @onclick="() => SortBy(col.Key)" class="@(SortColumn == col.Key ? "sorted" : null)">@col.Label @if (SortColumn == col.Key){<span>@(SortAsc ? "↑" : "↓")</span>}</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in PagedRows)
+                    {
+                        <tr>
+                            <td title="@row.WardType">@row.Ward (@row.PhysicalBeds)</td><td>@row.OpenBeds</td><td>@row.OccupiedBeds</td><td>@row.Elective</td><td>@row.EdAddons</td><td>@row.AddOnPatients</td><td>@row.Outliers</td><td>@row.PredictedDischarges</td><td>@row.ActualDischarges</td><td>@row.DelayedDischarge</td>
+                            @if (SelectedVersion == "V2" && IsQchAccess)
+                            {
+                                var future = GetPredictedAvailability(row.Ward);
+                                <td>
+                                    <div class="bm-inline-stack"><span>@future.CurrentState</span><span>Discharge @future.PredictedDischargeTime</span><span>Next @future.NextPlannedPatient</span></div>
+                                </td>
+                                <td>@future.CleaningEta</td>
+                            }
+                            <td>@row.PostcodeCatchment</td><td><span class="bm-action-icon-wrap"><img src="images/icons/show-blackish.png" alt="View" class="bm-action-icon" /></span><span class="bm-action-icon-wrap"><img src="images/icons/edit-blackish.png" alt="Edit" class="bm-action-icon" /></span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+        }
+    </section>
+</section>
+
+@code {
+    private const string AccessStatewide = "statewide";
+    private const string AccessQchBedManager = "qch-bed-manager";
+    private const string QchHhs = "Children's Health Queensland";
+    private const string QchFacility = "Queensland Children's Hospital";
+    private int EditingNotificationId = -1;
+    private bool IsCreatingNotification;
+    private EditableNotification DraftNotification = new();
+    private List<FacilityNotification> QchNotifications = new()
+    {
+        new FacilityNotification(1, "Tier 2 — Amber", "Fire alarm testing scheduled at 3pm. Please minimise non-essential patient transfers during testing window.", "amber"),
+        new FacilityNotification(2, "Hospital Capacity Status: Red", "High demand across ED and inpatient flow. Prioritise confirmed discharges before 11:00.", "red")
+    };
+    private string QchActivityView = "Today";
+
+    private string SelectedAccessView = AccessStatewide;
+    private string SelectedHhs = DemoReferenceData.All;
+    private string SelectedFacility = DemoReferenceData.All;
+    private string SelectedWard = AllWards;
+    private string ActiveInsightFilter = string.Empty;
+    private string SelectedView = "List";
+    private string SelectedVersion = "V1";
+    private bool ShowInsightsPanel;
+    private string SortColumn = "Ward";
+    private bool SortAsc = true;
+    private int CurrentPage = 1;
+    private int PageSize = 12;
+    private const string AllWards = "All wards";
+    private bool IsQchAccess => SelectedAccessView == AccessQchBedManager;
+    private IReadOnlyList<string> HhsOptions => DemoReferenceData.HhsOptions;
+    private IReadOnlyList<string> FacilityOptions =>
+        new[] { DemoReferenceData.All }
+            .Concat(
+                SelectedHhs == DemoReferenceData.All
+                    ? DemoReferenceData.FacilitiesByHhs.SelectMany(x => x.Value).Distinct().Order()
+                    : DemoReferenceData.FacilitiesByHhs.GetValueOrDefault(SelectedHhs, new List<string>()).Order())
+            .ToList();
+    private IReadOnlyList<string> WardOptions => GetAvailableWardOptions();
+    private List<BedOverviewRow> FilteredRows => GetScopedBedManagementRows();
+    private List<BedOverviewRow> SortedRows => SortAsc ? FilteredRows.OrderBy(GetSortValue).ToList() : FilteredRows.OrderByDescending(GetSortValue).ToList();
+    private List<BedOverviewRow> PagedRows => SortedRows.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+
+    private List<(string Key, string Label)> CurrentColumns =>
+        new List<(string Key, string Label)>
+        {
+            ("Ward", "Ward"), ("OpenBeds", "Open Beds"), ("OccupiedBeds", "Occupied Beds"), ("Elective", "Elective Admissions"),
+            ("EdAddons", "ED Admissions"), ("AddOnPatients", "Add-On Patients"), ("Outliers", "Outliers"),
+            ("PredictedDischarges", "Predicted Discharges"), ("ActualDischarges", "Actual Discharges"),
+            ("DelayedDischarge", "Delayed Discharges")
+        }
+        .Concat(SelectedVersion == "V2" && IsQchAccess
+            ? new List<(string Key, string Label)> { ("FuturePlan", "Future Bed Plan"), ("CleaningEta", "Cleaning/Transfer ETA") }
+            : new List<(string Key, string Label)>())
+        .Concat(new List<(string Key, string Label)> { ("PostcodeCatchment", "Postcode / Catchment"), ("Actions", "Actions") })
+        .ToList();
+
+    private object GetSortValue(BedOverviewRow x) => SortColumn switch { "Ward" => x.Ward, "OpenBeds" => x.OpenBeds, "OccupiedBeds" => x.OccupiedBeds, "Elective" => x.Elective, "EdAddons" => x.EdAddons, "AddOnPatients" => x.AddOnPatients, "Outliers" => x.Outliers, "PredictedDischarges" => x.PredictedDischarges, "ActualDischarges" => x.ActualDischarges, "DelayedDischarge" => x.DelayedDischarge, "PostcodeCatchment" => x.PostcodeCatchment, _ => x.Ward };
+    private void SortBy(string key) { if (key is "Actions") return; if (SortColumn == key) SortAsc = !SortAsc; else { SortColumn = key; SortAsc = true; } }
+    private void SetView(string view) { SelectedView = view; CurrentPage = 1; }
+    private void SetVersion(string version) { SelectedVersion = version; if (version != "V2") ShowInsightsPanel = false; }
+    private string? OpenKpiInfoTitle;
+    private void StartCreateNotification() { EditingNotificationId = -1; IsCreatingNotification = true; DraftNotification = new EditableNotification(); }
+    private void CancelCreateNotification() { IsCreatingNotification = false; DraftNotification = new EditableNotification(); }
+    private void SaveCreateNotification()
+    {
+        if (string.IsNullOrWhiteSpace(DraftNotification.Title) || string.IsNullOrWhiteSpace(DraftNotification.Message)) return;
+        var nextId = QchNotifications.Count == 0 ? 1 : QchNotifications.Max(x => x.Id) + 1;
+        QchNotifications.Add(new FacilityNotification(nextId, DraftNotification.Title.Trim(), DraftNotification.Message.Trim(), DraftNotification.Severity));
+        CancelCreateNotification();
+    }
+    private void StartUpdateNotification(int id)
+    {
+        var note = QchNotifications.First(x => x.Id == id);
+        EditingNotificationId = id;
+        DraftNotification = new EditableNotification { Title = note.Title, Message = note.Message, Severity = note.Severity };
+        IsCreatingNotification = false;
+    }
+    private void SaveUpdateNotification(int id)
+    {
+        var index = QchNotifications.FindIndex(x => x.Id == id);
+        if (index < 0 || string.IsNullOrWhiteSpace(DraftNotification.Title) || string.IsNullOrWhiteSpace(DraftNotification.Message)) return;
+        QchNotifications[index] = new FacilityNotification(id, DraftNotification.Title.Trim(), DraftNotification.Message.Trim(), DraftNotification.Severity);
+        CancelUpdateNotification();
+    }
+    private void CancelUpdateNotification() { EditingNotificationId = -1; DraftNotification = new EditableNotification(); }
+    private void RemoveNotification(int id)
+    {
+        QchNotifications.RemoveAll(x => x.Id == id);
+        if (EditingNotificationId == id) CancelUpdateNotification();
+    }
+    private void ToggleKpiInfo(string title) => OpenKpiInfoTitle = OpenKpiInfoTitle == title ? null : title;
+    private void OnQchActivityTabChanged(string tab) => QchActivityView = tab;
+    private void CloseKpiInfo() => OpenKpiInfoTitle = null;
+    private void HandleKeydown(KeyboardEventArgs args) { if (args.Key == "Escape") OpenKpiInfoTitle = null; }
+    private string ActiveInsightTitle => ActiveInsights.FirstOrDefault(x => x.InsightKey == ActiveInsightFilter)?.Title ?? string.Empty;
+    private HashSet<string> ActiveInsightWardIds =>
+        ActiveInsights.FirstOrDefault(x => x.InsightKey == ActiveInsightFilter)?.RelatedWardIds
+        ?? new HashSet<string>();
+    private void OnAccessViewChanged() { ApplyAccessScope(); ClearInsightFilter(); }
+    private void OnHhsChanged() { if (SelectedHhs != QchHhs && SelectedFacility == QchFacility) SelectedFacility = DemoReferenceData.All; }
+    private void ApplyAccessScope() { if (IsQchAccess) { SelectedHhs = QchHhs; SelectedFacility = QchFacility; SelectedWard = AllWards; } else { SelectedHhs = DemoReferenceData.All; SelectedFacility = DemoReferenceData.All; SelectedWard = AllWards; } }
+    private List<string> GetAvailableWardOptions()
+    {
+        var sourceRows = IsQchAccess
+            ? Rows.Where(x => x.Hhs == QchHhs && x.Facility == QchFacility)
+            : Rows.Where(x => SelectedFacility == DemoReferenceData.All || x.Facility == SelectedFacility);
+
+        return new[] { AllWards }
+            .Concat(sourceRows.Select(x => x.Ward).Distinct().Order())
+            .ToList();
+    }
+    private IEnumerable<BedOverviewRow> GetBaseScopedRows() { IEnumerable<BedOverviewRow> scoped = Rows; if (IsQchAccess) scoped = scoped.Where(r => r.Hhs == QchHhs && r.Facility == QchFacility); else { if (SelectedHhs != DemoReferenceData.All) scoped = scoped.Where(r => r.Hhs == SelectedHhs); if (SelectedFacility != DemoReferenceData.All) scoped = scoped.Where(r => r.Facility == SelectedFacility);} if (SelectedWard != AllWards) scoped = scoped.Where(r => r.Ward == SelectedWard); return scoped; }
+    private List<BedOverviewRow> GetScopedBedManagementRows() { var scoped = GetBaseScopedRows(); if (!string.IsNullOrWhiteSpace(ActiveInsightFilter)) { var ids = ActiveInsightWardIds; scoped = scoped.Where(r => ids.Contains(r.Ward)); } return scoped.ToList(); }
+    private void ApplyInsightFilter(string filterKey) => ActiveInsightFilter = ActiveInsightFilter == filterKey ? string.Empty : filterKey;
+    private void ClearInsightFilter() => ActiveInsightFilter = string.Empty;
+    private bool IsInsightActive(string insightKey) => ActiveInsightFilter == insightKey;
+
+    private List<SituationalInsight> ActiveInsights => BuildSituationalInsights(GetBaseScopedRows().ToList());
+    private static List<SituationalInsight> BuildSituationalInsights(List<BedOverviewRow> rows)
+    {
+        var insights = new List<SituationalInsight>
+        {
+            CreateInsight("wards-over-capacity", "Wards Over Capacity", "Wards operating above safe occupancy threshold and requiring immediate focus.", "critical", "capacity", rows.Where(r => r.OccupancyValue >= 95 || r.OpenBeds <= 1), Icons.Material.Filled.Warning, "View wards"),
+            CreateInsight("delayed-discharge-risk", "Delayed Discharge Risk", "Delayed flow and discharge barriers are constraining throughput.", "warning", "delayed-discharge", rows.Where(r => r.DelayedDischarge >= 3), Icons.Material.Filled.PersonOff, "Review delayed discharge"),
+            CreateInsight("high-ed-pressure", "High ED Admission Pressure", "Elevated ED admission activity is loading inpatient capacity.", "high", "ed-admissions", rows.Where(r => r.EdAddons >= 3), Icons.Material.Filled.LocalHospital, "View wards"),
+            CreateInsight("high-outlier-load", "Outlier Pressure", "Outlier cohorts are impacting placement flexibility.", "high", "outliers", rows.Where(r => r.Outliers >= 2), Icons.Material.Filled.SwapHoriz, "Review outliers"),
+            CreateInsight("predicted-discharge-opportunity", "Predicted Discharge Opportunity", "Wards with immediate discharge opportunities to recover capacity.", "info", "predicted-discharges", rows.Where(r => r.PredictedDischarges >= 4 && r.DelayedDischarge <= 3), Icons.Material.Filled.TrendingDown, "Review predicted discharges"),
+            CreateInsight("operational-escalation-risk", "Operational Escalation Risk", "Wards approaching Tier 3 pressure due to occupancy and constraints.", "critical", "escalation", rows.Where(r => (r.Pressure == "Critical" || r.Pressure == "High") && (r.OccupancyValue >= 92 || r.DelayedDischarge >= 4)), Icons.Material.Filled.CrisisAlert, "Open escalation")
+        };
+
+        return insights.Where(x => x.Count > 0).ToList();
+    }
+
+    private static SituationalInsight CreateInsight(string key, string title, string description, string severityClass, string filterType, IEnumerable<BedOverviewRow> rows, string icon, string actionLabel)
+    {
+        var matchedRows = rows.DistinctBy(x => x.Ward).ToList();
+        return new SituationalInsight(key, title, description, severityClass, matchedRows.Select(x => x.Ward).ToHashSet(), filterType, matchedRows.Count, icon, actionLabel);
+    }
+
+
+    private PredictedBedState GetPredictedAvailability(string ward) =>
+        PredictedBedStates.FirstOrDefault(x => x.Ward == ward)
+        ?? new PredictedBedState(ward, "Occupied", "16:00", "Awaiting allocation", "TBC", "None", "Low");
+    private WardOrchestrationSnapshot GetWardOrchestrationSnapshot(string ward) =>
+        WardSnapshots.FirstOrDefault(x => x.Ward == ward)
+        ?? new WardOrchestrationSnapshot(ward, "Occupied", "15:00-17:00", "General admission", "Awaiting transport", "Stable");
+    private IReadOnlyList<OperationalEscalation> GetOperationalEscalations() => OperationalEscalations;
+    private IReadOnlyList<TransferStatus> GetTransferRisks() => TransferStatuses;
+    private IReadOnlyList<StaffingImpact> GetStaffingImpacts() => StaffingImpacts;
+    private IReadOnlyList<FutureAvailabilityWindow> GetFutureDischargeOpportunities() => FutureWindows;
+    private IReadOnlyList<PredictiveOperationalInsight> GetPredictiveInsights() => PredictiveInsights;
+
+    private readonly List<KpiItem> Kpis = new List<KpiItem>
+    {
+        new("Physical Capacity", "5,643", "Total beds", "open-bed-default", "kpi-blue", "The count of physically placed beds in the selected ward, facility or view."),
+        new("Open Operational Beds", "1,243", "22% of capacity", "open-bed-green", "kpi-green", "Beds that are open and available for use today."),
+        new("Beds Returning", "142", "Awaiting cleaning", "cleaning-orange", "kpi-orange", "Beds waiting to be cleaned."),
+        new("Operational Pressure", "87%", "High", "operation-pressure-orange", "kpi-red", "The percentage of open operational beds currently occupied by patients."),
+        new("Capacity Delta (24h)", "+53", "6 OUT 11 IN", "activity-default", "kpi-blue", "The change in available operational capacity."),
+        new("Admissions Today", "245", "Planned: 182", "admission-default", "kpi-blue", "Patients expected or confirmed for admission."),
+        new("Delayed Flow Patients", "78", "12% of total", "ddp-flow-red", "kpi-red", "Patients delayed by discharge barriers.")
+    };
+    private readonly List<KpiItem> QchKpis = new List<KpiItem>
+    {
+        new("Physical Capacity", "206", "Total Beds", "open-bed-default", "kpi-blue", "The count of physically placed beds across the selected facility or ward scope."),
+        new("Open Operational Beds", "185", "89% of Capacity", "open-bed-green", "kpi-green", "Beds operationally open and available for use today."),
+        new("Occupied Beds", "175", "94% occupancy", "occupied-bed-default", "kpi-gray", "Beds currently occupied by admitted patients receiving care."),
+        new("Beds Pending", "21", "Total Beds Pending", "cleaning-default", "kpi-orange", "Beds temporarily unavailable due to cleaning, maintenance, closure or operational constraints.", TileType: "breakdown", BreakdownItems: new[] { new SituationalKpiTile.KpiBreakdownItem("Cleaning", "6"), new SituationalKpiTile.KpiBreakdownItem("Maintenance", "5"), new SituationalKpiTile.KpiBreakdownItem("Closed", "10") }),
+        new("Operational Pressure", "Tier 2", "Moderate — Amber", "operation-pressure-orange", "kpi-orange", "Operational escalation level based on demand, capacity and system pressure."),
+        new("Admissions Today", "245", "Elective 65 • ED 225 • IHT 4", "admission-default", "kpi-blue", "Expected and planned admissions activity for the current operational day."),
+        new("Activity", "", "", "activity-default", "kpi-blue", "Operational activity trends and forward planning indicators.", TileType: "activity", BreakdownItems: new[] { new SituationalKpiTile.KpiBreakdownItem("Elective admissions", "60"), new SituationalKpiTile.KpiBreakdownItem("Pending IHT", "4"), new SituationalKpiTile.KpiBreakdownItem("Predicted ED presentations", "225") }, Tabs: new[] { "Yesterday", "Today", "Tomorrow" }),
+        new("Delayed Flow Patients", "10", "5% of inpatients", "ddp-flow-red", "kpi-red", "Patients delayed by discharge barriers.")
+    };
+
+    private static readonly List<BedOverviewRow> Rows = new List<BedOverviewRow>
+    {
+        new("Metro North HHS", "Royal Brisbane and Women's Hospital", "General Medicine", "Medical", 42, 8, 34, "81%", "Medium", "medium", 4, 3, 1, 5, 3, 2, "Staffing gap", 2, 1, "Metro North"),
+        new(QchHhs, QchFacility, "PICU", "Paediatric Intensive Care Unit", 36, 2, 34, "94%", "Critical", "critical", 3, 4, 1, 3, 1, 5, "Over capacity pressure", 3, 2, "Local"),
+        new(QchHhs, QchFacility, "12A", "Surgical & Orthopaedics", 28, 4, 24, "86%", "High", "high", 5, 2, 1, 5, 3, 3, "Elective surge", 2, 1, "Local"),
+        new(QchHhs, QchFacility, "11A", "General Medicine", 24, 5, 19, "79%", "Medium", "medium", 3, 2, 1, 4, 3, 2, "Stable flow", 1, 1, "Metro North"),
+        new(QchHhs, QchFacility, "11B", "Cardiology", 24, 2, 22, "92%", "High", "high", 2, 2, 1, 3, 2, 4, "Complex discharge", 2, 1, "Out of catchment"),
+        new(QchHhs, QchFacility, "10A", "Respiratory", 24, 3, 21, "88%", "High", "high", 2, 3, 0, 4, 3, 3, "Respiratory season", 1, 1, "Sunshine Coast"),
+        new(QchHhs, QchFacility, "9A", "Oncology", 24, 2, 22, "92%", "High", "high", 4, 1, 0, 2, 1, 3, "Stepdown delayed", 1, 1, "Local"),
+        new(QchHhs, QchFacility, "4C", "Infant Medical Ward", 22, 2, 20, "91%", "High", "high", 2, 3, 0, 3, 2, 4, "Delayed family support", 2, 1, "Metro North"),
+        new(QchHhs, QchFacility, "Ellen Barron Centre", "Sleep Centre", 20, 4, 16, "80%", "Medium", "medium", 1, 1, 0, 3, 2, 1, "Planned throughput", 1, 0, "Local"),
+        new(QchHhs, QchFacility, "ED SSTA", "Emergency Department Short Stay Treatment Area", 18, 1, 17, "94%", "Critical", "critical", 1, 6, 0, 2, 1, 4, "ED flow backlog", 3, 2, "Out of catchment"),
+        new(QchHhs, QchFacility, "8A", "Specialist Paediatrics", 16, 2, 14, "88%", "High", "high", 1, 2, 0, 2, 1, 2, "Specialist wait", 1, 0, "Local"),
+        new("Gold Coast", "Gold Coast University Hospital", "ED", "Emergency Department", 54, 6, 48, "89%", "High", "high", 6, 7, 1, 8, 4, 5, "High ED arrivals", 4, 3, "Gold Coast"),
+        new("Gold Coast", "Gold Coast University Hospital", "Surgical", "Surgical", 40, 5, 35, "88%", "High", "high", 7, 3, 0, 6, 3, 3, "Elective surge", 3, 1, "Gold Coast"),
+        new("Metro South", "Logan Hospital", "General Medicine", "Medical", 38, 4, 34, "89%", "High", "high", 4, 5, 1, 5, 2, 4, "Outlier pressure", 2, 2, "Logan"),
+        new("Cairns and Hinterland", "Cairns Hospital", "ICU", "Critical Care", 22, 2, 20, "91%", "Critical", "critical", 2, 3, 0, 3, 1, 2, "Staffing impact", 1, 1, "Far North"),
+        new("Mackay", "Mackay Base Hospital", "Medical Assessment Unit", "Assessment", 28, 5, 23, "82%", "Medium", "medium", 3, 2, 0, 4, 3, 2, "Stable flow", 2, 1, "Mackay"),
+        new("Townsville", "Townsville University Hospital", "Respiratory", "Respiratory", 30, 3, 27, "90%", "High", "high", 3, 4, 0, 4, 2, 3, "Transfer delays", 2, 2, "Townsville"),
+        new("Wide Bay", "Bundaberg Hospital", "General Medicine", "Medical", 26, 4, 22, "85%", "Medium", "medium", 2, 3, 1, 5, 4, 2, "Cleaning backlog", 1, 1, "Wide Bay")
+    };
+
+    private static readonly List<WardOrchestrationSnapshot> WardSnapshots = new()
+    {
+        new("PICU", "Occupied", "14:00-15:00", "ED escalation allocation", "Awaiting accepting team", "3 beds unavailable"),
+        new("12A", "Occupied", "13:30-14:30", "Elective post-op", "Awaiting porter", "Stable"),
+        new("11A", "Occupied", "14:00-16:00", "General medical admission", "No active transfer issue", "Stable"),
+        new("11B", "Occupied", "15:00-16:00", "Cardiology step-down", "Awaiting accepting team", "Reduced overnight staffing"),
+        new("10A", "Occupied", "15:30-17:00", "Respiratory admission", "No active transfer issue", "Stable"),
+        new("9A", "Occupied", "16:00-18:00", "Oncology admission", "Cleaning dependent", "Stable"),
+        new("4C", "Occupied", "15:00-17:00", "Infant medical admission", "Awaiting bed clean before transfer", "Stable"),
+        new("Ellen Barron Centre", "Available", "Planned", "Sleep study admission", "No active transfer issue", "Stable"),
+        new("ED SSTA", "Occupied", "Now-14:30", "ED short stay", "Delayed transport", "2 surge spaces staffing dependent"),
+        new("8A", "Occupied", "16:00-18:00", "Specialist paediatrics admission", "No active transfer issue", "Stable")
+    };
+
+
+    private static readonly List<PredictedBedState> PredictedBedStates = new()
+    {
+        new("PICU", "Occupied", "14:00", "ED escalation allocation", "14:45 clean complete", "Transfer clean required", "high"),
+        new("12A", "Occupied", "13:30", "Elective post-op", "14:10 clean complete", "Awaiting porter", "medium"),
+        new("11B", "Occupied", "15:00", "Cardiology step-down", "15:40 clean complete", "Awaiting accepting team", "high")
+    };
+    private static readonly List<TransferStatus> TransferStatuses = new()
+    {
+        new("PICU", "Pending repatriation", "Awaiting accepting team"),
+        new("ED SSTA", "Transfer to home catchment", "Delayed transport"),
+        new("4C", "Intra-hospital transfer", "Awaiting bed clean before transfer")
+    };
+    private static readonly List<StaffingImpact> StaffingImpacts = new()
+    {
+        new("PICU", "3 beds unavailable due to staffing (NUM escalation active)"),
+        new("11B", "Reduced overnight staffing; agency cover confirmed"),
+        new("ED SSTA", "2 surge spaces contingent on evening staffing uplift")
+    };
+    private static readonly List<OperationalEscalation> OperationalEscalations = new()
+    {
+        new("Staffing escalation", "Executive review suggested for PICU night shift"),
+        new("Discharge escalation", "11B requires consultant-led discharge unblock"),
+        new("Operational bottleneck", "ED SSTA delayed transfer queue > 90 mins")
+    };
+    private static readonly List<FutureAvailabilityWindow> FutureWindows = new()
+    {
+        new("12A", "13:30-14:30", "2 potential discharge opportunities"),
+        new("11A", "14:00-16:00", "1 likely transfer-to-home catchment release"),
+        new("9A", "16:00-18:00", "Cleaning dependent availability")
+    };
+    private static readonly List<PredictiveOperationalInsight> PredictiveInsights = new()
+    {
+        new("By 17:00", "Predicted Tier 3 pressure if transfer queue persists.", "critical"),
+        new("By 15:00", "Expected discharge opportunity in 12A and 11A.", "high"),
+        new("Overnight", "Likely capacity constraint without staffing uplift.", "warning")
+    };
+
+    private record KpiItem(string Title, string Value, string Subtitle, string IconName, string ColorClass, string InfoText, bool ShowInfoIcon = true, string TileType = "standard", IReadOnlyList<SituationalKpiTile.KpiBreakdownItem>? BreakdownItems = null, IReadOnlyList<string>? Tabs = null)
+    {
+        public IReadOnlyList<SituationalKpiTile.KpiBreakdownItem> BreakdownItems { get; } = BreakdownItems ?? Array.Empty<SituationalKpiTile.KpiBreakdownItem>();
+        public IReadOnlyList<string> Tabs { get; } = Tabs ?? Array.Empty<string>();
+    }
+    private record SituationalInsight(string InsightKey, string Title, string Description, string SeverityClass, HashSet<string> RelatedWardIds, string FilterType, int Count, string Icon, string ActionLabel);
+    private record PredictedBedState(string Ward, string CurrentState, string PredictedDischargeTime, string NextPlannedPatient, string CleaningEta, string TransferState, string PressureClass);
+    private record TransferStatus(string Ward, string Status, string WaitingState);
+    private record StaffingImpact(string Ward, string Message);
+    private record OperationalEscalation(string Type, string Message);
+    private record FutureAvailabilityWindow(string Ward, string Window, string Detail);
+    private record PredictiveOperationalInsight(string Window, string Message, string PressureClass);
+    private record WardOrchestrationSnapshot(string Ward, string CurrentState, string DischargeWindow, string NextPlannedPatient, string TransferState, string StaffingState);
+    private record FacilityNotification(int Id, string Title, string Message, string Severity);
+    private sealed class EditableNotification
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public string Severity { get; set; } = "blue";
+    }
+
+    private record BedOverviewRow(string Hhs, string Facility, string Ward, string WardType, int PhysicalBeds, int OpenBeds, int OccupiedBeds, string Occupancy, string Pressure, string PressureClass, int Elective, int EdAddons, int HithReturns, int PredictedDischarges, int ActualDischarges, int DelayedDischarge, string Constraints, int AddOnPatients, int Outliers, string PostcodeCatchment)
+    {
+        public int OccupancyValue => int.TryParse(Occupancy.Replace("%", string.Empty), out var value) ? value : 0;
+    }
+}
