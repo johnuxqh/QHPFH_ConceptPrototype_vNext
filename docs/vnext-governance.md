@@ -17,6 +17,7 @@ Current routes that must continue to work include:
 - any current Bed & Ward routes
 - any current Delayed Discharge routes
 - Home/MyHub routes
+- Connected Apps routes (if present)
 
 ### 2) Preserve GitHub Pages Compatibility
 Do not break base path behavior or deployment behavior.
@@ -71,6 +72,25 @@ Every final Codex response must include a short checklist stating:
 - known risks
 - manual test steps
 
+## GitHub Pages Base Path and Routing Safety
+
+Current expected GitHub Pages base path:
+- `/QHPFH_ConceptPrototype_vNext/`
+
+Required protections:
+- Keep `<base href="/QHPFH_ConceptPrototype_vNext/" />` aligned with current repo deployment path unless explicitly changing hosting strategy.
+- Do not casually change base href, because it can break CSS/script loading and internal client-side routing on GitHub Pages.
+- Keep or maintain a deep-link fallback strategy (for example `wwwroot/404.html`) so direct URLs continue to load the Blazor app.
+- Remove or update stale references to old repo paths (for example `/QHPFH_ConceptPrototype/`) unless a deliberate fallback is documented in the change.
+- Prefer framework-safe internal navigation (relative/component routing) over hard-coded absolute URLs.
+
+Required deep-route smoke tests after any routing/base-path change:
+1. Open `/QHPFH_ConceptPrototype_vNext/`
+2. Open `/QHPFH_ConceptPrototype_vNext/bed-management`
+3. Open `/QHPFH_ConceptPrototype_vNext/ward-operations`
+4. Open `/QHPFH_ConceptPrototype_vNext/allocation-centre`
+5. Confirm app shell and page content load as expected from direct URL entry.
+
 ## Expected Codex Workflow (Every Task)
 1. Read the prompt and identify explicit constraints.
 2. Identify the minimum file set required.
@@ -96,11 +116,14 @@ Use this at the end of each task:
 - Pages affected: <list or "none">
 - Components affected: <list or "none">
 - Known risks: <list or "none">
+- Route fallback file changed: yes/no (and which file)
+- Base href changed: yes/no (and why)
 - Manual test steps:
   1. Launch app
   2. Visit key routes (`/`, `/bed-management`, `/ward-operations`, `/allocation-centre`)
   3. Verify expected screen content is still present
   4. Verify shell/navigation mode behavior
+  5. Verify deep links under `/QHPFH_ConceptPrototype_vNext/` load correctly
 
 ## Scope
 This governance file applies to all future Codex work in this repository unless superseded by explicit user/developer/system instructions.
