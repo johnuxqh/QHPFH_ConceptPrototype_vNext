@@ -594,3 +594,64 @@ Use this checklist for future UI-related changes:
 - Operational alert readability verified
 - Colour dependency checked (not colour-only where practical)
 - Keyboard interaction not regressed (basic tab/focus flow)
+
+## Responsive Behaviour Governance Rules
+
+### Desktop-first operational philosophy
+This platform is desktop/laptop/operations-room first.
+Responsive decisions must prioritize operational workflow efficiency on desktop and widescreen layouts before mobile-style adaptation.
+
+### Operational density preservation
+Responsive behavior must preserve operational density.
+Do not introduce oversized mobile-like spacing on desktop (excessive padding, large row heights, excessive whitespace) that reduces throughput.
+
+### Responsive collapse philosophy
+Header/navigation/filter regions should collapse or adapt intelligently to preserve usable workspace area and maintain situational awareness.
+Prefer compact adaptations that keep key workflows visible.
+
+### Table and grid responsiveness expectations
+- Preserve table/grid readability and alignment across supported screen ranges.
+- Do not replace dense operational tables with unusable stacked-card patterns by default.
+- If horizontal scroll is required, keep it intentional, controlled, and single-layer where possible.
+
+### Scroll behavior rules
+Avoid:
+- unnecessary nested horizontal scrolling
+- clipped operational tables
+- double horizontal scrollbars in core workflows
+
+When overflow is unavoidable, ensure it remains operationally usable.
+
+### Overlay and slideout responsiveness
+Overlays/slideouts should adapt to narrower screens while preserving:
+- readable hierarchy
+- reachable actions
+- visible close controls
+- workflow continuity
+
+### Interaction continuity across breakpoints
+Responsive changes must not hide or remove critical operational actions, break navigation logic, or disrupt filtering workflows.
+
+### Widescreen operational support expectations
+Support command-centre-style widescreen usage with multi-column workflows where appropriate.
+Do not fragment structure into unrelated breakpoint-specific products.
+
+## Reusable Responsive Validation Checklist
+Use this checklist for future responsive-impacting changes:
+- Desktop layout stability verified
+- Widescreen behavior verified
+- Navigation collapse behavior verified
+- Filter bar behavior verified
+- Table/grid readability verified
+- Overlay/slideout responsiveness verified
+- Horizontal scroll behavior verified (no unintended double-scroll)
+- Operational workspace preservation verified
+
+## Lightweight Responsive Audit Notes
+When performing lightweight responsive audits, check for:
+- obvious oversized spacing introduced on desktop
+- broken or wasteful navigation/header collapse behavior
+- nested horizontal scrolling in active workflows
+- obvious overflow/clipping of operational tables/panels
+
+Prefer small shared fixes (for example min-width/overflow containment adjustments) over broad layout rewrites.
