@@ -330,3 +330,105 @@ For each system, future work should document:
 - intended shared base pattern
 - known divergences and whether intentional
 - safe consolidation opportunities
+
+## Prototype Stability and Regression Prevention Rules
+
+### Stability objective
+Protect the prototype from avoidable regressions while enabling safe, incremental evolution for workshop and clinical demonstration use.
+
+### Smallest safe change principle (stability)
+- Make the smallest safe change possible.
+- Avoid unrelated refactors and broad rewrites.
+- Avoid touching unrelated files.
+- Avoid replacing stable systems unless explicitly required.
+
+### Incremental merge philosophy
+Prefer:
+- small PRs
+- incremental architecture evolution
+- frequent build/check validation
+- frequent deployment/path validation
+
+Avoid:
+- giant multi-system rewrites
+- large untested merges
+- stacked unvalidated architectural changes
+
+### Preserve working workflows
+Do not break existing:
+- navigation and routes
+- dark mode behavior
+- overlays/slideouts
+- operational workflows
+- Bed Management / Ward Operations / Allocation Centre flows
+
+unless explicitly requested.
+
+### Shared architecture awareness
+Future changes must preserve:
+- shared state philosophy
+- shared operational workflows
+- shared component systems
+- adaptive access architecture
+- GitHub Pages compatibility
+
+### Avoid silent regressions
+Future changes should validate at minimum:
+- routes still load
+- pages still render
+- overlays still open
+- filters still function
+- dark mode still works
+- no new console errors are introduced
+
+### Preserve operational continuity
+The prototype should remain:
+- operational
+- clinically believable
+- workflow-oriented
+- stable during demonstrations
+
+Avoid visible dead ends, broken interactions, or partially implemented UI in active workflows.
+
+### Build and deployment validation expectations
+Every future task must:
+- run the available build/check command
+- report pass/fail status
+- explain changed files
+- explain known risks/deferred work
+
+After route/base-path/shell changes, validate GitHub Pages behavior and deep links under:
+- `/QHPFH_ConceptPrototype_vNext/`
+
+### Rollback and checkpoint philosophy
+- Keep changes reviewable and rollback-friendly.
+- Prefer checkpoint-style, scoped commits over monolithic changes.
+- Document riskier decisions so future rollback/recovery is clear.
+
+## Lightweight Regression Checklist Template
+Use this template in future final task responses:
+
+- Build status: PASS/FAIL
+- Changed files: <list>
+- Routes tested: <list>
+- Pages tested: <list>
+- Dark mode tested: yes/no
+- Overlays/slideouts tested: yes/no
+- Filters tested: yes/no
+- Console errors checked: yes/no
+- GitHub Pages routing/deployment path checked: yes/no
+- Known risks/deferred work: <list or "none">
+
+## High-Risk Change Guidance (Extra Caution Required)
+The following change types are high risk and require extra validation depth:
+- routing changes
+- shell/navigation changes
+- shared state changes
+- filter architecture changes
+- overlay/slideout system changes
+- global CSS changes
+- token/theme system changes
+- layout wrapper changes
+- session-state behavior changes
+
+For high-risk changes, increase validation coverage and prefer incremental rollout over bundled multi-system edits.
