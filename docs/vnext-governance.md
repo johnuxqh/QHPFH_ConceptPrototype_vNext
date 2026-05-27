@@ -712,3 +712,5 @@ Prefer small, safe replacements over broad dataset rewrites unless explicitly re
 - PrototypeDataStore now supports controlled in-memory writeback methods.
 - Browser refresh reset to seed data is intentional for workshop/demo safety.
 - Future UI actions should mutate shared state through PrototypeDataStore methods rather than page-local data copies.
+
+- Allocation workflow models in this prototype support operational simulation only and do not represent production PAS/HBCIS writeback.

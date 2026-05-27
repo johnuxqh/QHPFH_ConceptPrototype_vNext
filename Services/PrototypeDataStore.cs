@@ -21,6 +21,9 @@ public sealed class PrototypeDataStore
     private List<PatientCareTeamMemberRecord> _patientCareTeamMemberRecords = [];
     private List<PatientNoteRecord> _patientNoteRecords = [];
     private List<PatientDischargeRecord> _patientDischargeRecords = [];
+    private List<IncomingPatientRecord> _incomingPatientRecords = [];
+    private List<TransferRequestRecord> _transferRequestRecords = [];
+    private List<AllocationRequestRecord> _allocationRequestRecords = [];
 
     public event Action? OnChange;
 
@@ -34,6 +37,12 @@ public sealed class PrototypeDataStore
     public PatientRecord? GetPatientById(string id) => _patientRecords.FirstOrDefault(x => x.Id == id);
     public IReadOnlyList<AdmissionRecord> GetAdmissions() => _admissionRecords;
     public IReadOnlyList<AllocationRecord> GetAllocations() => _allocationRecords;
+    public IReadOnlyList<IncomingPatientRecord> GetIncomingPatients() => _incomingPatientRecords;
+    public IReadOnlyList<IncomingPatientRecord> GetIncomingPatientsBySource(AllocationSourceType sourceType) => _incomingPatientRecords.Where(x => x.SourceType == sourceType).ToList();
+    public IReadOnlyList<TransferRequestRecord> GetTransferRequests() => _transferRequestRecords;
+    public IReadOnlyList<AllocationRequestRecord> GetAllocationRequests() => _allocationRequestRecords;
+    public IReadOnlyList<AllocationRecord> GetAllocationsForWard(string wardId) => _allocationRecords.Where(x => x.WardId == wardId).ToList();
+    public IReadOnlyList<AllocationRecord> GetAllocationsForPatient(string patientId) => _allocationRecords.Where(x => x.PatientId == patientId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEvents() => _operationalEventRecords;
     public IReadOnlyList<InformationBannerRecord> GetInformationBanners() => _informationBannerRecords;
     public IReadOnlyList<PatientAlertRecord> GetPatientAlerts() => _patientAlertRecords;
@@ -163,7 +172,66 @@ public sealed class PrototypeDataStore
     {
         if (string.IsNullOrWhiteSpace(patientId) || string.IsNullOrWhiteSpace(facility) || string.IsNullOrWhiteSpace(wardCode)) return false;
         if (!_patientRecords.Any(x => x.Id == patientId)) return false;
-        _allocationRecords.Add(new AllocationRecord($"ALL-{Guid.NewGuid():N}"[..12], patientId, facility, wardCode, string.IsNullOrWhiteSpace(priority) ? "Routine" : priority, "PreAllocated", DateTime.UtcNow));
+        _allocationRecords.Add(new AllocationRecord($"ALL-{Guid.NewGuid():N}"[..12], patientId, facility, wardCode, string.IsNullOrWhiteSpace(priority) ? "Routine" : priority, "PreAllocated", DateTime.UtcNow)
+        {
+            SourceType = AllocationSourceType.ED,
+            IsFutureAllocation = true,
+            IsPreAllocation = true
+        });
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool AddIncomingPatient(IncomingPatientRecord incomingPatient)
+    {
+        if (string.IsNullOrWhiteSpace(incomingPatient.Id) || _incomingPatientRecords.Any(x => x.Id == incomingPatient.Id)) return false;
+        _incomingPatientRecords.Add(incomingPatient);
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool UpdateAllocationStatus(string allocationId, AllocationStatus status, string? notes = null)
+    {
+        if (string.IsNullOrWhiteSpace(allocationId)) return false;
+        var index = _allocationRecords.FindIndex(x => x.Id == allocationId);
+        if (index < 0) return false;
+        var current = _allocationRecords[index];
+        _allocationRecords[index] = current with { Status = status, UpdatedAtUtc = DateTime.UtcNow, Notes = notes ?? current.Notes };
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool AssignAllocationToBed(string allocationId, string bedId)
+    {
+        if (string.IsNullOrWhiteSpace(allocationId) || string.IsNullOrWhiteSpace(bedId)) return false;
+        var index = _allocationRecords.FindIndex(x => x.Id == allocationId);
+        if (index < 0) return false;
+        if (!_bedRecords.Any(x => x.Id == bedId)) return false;
+        var current = _allocationRecords[index];
+        _allocationRecords[index] = current with { TargetBedId = bedId, Status = AllocationStatus.Allocated, UpdatedAtUtc = DateTime.UtcNow, IsPreAllocation = false };
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool PreAllocatePatientToBed(string allocationId, string bedId)
+    {
+        if (string.IsNullOrWhiteSpace(allocationId) || string.IsNullOrWhiteSpace(bedId)) return false;
+        var index = _allocationRecords.FindIndex(x => x.Id == allocationId);
+        if (index < 0) return false;
+        if (!_bedRecords.Any(x => x.Id == bedId)) return false;
+        var current = _allocationRecords[index];
+        _allocationRecords[index] = current with { FutureBedId = bedId, Status = AllocationStatus.PreAllocated, IsFutureAllocation = true, IsPreAllocation = true, UpdatedAtUtc = DateTime.UtcNow };
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool UpdateTransferReadiness(string transferRequestId, TransferReadinessStatus readinessStatus, string? notes = null)
+    {
+        if (string.IsNullOrWhiteSpace(transferRequestId)) return false;
+        var index = _transferRequestRecords.FindIndex(x => x.Id == transferRequestId);
+        if (index < 0) return false;
+        var current = _transferRequestRecords[index];
+        _transferRequestRecords[index] = current with { ReadinessStatus = readinessStatus, Notes = notes ?? current.Notes };
         NotifyStateChanged();
         return true;
     }
@@ -186,6 +254,9 @@ public sealed class PrototypeDataStore
         _patientCareTeamMemberRecords = [..DemoDataSeed.PatientCareTeamMembers];
         _patientNoteRecords = [..DemoDataSeed.PatientNotes];
         _patientDischargeRecords = [..DemoDataSeed.PatientDischarges];
+        _incomingPatientRecords = [..DemoDataSeed.IncomingPatients];
+        _transferRequestRecords = [..DemoDataSeed.TransferRequests];
+        _allocationRequestRecords = [..DemoDataSeed.AllocationRequests];
         NotifyStateChanged();
     }
 

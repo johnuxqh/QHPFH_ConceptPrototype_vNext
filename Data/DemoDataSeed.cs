@@ -97,7 +97,39 @@ public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
 
     public static IReadOnlyList<AllocationRecord> Allocations { get; } =
     [
-        new("ALL-001", "PAT-003", "Princess Alexandra Hospital", "GEN", "High", "Pending", DateTime.UtcNow.AddMinutes(-12))
+        new AllocationRecord("ALL-001", "PAT-003", "FAC-PAH", "WARD-PAH-GEN", "High", "PreAllocated", DateTime.UtcNow.AddMinutes(-12)) with
+        {
+            SourceType = AllocationSourceType.ED,
+            TargetBedId = "BED-GEN-03",
+            FutureBedId = "BED-GEN-03",
+            IsFutureAllocation = true,
+            IsPreAllocation = true,
+            RequiresIsolation = true,
+            RequiredBedType = BedType.Transit,
+            RequiredSpecialty = "General Medicine",
+            Notes = "Pre-allocated to currently occupied transit-capable bed."
+        }
+    ];
+
+    public static IReadOnlyList<IncomingPatientRecord> IncomingPatients { get; } =
+    [
+        new("INC-ED-001", "PAT-003", AllocationSourceType.ED, "RBWH ED", "FAC-PAH", "WARD-PAH-GEN", BedType.Transit, "General Medicine", true, "Isolation required", AllocationPriority.Critical, AllocationStatus.Waiting, DateTime.UtcNow.AddMinutes(45), "Escalated from ED hold."),
+        new("INC-IHT-001", "PAT-004", AllocationSourceType.IHT, "Metro North IHT", "FAC-RBWH", "WARD-RBWH-SUR", BedType.Standard, "Surgical", false, null, AllocationPriority.Medium, AllocationStatus.PendingReview, DateTime.UtcNow.AddHours(2), "Inter-hospital transfer request."),
+        new("INC-ELE-001", "PAT-005", AllocationSourceType.Elective, "Elective Theatre List", "FAC-RBWH", "WARD-RBWH-SUR", BedType.Standard, "Surgical", false, null, AllocationPriority.Routine, AllocationStatus.Waiting, DateTime.UtcNow.AddHours(6), "Elective admission planning."),
+        new("INC-ADD-001", "PAT-001", AllocationSourceType.AddOn, "Add-On Queue", "FAC-RBWH", "WARD-RBWH-ICU", BedType.CriticalCare, "Critical Care", false, null, AllocationPriority.High, AllocationStatus.PendingReview, DateTime.UtcNow.AddHours(1), "Late add-on bed request."),
+        new("INC-TRN-001", "PAT-002", AllocationSourceType.Transit, "Transit Bay", "FAC-PAH", "WARD-PAH-GEN", BedType.Transit, "General Medicine", true, "Contact precautions", AllocationPriority.High, AllocationStatus.InTransit, DateTime.UtcNow.AddMinutes(30), "Transit bed utilization example.")
+    ];
+
+    public static IReadOnlyList<TransferRequestRecord> TransferRequests { get; } =
+    [
+        new("TRF-001", "PAT-002", "FAC-RBWH", "WARD-RBWH-ICU", "FAC-PAH", "WARD-PAH-GEN", "Step-down from ICU", AllocationPriority.High, TransferReadinessStatus.PendingClinicalClearance, DateTime.UtcNow.AddMinutes(-25), "Ward transfer stream example."),
+        new("TRF-002", "PAT-001", "FAC-RBWH", "WARD-RBWH-SUR", "FAC-RBWH", "WARD-RBWH-SUR", "Transit discharge lounge", AllocationPriority.Medium, TransferReadinessStatus.TransportBooked, DateTime.UtcNow.AddMinutes(-10), "Transit-related transfer example.")
+    ];
+
+    public static IReadOnlyList<AllocationRequestRecord> AllocationRequests { get; } =
+    [
+        new("ARQ-001", "INC-ED-001", "PAT-003", "Barbara Gordon", DateTime.UtcNow.AddMinutes(-20), "WARD-PAH-GEN", "BED-GEN-03", BedType.Transit, "General Medicine", true, AllocationPriority.Critical, AllocationStatus.PreAllocated, "Future bed pre-allocation request."),
+        new("ARQ-002", "INC-IHT-001", "PAT-004", "Peggy Carter", DateTime.UtcNow.AddMinutes(-15), "WARD-RBWH-SUR", null, BedType.Standard, "Surgical", false, AllocationPriority.Medium, AllocationStatus.PendingReview, "IHT stream request.")
     ];
 
     public static IReadOnlyList<OperationalEventRecord> OperationalEvents { get; } =
