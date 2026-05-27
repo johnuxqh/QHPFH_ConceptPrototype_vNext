@@ -36,6 +36,18 @@ public static class DemoDataSeed
         new("PAT-003", "Bruce Wayne", 45, "M", "GEN", "Queued", false, true)
     ];
 
+
+
+    public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
+    [
+        new("ADM-001", "PAT-003", "ED", "Queued", DateTime.UtcNow.AddMinutes(-35), DateTime.UtcNow.AddMinutes(20))
+    ];
+
+    public static IReadOnlyList<AllocationRecord> Allocations { get; } =
+    [
+        new("ALL-001", "PAT-003", "Princess Alexandra Hospital", "GEN", "High", "Pending", DateTime.UtcNow.AddMinutes(-12))
+    ];
+
     public static IReadOnlyList<OperationalEventRecord> OperationalEvents { get; } =
     [
         new("EVT-001", "Ward", "SUR", "Cleaning", "Medium", "One bed awaiting cleaning clearance.", DateTime.UtcNow.AddMinutes(-25)),
