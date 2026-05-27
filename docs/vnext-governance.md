@@ -432,3 +432,101 @@ The following change types are high risk and require extra validation depth:
 - session-state behavior changes
 
 For high-risk changes, increase validation coverage and prefer incremental rollout over bundled multi-system edits.
+
+## Session State and Demo Reset Governance Rules
+
+### Session-state philosophy
+The prototype should behave like a shared operational simulation with a common in-session state layer and cross-workspace awareness.
+Within an active browser session, operational interactions should feel connected and persistent.
+
+### Session-scoped persistence expectations
+During a single browser session, operational changes should persist while:
+- navigating between pages/routes
+- switching access perspectives
+- switching experience modes
+- switching layout variants
+- opening/closing overlays and slideouts
+
+Examples of in-session writeback behavior:
+- operational banner updates
+- patient allocation/movement updates
+- bed status updates
+- activity feed additions
+- workflow state transitions
+
+### Browser refresh reset philosophy
+A browser refresh should intentionally reset the prototype to seeded demo conditions:
+- seeded demo data
+- seeded operational state
+- seeded notifications/events
+
+This is expected for workshop simulation usage and is not a defect.
+
+### No real persistence yet
+At this stage, do not introduce:
+- production databases
+- server-side persistence
+- authentication/session persistence infrastructure
+- production-grade backend APIs
+
+GitHub Pages compatibility and lightweight deployment remain core constraints.
+
+### Shared operational truth rules
+All operational workspaces should reflect the same in-session state.
+Examples:
+- patient movements in Allocation Centre should appear in Ward/Bed contexts
+- operational banner changes should be visible across relevant views
+- bed status changes should drive consistent KPI recalculation
+
+Avoid disconnected, page-local state islands for shared operational concepts.
+
+### Operational continuity expectations
+Session behavior should feel:
+- believable
+- operationally realistic
+- continuous across workflows
+- coherent across perspectives
+
+Avoid hard-refresh-like behavior during normal navigation and avoid fake isolated widgets.
+
+### Future architecture direction (non-production)
+Future implementation should move incrementally toward:
+- shared `PrototypeDataStore`
+- shared operational models/state
+- shared event propagation
+- shared derived KPI calculations
+- lightweight shared session cache
+
+without introducing a production backend in this prototype phase.
+
+## Future Session-State Implementation Guidance
+Expected future behavior standards:
+- Patient movement propagation: movement in one operational workspace is reflected across related workspaces.
+- Operational banner propagation: banner/notification updates appear consistently across relevant operational views.
+- KPI recalculation: derived KPIs recompute from shared session state after state-changing actions.
+- Overlay continuity: overlays/slideouts should preserve workflow context and read/write against shared session state.
+- Access-perspective continuity: switching perspective/mode should keep the same underlying session truth while adapting presentation density/emphasis.
+
+## Lightweight Future Architecture Placeholders (Documentation)
+Use these as planned alignment targets for future implementation tasks:
+
+### PrototypeDataStore (planned)
+- In-memory/session-scoped source of operational truth for the active browser session.
+- Seeded from demo data at load and reset on browser refresh.
+
+### Shared operational state (planned)
+- Common structures for beds, patients, allocations, alerts, and workflow markers.
+- No per-page duplication for shared concepts.
+
+### Shared event propagation (planned)
+- Standard mechanism for publishing/observing operational state changes.
+- Enables cross-workspace updates without hard-coupled page logic.
+
+### Shared KPI calculation engine (planned)
+- Derived metrics computed from shared session state, not manually duplicated per page.
+- Ensures consistent KPI semantics across workspaces.
+
+### Shared session cache (planned)
+- Lightweight browser-session cache behavior only.
+- Reset on refresh to seeded demo baseline.
+- No production persistence guarantees.
