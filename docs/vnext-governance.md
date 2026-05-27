@@ -159,3 +159,79 @@ After any styling/theme change, validate at minimum:
 
 ### Lightweight theme audit expectation
 For small governance/stabilization tasks, perform a lightweight scan for obvious reusable hard-coded theme risks and prefer minimal, token-first corrections over broad restyling.
+
+## Operational UX Governance Rules
+
+### Operational UX philosophy
+QH Patient Flow Hub is an operational healthcare coordination platform, situational awareness platform, and orchestration workspace.
+It is not a passive reporting portal or a generic BI dashboard.
+
+Future UX changes must prioritise:
+- operational usability
+- rapid scanning
+- escalation awareness
+- workflow efficiency
+- actionability
+- clinical readability
+- low cognitive load
+
+### Workflow-first principles
+- Design and interactions must support decision-making, coordination, prioritisation, escalation handling, and patient flow action.
+- Metrics/insights must explain operational state and drive action, not decorative display.
+- Avoid vanity dashboard patterns or charting without explicit operational purpose.
+
+### Situational awareness principles
+- Users must always be able to understand where they are, the active operational scope, pressure state, escalations, and current flow status.
+- Preserve continuous awareness cues across the shell and operational pages.
+
+### Dense operational usability and readability
+- Preserve high-density operational workflows for shift-based use.
+- Prioritise scanability over decorative spacing.
+- Avoid oversized-card or excessive whitespace patterns that reduce operational throughput.
+- Keep information clinically readable, prioritised, and color-safe.
+
+### Escalation and status semantics
+- Preserve severity meaning and rapid recognition:
+  - red = critical/escalation
+  - amber = warning/moderate pressure
+  - green = normal/BAU
+  - blue = informational/contextual
+- Critical states and blockers should remain visually discoverable at a glance.
+
+### Workflow continuity rules
+- Prefer contextual overlays, slideouts, and progressive drill-down to maintain workflow continuity.
+- Avoid unnecessary page-hopping, modal traps, and disjointed flow interruptions.
+
+### Operational hierarchy and interaction model
+- Preserve coherent hierarchy across statewide, facility, ward, and patient-level operations.
+- Avoid fragmenting the prototype into disconnected products or standalone dashboard islands.
+
+### Realism and prototype behavior expectations
+- Keep interactions clinically grounded and operationally believable.
+- Avoid gimmicks, game-like behavior, or unrealistic automation concepts.
+
+## Reusable Codex Implementation Guidance (Operational UX)
+Use these standards in future implementation prompts unless explicitly overridden:
+- Do not over-dashboard.
+- Preserve operational workflows.
+- Prioritise scanability.
+- Maintain operational density.
+- Avoid decorative UI.
+- Keep insights actionable.
+- Preserve escalation visibility.
+- Keep controls workflow-adjacent, not buried behind extra navigation.
+- Prefer smallest safe change over broad UX rework.
+
+## Workshop / Prototype Mode Guidance
+
+### Access View philosophy
+Access View variations simulate operational perspectives (for example executive, command, bed manager, ward coordinator) and information emphasis.
+They are prototype perspective simulations, not production authentication/authorization models.
+
+### Experience Mode philosophy
+Experience Modes simulate different operational contexts and workflow emphasis (for example concept vs standard operations expression) while preserving shared platform behavior and awareness.
+They are not separate products.
+
+### Layout Variant philosophy
+Layout Variants can adjust density, emphasis, and arrangement to support operational tasks, but must preserve workflow continuity, route stability, and shared data context.
+Variants represent operational presentation options, not independent application architectures.
