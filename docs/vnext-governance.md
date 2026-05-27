@@ -530,3 +530,67 @@ Use these as planned alignment targets for future implementation tasks:
 - Lightweight browser-session cache behavior only.
 - Reset on refresh to seeded demo baseline.
 - No production persistence guarantees.
+
+## Accessibility and Contrast Validation Governance Rules
+
+### Operational accessibility philosophy
+Accessibility in this prototype is primarily an operational usability requirement for healthcare workflows.
+It must support rapid recognition, long-session readability, fatigue reduction, and workflow safety in both light and dark environments.
+
+### Contrast and readability expectations
+Future changes must preserve readable:
+- text
+- icons
+- tables/grids
+- operational alerts
+- overlays/slideouts
+- filters/controls
+
+Avoid low-contrast grey-on-grey patterns, washed-out typography, or hidden controls/icons.
+
+### Clinically meaningful colour usage
+Colour should reinforce severity and operational awareness, but should not be the only indicator.
+Where practical, reinforce meaning with labels/icons/text/pattern cues in addition to colour.
+
+### Dark mode accessibility rules
+Dark mode must preserve:
+- readable text and icons
+- readable controls
+- visible hover states
+- visible focus states
+- readable overlays/slideouts
+
+Avoid black-on-dark, low-contrast greys, and washed-out action states.
+
+### Keyboard and focus awareness
+Future interaction changes should remain keyboard-aware and must not block keyboard navigation evolution.
+Ensure focus visibility remains discoverable for interactive controls and maintain usable click-target sizes.
+
+### Density with readability
+Operational density is acceptable and expected, but dense screens must remain scannable, readable, and navigable.
+Do not trade readability for decorative compactness.
+
+### Accessibility-safe interaction principles
+- Prefer clear hierarchy and explicit action affordances.
+- Avoid subtle/low-opacity interaction states that hide operability.
+- Keep operational usability ahead of decorative styling trends.
+
+### Overlay and slideout readability expectations
+Overlays/slideouts should maintain:
+- readable hierarchy
+- readable action labels
+- visible close/escape affordances
+- sufficient foreground/background contrast
+
+## Reusable Accessibility Validation Checklist
+Use this checklist for future UI-related changes:
+- Text readability verified (light + dark)
+- Icon visibility verified (light + dark)
+- Hover visibility verified
+- Focus visibility verified
+- Dark mode control readability verified
+- Overlay/slideout readability verified
+- Table/grid readability verified
+- Operational alert readability verified
+- Colour dependency checked (not colour-only where practical)
+- Keyboard interaction not regressed (basic tab/focus flow)
