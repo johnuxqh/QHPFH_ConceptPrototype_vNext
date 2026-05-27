@@ -127,3 +127,35 @@ Use this at the end of each task:
 
 ## Scope
 This governance file applies to all future Codex work in this repository unless superseded by explicit user/developer/system instructions.
+
+## Dark Mode and Theme Compatibility Safety
+
+### Theme governance goals
+Future changes must preserve operational readability in both light and dark mode for long-session clinical and operations usage.
+
+### Theme rules
+- Prefer shared tokens/CSS variables over one-off hard-coded component colors.
+- Do not introduce hard-coded `#ffffff`/`white` light surfaces in reusable/shared components when a token can be used.
+- Do not introduce hard-coded `#000000`/`black` text/icon colors in reusable/shared components; prefer inherited or tokenized theme text colors.
+- Preserve clinically meaningful status colors across themes:
+  - red = critical/escalation
+  - amber = warning/moderate pressure
+  - green = normal/BAU
+  - blue = informational/contextual
+- Maintain high contrast and operational scanability; avoid grey-on-grey and low-visibility controls.
+- Inputs/controls (filters, selects, buttons, tables, overlays, slideouts, toasts) must remain readable in dark mode.
+
+### Required theme validation checklist
+After any styling/theme change, validate at minimum:
+1. Light mode readability on key workflow screens.
+2. Dark mode readability on key workflow screens.
+3. Hover states remain visible in both themes.
+4. Focus states remain visible in both themes.
+5. Overlay/slideout/toast contrast is readable in both themes.
+6. Table/grid text and separators remain legible in both themes.
+7. Icons are visible in both themes.
+8. Dropdowns/selects remain readable in both themes.
+9. Operational severity/status cues remain easy to distinguish in both themes.
+
+### Lightweight theme audit expectation
+For small governance/stabilization tasks, perform a lightweight scan for obvious reusable hard-coded theme risks and prefer minimal, token-first corrections over broad restyling.
