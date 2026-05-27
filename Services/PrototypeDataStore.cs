@@ -111,7 +111,12 @@ public sealed class PrototypeDataStore
             return false;
         }
 
-        _bedRecords[index] = _bedRecords[index] with { Status = status };
+        var parsedStatus = Enum.TryParse<BedStatus>(status, true, out var resolvedStatus) ? resolvedStatus : BedStatus.Open;
+        _bedRecords[index] = _bedRecords[index] with
+        {
+            BedStatus = parsedStatus,
+            IsOpenOperationally = parsedStatus is BedStatus.Open or BedStatus.Occupied or BedStatus.FutureAllocated
+        };
         NotifyStateChanged();
         return true;
     }
@@ -129,7 +134,14 @@ public sealed class PrototypeDataStore
             return false;
         }
 
-        _bedRecords[index] = _bedRecords[index] with { IsBlocked = isBlocked, IsIsolation = isIsolation };
+        var nextStatus = isBlocked ? BedStatus.Blocked : _bedRecords[index].BedStatus;
+        _bedRecords[index] = _bedRecords[index] with
+        {
+            BedStatus = nextStatus,
+            IsIsolationCapable = isIsolation,
+            IsSpecialistBed = _bedRecords[index].IsSpecialistBed || isIsolation,
+            IsOpenOperationally = !isBlocked
+        };
         NotifyStateChanged();
         return true;
     }
@@ -159,7 +171,12 @@ public sealed class PrototypeDataStore
             return false;
         }
 
-        _bedRecords[bedIndex] = bed with { AssignedPatientId = patientId, Status = "Occupied" };
+        _bedRecords[bedIndex] = bed with
+        {
+            CurrentPatientId = patientId,
+            BedStatus = BedStatus.Occupied,
+            IsOpenOperationally = true
+        };
         NotifyStateChanged();
         return true;
     }
