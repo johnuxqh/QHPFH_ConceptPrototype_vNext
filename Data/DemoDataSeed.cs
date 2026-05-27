@@ -38,12 +38,59 @@ public static class DemoDataSeed
 
     public static IReadOnlyList<PatientRecord> Patients { get; } =
     [
-        new("PAT-001", "Clark Kent", 38, "M", "SUR", "Admitted", false, false),
-        new("PAT-002", "Diana Prince", 34, "F", "ICU", "Admitted", true, false),
-        new("PAT-003", "Bruce Wayne", 45, "M", "GEN", "Queued", false, true)
+        new PatientRecord("PAT-001", "Clark Kent", 38, "M", "WARD-RBWH-SUR", "Admitted", false, false) with { CurrentBedId = "BED-SUR-01", RiskStatus = PatientRiskStatus.Stable, LengthOfStayDays = 2, CatchmentStatus = "In-Catchment" },
+        new PatientRecord("PAT-002", "Diana Prince", 34, "F", "WARD-RBWH-ICU", "Admitted", true, false) with { CurrentBedId = "BED-ICU-01", RiskStatus = PatientRiskStatus.AtRisk, IsInfectionControlFlagged = true, HasAllergyAlert = true, LengthOfStayDays = 4 },
+        new PatientRecord("PAT-003", "Bruce Wayne", 45, "M", "WARD-PAH-GEN", "Queued", false, true) with { FlowStatus = PatientFlowStatus.PreAllocated, IsOutlier = true, IsDelayedDischarge = true, EstimatedDischargeDate = DateTime.UtcNow.Date.AddDays(2), LengthOfStayDays = 9 },
+        new PatientRecord("PAT-004", "Pepper Potts", 41, "F", "WARD-PAH-GEN", "Allocated", false, false) with { FlowStatus = PatientFlowStatus.Allocated, RiskStatus = PatientRiskStatus.Watch, LengthOfStayDays = 1 },
+        new PatientRecord("PAT-005", "Johnny Storm", 29, "M", "WARD-RBWH-SUR", "ReadyForDischarge", false, false) with { FlowStatus = PatientFlowStatus.ReadyForDischarge, RiskStatus = PatientRiskStatus.Stable, EstimatedDischargeDate = DateTime.UtcNow.Date, LengthOfStayDays = 3 }
     ];
 
-    public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
+    public static IReadOnlyList<PatientAlertRecord> PatientAlerts { get; } =
+    [
+        new("ALR-001", "PAT-002", PatientAlertType.Allergy, "High", "Allergy Alert", "Known allergy requires medication verification.", true),
+        new("ALR-002", "PAT-002", PatientAlertType.InfectionControl, "Medium", "Infection Control", "Isolation precautions required.", true),
+        new("ALR-003", "PAT-003", PatientAlertType.FallsRisk, "Medium", "Falls Risk", "Mobility support recommended during transfers.", true)
+    ];
+
+    public static IReadOnlyList<PatientTaskRecord> PatientTasks { get; } =
+    [
+        new("TSK-001", "PAT-003", "Discharge", "Discharge summary", PatientTaskStatus.InProgress, PatientTaskPriority.High, DateTime.UtcNow.AddHours(6), "Ward Coordination"),
+        new("TSK-002", "PAT-004", "Pathology", "Pathology review", PatientTaskStatus.Pending, PatientTaskPriority.Medium, DateTime.UtcNow.AddHours(3), "Medical Team"),
+        new("TSK-003", "PAT-002", "Radiology", "CT follow-up", PatientTaskStatus.Pending, PatientTaskPriority.High, DateTime.UtcNow.AddHours(4), "ICU Team")
+    ];
+
+    public static IReadOnlyList<PatientResultRecord> PatientResults { get; } =
+    [
+        new("RST-001", "PAT-004", "Pathology", "Blood panel", PatientResultStatus.Pending, DateTime.UtcNow.AddHours(-2), DateTime.UtcNow.AddHours(2), "Awaiting lab validation."),
+        new("RST-002", "PAT-002", "Radiology", "CT chest", PatientResultStatus.InProgress, DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddHours(1), "Imaging in progress.")
+    ];
+
+    public static IReadOnlyList<PatientMedicationRecord> PatientMedications { get; } =
+    [
+        new("MED-001", "PAT-001", "Cefazolin", "IV", "8 hourly", "Active", DateTime.UtcNow.AddHours(2), DateTime.UtcNow.AddHours(-6), "Post-op prophylaxis."),
+        new("MED-002", "PAT-002", "Heparin", "Subcutaneous", "Daily", "Active", DateTime.UtcNow.AddHours(5), DateTime.UtcNow.AddHours(-19), "Monitor platelets.")
+    ];
+
+    public static IReadOnlyList<PatientCareTeamMemberRecord> PatientCareTeamMembers { get; } =
+    [
+        new("CTM-001", "PAT-003", "Stephen Strange", "Consultant", "General Medicine", "Ext 4102", true),
+        new("CTM-002", "PAT-003", "Natasha Romanoff", "NUM", "Ward Coordination", "Ext 2250", false),
+        new("CTM-003", "PAT-002", "Jean Grey", "Infection Control CNC", "ICU", "Ext 3371", true)
+    ];
+
+    public static IReadOnlyList<PatientNoteRecord> PatientNotes { get; } =
+    [
+        new("NTE-001", "PAT-003", "Progress", "Stephen Strange", DateTime.UtcNow.AddHours(-4), "Awaiting community package confirmation before discharge.", true),
+        new("NTE-002", "PAT-004", "Result", "Pepper Potts", DateTime.UtcNow.AddHours(-1), "Pathology pending; maintain current observation plan.", false)
+    ];
+
+    public static IReadOnlyList<PatientDischargeRecord> PatientDischarges { get; } =
+    [
+        new("DSC-001", "PAT-003", DateTime.UtcNow.Date.AddDays(2), DischargeProgressStatus.WaitingForExternal, "Community support package", "External Services", "Home with supports", true, "Awaiting package approval"),
+        new("DSC-002", "PAT-005", DateTime.UtcNow.Date, DischargeProgressStatus.MedicallyReady, "Transport booking", null, "Home", false, null)
+    ];
+
+public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
     [
         new("ADM-001", "PAT-003", "ED", "Queued", DateTime.UtcNow.AddMinutes(-35), DateTime.UtcNow.AddMinutes(20))
     ];

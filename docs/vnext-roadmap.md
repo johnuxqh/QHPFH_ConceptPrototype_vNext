@@ -9,7 +9,7 @@ This roadmap tracks staged Codex implementation prompts for the vNext prototype.
 | Phase | Prompt IDs | Status | Dependencies | Testing / Checkpoint Notes |
 | --- | --- | --- | --- | --- |
 | P0 — Governance + Safety | P0.01, P0.02, P0.03, P0.04, P0.05, P0.06, P0.07, P0.08, P0.09, P0.10 | Complete | None | Governance baseline established before architecture work. |
-| P1 — Data + State Foundation | P1.01, P1.02, P1.03, P1.04 | Complete | P0 complete | Shared model/data scaffold, central in-memory store, and session writeback foundation are in place; shared HHS/facility/ward/bed model layer refined for future filters, access scopes, KPI calculations, and bed workflows; UI/page wiring deferred to later P1 prompts. |
+| P1 — Data + State Foundation | P1.01, P1.02, P1.03, P1.04, P1.05 | Complete | P0 complete | Shared model/data scaffold, central in-memory store, and session writeback foundation are in place; shared HHS/facility/ward/bed model layer refined for future filters, access scopes, KPI calculations, and bed workflows; shared patient workflow models added for future patient slideouts, ward workflows, delayed discharge, and allocation workflows; UI/page wiring deferred to later P1 prompts. |
 | P2 — Shell + Platform Framework | Pending | Pending | P1 | Keep routing/base-path stable while aligning shell architecture. |
 | P3 — Filter + Access Architecture | Pending | Pending | P1, P2 | Add shared filter state and access perspectives incrementally. |
 | P4 — Design System + Visual Alignment | Pending | Pending | P2 | No broad redesign; align visual patterns through incremental updates only. |
@@ -29,3 +29,7 @@ Session-level writeback foundation added to PrototypeDataStore. UI wiring deferr
 
 
 Shared HHS/Facility/Ward/Bed model layer refined for future filters, access scopes, KPI calculations, and bed workflows.
+
+
+Shared patient workflow models added for future patient slideouts, ward workflows, delayed discharge, and allocation workflows.
+Shared patient workflow models support operational coordination and do not represent a full EMR.

@@ -14,31 +14,77 @@ public sealed class PrototypeDataStore
     private List<AllocationRecord> _allocationRecords = [];
     private List<OperationalEventRecord> _operationalEventRecords = [];
     private List<InformationBannerRecord> _informationBannerRecords = [];
+    private List<PatientAlertRecord> _patientAlertRecords = [];
+    private List<PatientTaskRecord> _patientTaskRecords = [];
+    private List<PatientResultRecord> _patientResultRecords = [];
+    private List<PatientMedicationRecord> _patientMedicationRecords = [];
+    private List<PatientCareTeamMemberRecord> _patientCareTeamMemberRecords = [];
+    private List<PatientNoteRecord> _patientNoteRecords = [];
+    private List<PatientDischargeRecord> _patientDischargeRecords = [];
 
     public event Action? OnChange;
 
-    public PrototypeDataStore()
-    {
-        ResetToSeedData();
-    }
+    public PrototypeDataStore() => ResetToSeedData();
 
     public IReadOnlyList<HhsRecord> GetHhs() => _hhsRecords;
     public IReadOnlyList<FacilityRecord> GetFacilities() => _facilityRecords;
     public IReadOnlyList<WardRecord> GetWards() => _wardRecords;
     public IReadOnlyList<BedRecord> GetBeds() => _bedRecords;
     public IReadOnlyList<PatientRecord> GetPatients() => _patientRecords;
+    public PatientRecord? GetPatientById(string id) => _patientRecords.FirstOrDefault(x => x.Id == id);
     public IReadOnlyList<AdmissionRecord> GetAdmissions() => _admissionRecords;
     public IReadOnlyList<AllocationRecord> GetAllocations() => _allocationRecords;
     public IReadOnlyList<OperationalEventRecord> GetOperationalEvents() => _operationalEventRecords;
     public IReadOnlyList<InformationBannerRecord> GetInformationBanners() => _informationBannerRecords;
+    public IReadOnlyList<PatientAlertRecord> GetPatientAlerts() => _patientAlertRecords;
+    public IReadOnlyList<PatientAlertRecord> GetPatientAlerts(string patientId) => _patientAlertRecords.Where(x => x.PatientId == patientId).ToList();
+    public IReadOnlyList<PatientTaskRecord> GetPatientTasks() => _patientTaskRecords;
+    public IReadOnlyList<PatientTaskRecord> GetPatientTasks(string patientId) => _patientTaskRecords.Where(x => x.PatientId == patientId).ToList();
+    public IReadOnlyList<PatientResultRecord> GetPatientResults() => _patientResultRecords;
+    public IReadOnlyList<PatientMedicationRecord> GetPatientMedications() => _patientMedicationRecords;
+    public IReadOnlyList<PatientCareTeamMemberRecord> GetPatientCareTeam() => _patientCareTeamMemberRecords;
+    public IReadOnlyList<PatientNoteRecord> GetPatientNotes() => _patientNoteRecords;
+    public IReadOnlyList<PatientDischargeRecord> GetPatientDischarges() => _patientDischargeRecords;
+    public PatientDischargeRecord? GetPatientDischarge(string patientId) => _patientDischargeRecords.FirstOrDefault(x => x.PatientId == patientId);
+
+    public bool AddPatientNote(PatientNoteRecord note)
+    {
+        if (string.IsNullOrWhiteSpace(note.Id) || string.IsNullOrWhiteSpace(note.PatientId) || _patientNoteRecords.Any(x => x.Id == note.Id)) return false;
+        _patientNoteRecords.Add(note);
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool UpdatePatientTaskStatus(string taskId, PatientTaskStatus status)
+    {
+        if (string.IsNullOrWhiteSpace(taskId)) return false;
+        var index = _patientTaskRecords.FindIndex(x => x.Id == taskId);
+        if (index < 0) return false;
+        _patientTaskRecords[index] = _patientTaskRecords[index] with { Status = status };
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool UpdatePatientDischargeProgress(string patientId, DischargeProgressStatus progress, string? waitingFor = null, string? delayReason = null)
+    {
+        if (string.IsNullOrWhiteSpace(patientId)) return false;
+        var index = _patientDischargeRecords.FindIndex(x => x.PatientId == patientId);
+        if (index < 0) return false;
+        var current = _patientDischargeRecords[index];
+        _patientDischargeRecords[index] = current with
+        {
+            DischargeProgress = progress,
+            WaitingFor = waitingFor ?? current.WaitingFor,
+            DelayReason = delayReason ?? current.DelayReason,
+            IsDelayed = progress == DischargeProgressStatus.WaitingForExternal || !string.IsNullOrWhiteSpace(delayReason)
+        };
+        NotifyStateChanged();
+        return true;
+    }
 
     public bool AddInformationBanner(InformationBannerRecord banner)
     {
-        if (string.IsNullOrWhiteSpace(banner.Id) || _informationBannerRecords.Any(x => x.Id == banner.Id))
-        {
-            return false;
-        }
-
+        if (string.IsNullOrWhiteSpace(banner.Id) || _informationBannerRecords.Any(x => x.Id == banner.Id)) return false;
         _informationBannerRecords.Add(banner);
         NotifyStateChanged();
         return true;
@@ -47,11 +93,7 @@ public sealed class PrototypeDataStore
     public bool UpdateInformationBanner(InformationBannerRecord banner)
     {
         var index = _informationBannerRecords.FindIndex(x => x.Id == banner.Id);
-        if (index < 0)
-        {
-            return false;
-        }
-
+        if (index < 0) return false;
         _informationBannerRecords[index] = banner;
         NotifyStateChanged();
         return true;
@@ -59,27 +101,15 @@ public sealed class PrototypeDataStore
 
     public bool RemoveInformationBanner(string bannerId)
     {
-        if (string.IsNullOrWhiteSpace(bannerId))
-        {
-            return false;
-        }
-
+        if (string.IsNullOrWhiteSpace(bannerId)) return false;
         var removed = _informationBannerRecords.RemoveAll(x => x.Id == bannerId) > 0;
-        if (removed)
-        {
-            NotifyStateChanged();
-        }
-
+        if (removed) NotifyStateChanged();
         return removed;
     }
 
     public bool AddOperationalEvent(OperationalEventRecord operationalEvent)
     {
-        if (string.IsNullOrWhiteSpace(operationalEvent.Id) || _operationalEventRecords.Any(x => x.Id == operationalEvent.Id))
-        {
-            return false;
-        }
-
+        if (string.IsNullOrWhiteSpace(operationalEvent.Id) || _operationalEventRecords.Any(x => x.Id == operationalEvent.Id)) return false;
         _operationalEventRecords.Add(operationalEvent);
         NotifyStateChanged();
         return true;
@@ -88,11 +118,7 @@ public sealed class PrototypeDataStore
     public bool UpdateOperationalEvent(OperationalEventRecord operationalEvent)
     {
         var index = _operationalEventRecords.FindIndex(x => x.Id == operationalEvent.Id);
-        if (index < 0)
-        {
-            return false;
-        }
-
+        if (index < 0) return false;
         _operationalEventRecords[index] = operationalEvent;
         NotifyStateChanged();
         return true;
@@ -100,109 +126,44 @@ public sealed class PrototypeDataStore
 
     public bool UpdateBedStatus(string bedId, string status)
     {
-        if (string.IsNullOrWhiteSpace(bedId) || string.IsNullOrWhiteSpace(status))
-        {
-            return false;
-        }
-
+        if (string.IsNullOrWhiteSpace(bedId) || string.IsNullOrWhiteSpace(status)) return false;
         var index = _bedRecords.FindIndex(x => x.Id == bedId);
-        if (index < 0)
-        {
-            return false;
-        }
-
+        if (index < 0) return false;
         var parsedStatus = Enum.TryParse<BedStatus>(status, true, out var resolvedStatus) ? resolvedStatus : BedStatus.Open;
-        _bedRecords[index] = _bedRecords[index] with
-        {
-            BedStatus = parsedStatus,
-            IsOpenOperationally = parsedStatus is BedStatus.Open or BedStatus.Occupied or BedStatus.FutureAllocated
-        };
+        _bedRecords[index] = _bedRecords[index] with { BedStatus = parsedStatus, IsOpenOperationally = parsedStatus is BedStatus.Open or BedStatus.Occupied or BedStatus.FutureAllocated };
         NotifyStateChanged();
         return true;
     }
 
     public bool UpdateBedOperationalState(string bedId, bool isBlocked, bool isIsolation)
     {
-        if (string.IsNullOrWhiteSpace(bedId))
-        {
-            return false;
-        }
-
+        if (string.IsNullOrWhiteSpace(bedId)) return false;
         var index = _bedRecords.FindIndex(x => x.Id == bedId);
-        if (index < 0)
-        {
-            return false;
-        }
-
+        if (index < 0) return false;
         var nextStatus = isBlocked ? BedStatus.Blocked : _bedRecords[index].BedStatus;
-        _bedRecords[index] = _bedRecords[index] with
-        {
-            BedStatus = nextStatus,
-            IsIsolationCapable = isIsolation,
-            IsSpecialistBed = _bedRecords[index].IsSpecialistBed || isIsolation,
-            IsOpenOperationally = !isBlocked
-        };
+        _bedRecords[index] = _bedRecords[index] with { BedStatus = nextStatus, IsIsolationCapable = isIsolation, IsSpecialistBed = _bedRecords[index].IsSpecialistBed || isIsolation, IsOpenOperationally = !isBlocked };
         NotifyStateChanged();
         return true;
     }
 
     public bool AssignPatientToBed(string patientId, string bedId)
     {
-        if (string.IsNullOrWhiteSpace(patientId) || string.IsNullOrWhiteSpace(bedId))
-        {
-            return false;
-        }
-
-        var patientExists = _patientRecords.Any(x => x.Id == patientId);
-        if (!patientExists)
-        {
-            return false;
-        }
-
+        if (string.IsNullOrWhiteSpace(patientId) || string.IsNullOrWhiteSpace(bedId)) return false;
+        if (!_patientRecords.Any(x => x.Id == patientId)) return false;
         var bedIndex = _bedRecords.FindIndex(x => x.Id == bedId);
-        if (bedIndex < 0)
-        {
-            return false;
-        }
-
+        if (bedIndex < 0) return false;
         var bed = _bedRecords[bedIndex];
-        if (bed.IsBlocked)
-        {
-            return false;
-        }
-
-        _bedRecords[bedIndex] = bed with
-        {
-            CurrentPatientId = patientId,
-            BedStatus = BedStatus.Occupied,
-            IsOpenOperationally = true
-        };
+        if (bed.IsBlocked) return false;
+        _bedRecords[bedIndex] = bed with { CurrentPatientId = patientId, BedStatus = BedStatus.Occupied, IsOpenOperationally = true };
         NotifyStateChanged();
         return true;
     }
 
     public bool PreAllocatePatientToFutureBed(string patientId, string facility, string wardCode, string priority)
     {
-        if (string.IsNullOrWhiteSpace(patientId) || string.IsNullOrWhiteSpace(facility) || string.IsNullOrWhiteSpace(wardCode))
-        {
-            return false;
-        }
-
-        if (!_patientRecords.Any(x => x.Id == patientId))
-        {
-            return false;
-        }
-
-        var allocation = new AllocationRecord(
-            Id: $"ALL-{Guid.NewGuid():N}"[..12],
-            PatientId: patientId,
-            Facility: facility,
-            WardCode: wardCode,
-            Priority: string.IsNullOrWhiteSpace(priority) ? "Routine" : priority,
-            Status: "PreAllocated",
-            UpdatedAtUtc: DateTime.UtcNow);
-
-        _allocationRecords.Add(allocation);
+        if (string.IsNullOrWhiteSpace(patientId) || string.IsNullOrWhiteSpace(facility) || string.IsNullOrWhiteSpace(wardCode)) return false;
+        if (!_patientRecords.Any(x => x.Id == patientId)) return false;
+        _allocationRecords.Add(new AllocationRecord($"ALL-{Guid.NewGuid():N}"[..12], patientId, facility, wardCode, string.IsNullOrWhiteSpace(priority) ? "Routine" : priority, "PreAllocated", DateTime.UtcNow));
         NotifyStateChanged();
         return true;
     }
@@ -218,6 +179,13 @@ public sealed class PrototypeDataStore
         _allocationRecords = [..DemoDataSeed.Allocations];
         _operationalEventRecords = [..DemoDataSeed.OperationalEvents];
         _informationBannerRecords = [..DemoDataSeed.InformationBanners];
+        _patientAlertRecords = [..DemoDataSeed.PatientAlerts];
+        _patientTaskRecords = [..DemoDataSeed.PatientTasks];
+        _patientResultRecords = [..DemoDataSeed.PatientResults];
+        _patientMedicationRecords = [..DemoDataSeed.PatientMedications];
+        _patientCareTeamMemberRecords = [..DemoDataSeed.PatientCareTeamMembers];
+        _patientNoteRecords = [..DemoDataSeed.PatientNotes];
+        _patientDischargeRecords = [..DemoDataSeed.PatientDischarges];
         NotifyStateChanged();
     }
 
