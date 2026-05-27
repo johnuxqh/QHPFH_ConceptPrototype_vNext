@@ -235,3 +235,98 @@ They are not separate products.
 ### Layout Variant philosophy
 Layout Variants can adjust density, emphasis, and arrangement to support operational tasks, but must preserve workflow continuity, route stability, and shared data context.
 Variants represent operational presentation options, not independent application architectures.
+
+## Shared Component Preservation Rules
+
+### Shared component philosophy
+As this prototype scales, reusable operational component discipline is mandatory.
+Future work must prioritise shared components and shared interaction systems over page-specific one-off implementations.
+
+### Reuse-first principles
+- Reuse before rebuild: check for existing shared patterns/components first.
+- Extend existing shared components where practical.
+- Do not create one-off variants unless explicitly required by scope.
+- Keep behavior and styling aligned with existing operational systems.
+
+### Anti-duplication rules
+Avoid introducing duplicate systems unless explicitly required:
+- multiple KPI card systems
+- multiple alert systems
+- multiple slideout systems
+- multiple overlay systems
+- multiple patient card systems
+- multiple filter systems
+- multiple quick-action systems
+
+### Interaction consistency rules
+Preserve consistent interaction patterns across Bed Management, Ward Operations, Allocation Centre, Delayed Discharge, and scenario/orchestration workspaces, including:
+- hover/click behavior
+- overlay/slideout behavior
+- quick actions
+- density handling
+- selection behavior
+- alert handling
+
+### Operational pattern and language preservation
+Preserve shared operational terminology and avoid duplicate terms for identical concepts.
+Examples include:
+- Bed Management
+- Ward View
+- Allocation Centre
+- Operational Events
+- Delayed Discharge
+- Open Beds
+- Pending Beds
+- Outliers
+- EDD
+- Isolation Beds
+
+### Adaptive architecture philosophy
+The platform should continue evolving toward:
+- shared operational data
+- adaptive operational perspectives
+- shared workflows
+- shared layouts
+- shared interaction systems
+
+Do not fragment into disconnected implementations.
+
+### Controlled evolution expectations
+- Avoid unnecessary rewrites of working components.
+- Avoid large structural moves without clear, explicit need.
+- Prefer incremental alignment and safe extension.
+- Preserve stable implementation unless explicitly instructed otherwise.
+
+### Component naming and alignment guidance
+- Prefer names that reflect shared operational purpose, not page-local context.
+- Avoid creating near-duplicate names for equivalent patterns.
+- If creating a new shared component, document why an existing one was not extended.
+- Keep naming consistent with current domain language.
+
+## Reusable Implementation Checklist (Before Creating a New Component)
+1. Does a similar shared component/pattern already exist?
+2. Can an existing shared component be extended safely?
+3. Does this introduce duplicate UX behavior?
+4. Does this fragment operational workflows?
+5. Does this preserve adaptive architecture direction?
+6. Is naming aligned with shared operational language?
+7. Is this the smallest safe change to satisfy the prompt?
+
+If any answer indicates duplication/fragmentation risk, prefer extending existing shared systems.
+
+## Lightweight Shared Inventory Placeholders (Documentation)
+Track and align these shared systems before adding new variants:
+- KPI cards
+- overlays
+- slideouts
+- patient cards
+- operational alerts
+- filters
+- activity feeds
+- action panels
+
+For each system, future work should document:
+- existing implementations in use
+- intended shared base pattern
+- known divergences and whether intentional
+- safe consolidation opportunities
