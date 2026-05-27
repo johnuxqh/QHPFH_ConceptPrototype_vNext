@@ -655,3 +655,51 @@ When performing lightweight responsive audits, check for:
 - obvious overflow/clipping of operational tables/panels
 
 Prefer small shared fixes (for example min-width/overflow containment adjustments) over broad layout rewrites.
+
+
+## Comic Identity and Fake PHI Governance Rules
+
+### Demo-data safety philosophy
+All prototype/demo operational data must be clearly fictional, privacy-safe, workshop-safe, screenshot-safe, and presentation-safe.
+The prototype must never resemble real Queensland Health patient/staff identity data.
+
+### Fake PHI rules
+- Do not use real patient names, realistic random names, copied production-style names, or near-real PHI.
+- Use clearly fictional civilian identities (for example DC/Marvel civilian names) for demo personas.
+- Apply this rule across all identity-bearing contexts: patients, clinicians, executives, coordinators, contacts, chat users, alerts, reports, activity feeds, and directories.
+
+### Prohibited identifier patterns
+Avoid production-style identifiers such as:
+- real MRN/UR number formats
+- realistic DOB + address combinations
+- real phone numbers
+- real email domains tied to real organizations
+- copied hospital identifiers
+
+Use explicit demo-safe patterns (for example `DEMO-` prefixes and `.invalid` email domains).
+
+### Operational realism without real PHI
+Maintain believable workflow realism via status logic, movement logic, and operational events, while keeping identities and identifiers fictional.
+
+### Consistent fictional identity pools (approved examples)
+Use coherent fictional civilian naming pools to keep personas believable and consistent:
+
+- Patients: Clark Kent, Diana Prince, Barry Allen, Kara Danvers, Peter Parker, Jean Grey, Logan Howlett
+- Executives / Command: Bruce Wayne, Tony Stark, T'Challa Udaku, Alfred Pennyworth
+- Clinicians: Stephen Strange, Leonard McCoy, Christine Palmer, Jean Grey
+- Operational staff / Coordinators: Barbara Gordon, Ned Leeds, Lois Lane, Peggy Carter
+- Support contacts / Utilities: Lucius Fox, Shuri Udaku, Oracle (Barbara Gordon), JARVIS Ops
+
+### Reusable future implementation guidance
+- All future generated demo data must remain fictional.
+- All future patient records must remain fictional.
+- Screenshots, recordings, and workflow demonstrations must remain privacy-safe by design.
+- If uncertain whether a name/identifier is too realistic, replace it with an obviously fictional alternative.
+
+### Lightweight fake-PHI audit expectation
+For future tasks that touch demo data, perform a lightweight audit for:
+- obvious realistic person names
+- real-organization email domains
+- production-style identifiers
+
+Prefer small, safe replacements over broad dataset rewrites unless explicitly requested.
