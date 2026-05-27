@@ -165,7 +165,20 @@ public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
         new("OIM-002", "EVT-005", "Staffing", "Reduced elective throughput expected.", "Ward", "8 hours", false)
     ];
 
-public static IReadOnlyList<InformationBannerRecord> InformationBanners { get; } =
+
+
+    public static IReadOnlyList<ActivityFeedItemRecord> ActivityFeedItems { get; } =
+    [
+        new("ACT-001", "Bed status changed", "Bed SUR-02 marked Cleaning.", ActivityFeedCategory.BedStatus, ActivityFeedSeverity.Warning, ActivityFeedScope.Bed, DateTime.UtcNow.AddMinutes(-55), "Barbara Gordon", null, "FAC-RBWH", "WARD-RBWH-SUR", "BED-SUR-02", null, null, null, "BedRecord", "BED-SUR-02", true, false, null),
+        new("ACT-002", "Patient pre-allocated", "Patient PAT-003 pre-allocated to Bed GEN-03.", ActivityFeedCategory.Allocation, ActivityFeedSeverity.Info, ActivityFeedScope.Allocation, DateTime.UtcNow.AddMinutes(-42), "Peggy Carter", null, "FAC-PAH", "WARD-PAH-GEN", "BED-GEN-03", "PAT-003", "ALL-001", null, "AllocationRecord", "ALL-001", false, true, "Future bed planning action."),
+        new("ACT-003", "Operational banner updated", "Facility capacity banner updated to Tier 3.", ActivityFeedCategory.Banner, ActivityFeedSeverity.Critical, ActivityFeedScope.Facility, DateTime.UtcNow.AddMinutes(-35), "Maria Hill", null, "FAC-PAH", null, null, null, null, "EVT-002", "OperationalBannerRecord", "OBN-002", true, true, null),
+        new("ACT-004", "Delayed discharge activity", "Community package pending for delayed discharge patient.", ActivityFeedCategory.Discharge, ActivityFeedSeverity.Warning, ActivityFeedScope.Patient, DateTime.UtcNow.AddMinutes(-28), "Stephen Strange", null, "FAC-PAH", "WARD-PAH-GEN", null, "PAT-003", null, null, "PatientDischargeRecord", "DSC-001", false, true, null),
+        new("ACT-005", "Transfer readiness updated", "Transfer request moved to Pending Clinical Clearance.", ActivityFeedCategory.Allocation, ActivityFeedSeverity.Info, ActivityFeedScope.Allocation, DateTime.UtcNow.AddMinutes(-22), "Natasha Romanoff", null, "FAC-RBWH", "WARD-RBWH-ICU", null, "PAT-002", null, null, "TransferRequestRecord", "TRF-001", false, false, null),
+        new("ACT-006", "Downtime protocol generated", "Downtime workflow initiated for bed tracking module.", ActivityFeedCategory.Downtime, ActivityFeedSeverity.Critical, ActivityFeedScope.Facility, DateTime.UtcNow.AddMinutes(-16), "Nick Fury", null, "FAC-RBWH", null, null, null, null, "EVT-004", "OperationalEventRecord", "EVT-004", true, true, null),
+        new("ACT-007", "Operational event escalated", "Capacity event escalated to Tier 3 coordination level.", ActivityFeedCategory.OperationalEvent, ActivityFeedSeverity.Critical, ActivityFeedScope.OperationalEvent, DateTime.UtcNow.AddMinutes(-10), "Jean Grey", null, "FAC-PAH", null, null, null, null, "EVT-002", "OperationalEscalationRecord", "OES-001", false, true, null)
+    ];
+
+    public static IReadOnlyList<InformationBannerRecord> InformationBanners { get; } =
     [
         new("BAN-001", "All", "Info", "Operational Update", "Demo seed data scaffold enabled for staged migration.", true)
     ];

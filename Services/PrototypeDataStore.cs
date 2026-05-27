@@ -28,6 +28,7 @@ public sealed class PrototypeDataStore
     private List<OperationalTimelineEventRecord> _operationalTimelineEventRecords = [];
     private List<OperationalEscalationRecord> _operationalEscalationRecords = [];
     private List<OperationalImpactRecord> _operationalImpactRecords = [];
+    private List<ActivityFeedItemRecord> _activityFeedItems = [];
 
     public event Action? OnChange;
 
@@ -52,6 +53,11 @@ public sealed class PrototypeDataStore
     public IReadOnlyList<OperationalTimelineEventRecord> GetOperationalTimelineEvents() => _operationalTimelineEventRecords;
     public IReadOnlyList<OperationalEscalationRecord> GetOperationalEscalations() => _operationalEscalationRecords;
     public IReadOnlyList<OperationalImpactRecord> GetOperationalImpacts() => _operationalImpactRecords;
+    public IReadOnlyList<ActivityFeedItemRecord> GetActivityFeedItems() => _activityFeedItems;
+    public IReadOnlyList<ActivityFeedItemRecord> GetActivityFeedForFacility(string facilityId) => _activityFeedItems.Where(x => x.FacilityId == facilityId).ToList();
+    public IReadOnlyList<ActivityFeedItemRecord> GetActivityFeedForWard(string wardId) => _activityFeedItems.Where(x => x.WardId == wardId).ToList();
+    public IReadOnlyList<ActivityFeedItemRecord> GetActivityFeedForPatient(string patientId) => _activityFeedItems.Where(x => x.PatientId == patientId).ToList();
+    public IReadOnlyList<ActivityFeedItemRecord> GetActivityFeedForAllocation(string allocationId) => _activityFeedItems.Where(x => x.AllocationId == allocationId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetActiveOperationalEvents() => _operationalEventRecords.Where(x => x.IsActive).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForFacility(string facilityId) => _operationalEventRecords.Where(x => x.FacilityId == facilityId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForWard(string wardId) => _operationalEventRecords.Where(x => x.WardId == wardId).ToList();
@@ -66,6 +72,19 @@ public sealed class PrototypeDataStore
     public IReadOnlyList<PatientNoteRecord> GetPatientNotes() => _patientNoteRecords;
     public IReadOnlyList<PatientDischargeRecord> GetPatientDischarges() => _patientDischargeRecords;
     public PatientDischargeRecord? GetPatientDischarge(string patientId) => _patientDischargeRecords.FirstOrDefault(x => x.PatientId == patientId);
+
+    public bool AddActivityFeedItem(ActivityFeedItemRecord item)
+    {
+        if (string.IsNullOrWhiteSpace(item.Id) || _activityFeedItems.Any(x => x.Id == item.Id)) return false;
+        _activityFeedItems.Add(item);
+        NotifyStateChanged();
+        return true;
+    }
+
+    private void AddSystemActivity(string title, string summary, ActivityFeedCategory category, ActivityFeedSeverity severity, ActivityFeedScope scope, string createdBy, string? facilityId = null, string? wardId = null, string? bedId = null, string? patientId = null, string? allocationId = null, string? operationalEventId = null)
+    {
+        _activityFeedItems.Add(new ActivityFeedItemRecord($"ACT-{Guid.NewGuid():N}"[..12], title, summary, category, severity, scope, DateTime.UtcNow, createdBy, null, facilityId, wardId, bedId, patientId, allocationId, operationalEventId, null, null, true, severity == ActivityFeedSeverity.Critical, null));
+    }
 
     public bool AddPatientNote(PatientNoteRecord note)
     {
@@ -98,6 +117,7 @@ public sealed class PrototypeDataStore
             DelayReason = delayReason ?? current.DelayReason,
             IsDelayed = progress == DischargeProgressStatus.WaitingForExternal || !string.IsNullOrWhiteSpace(delayReason)
         };
+        AddSystemActivity("Discharge progress updated", $"Patient {patientId} discharge progress updated to {progress}.", ActivityFeedCategory.Discharge, ActivityFeedSeverity.Info, ActivityFeedScope.Patient, "System", patientId: patientId);
         NotifyStateChanged();
         return true;
     }
@@ -151,6 +171,7 @@ public sealed class PrototypeDataStore
         if (index < 0) return false;
         var parsedStatus = Enum.TryParse<BedStatus>(status, true, out var resolvedStatus) ? resolvedStatus : BedStatus.Open;
         _bedRecords[index] = _bedRecords[index] with { BedStatus = parsedStatus, IsOpenOperationally = parsedStatus is BedStatus.Open or BedStatus.Occupied or BedStatus.FutureAllocated };
+        AddSystemActivity("Bed status updated", $"Bed {bedId} set to {parsedStatus}.", ActivityFeedCategory.BedStatus, ActivityFeedSeverity.Info, ActivityFeedScope.Bed, "System", wardId: _bedRecords[index].WardId, bedId: bedId);
         NotifyStateChanged();
         return true;
     }
@@ -208,6 +229,7 @@ public sealed class PrototypeDataStore
         if (index < 0) return false;
         var current = _allocationRecords[index];
         _allocationRecords[index] = current with { Status = status, UpdatedAtUtc = DateTime.UtcNow, Notes = notes ?? current.Notes };
+        AddSystemActivity("Allocation status updated", $"Allocation {allocationId} moved to {status}.", ActivityFeedCategory.Allocation, ActivityFeedSeverity.Info, ActivityFeedScope.Allocation, "System", facilityId: current.FacilityId, wardId: current.WardId, patientId: current.PatientId, allocationId: allocationId);
         NotifyStateChanged();
         return true;
     }
@@ -271,6 +293,7 @@ public sealed class PrototypeDataStore
         if (index < 0) return false;
         var current = _operationalEventRecords[index];
         _operationalEventRecords[index] = current with { IsActive = false, EndsAtUtc = DateTime.UtcNow, Notes = notes ?? current.Notes };
+        AddSystemActivity("Operational event resolved", $"Operational event {eventId} resolved.", ActivityFeedCategory.OperationalEvent, ActivityFeedSeverity.Success, ActivityFeedScope.OperationalEvent, "System", facilityId: current.FacilityId, wardId: current.WardId, operationalEventId: eventId);
         NotifyStateChanged();
         return true;
     }
@@ -280,6 +303,7 @@ public sealed class PrototypeDataStore
         if (string.IsNullOrWhiteSpace(eventId) || string.IsNullOrWhiteSpace(escalationLevel)) return false;
         if (!_operationalEventRecords.Any(x => x.Id == eventId)) return false;
         _operationalEscalationRecords.Add(new OperationalEscalationRecord($"OES-{Guid.NewGuid():N}"[..12], eventId, escalationLevel, DateTime.UtcNow, escalatedBy, reason, false, null));
+        AddSystemActivity("Operational event escalated", $"Event {eventId} escalated to {escalationLevel}.", ActivityFeedCategory.OperationalEvent, ActivityFeedSeverity.Critical, ActivityFeedScope.OperationalEvent, escalatedBy, operationalEventId: eventId);
         NotifyStateChanged();
         return true;
     }
@@ -317,6 +341,7 @@ public sealed class PrototypeDataStore
         _operationalTimelineEventRecords = [..DemoDataSeed.OperationalTimelineEvents];
         _operationalEscalationRecords = [..DemoDataSeed.OperationalEscalations];
         _operationalImpactRecords = [..DemoDataSeed.OperationalImpacts];
+        _activityFeedItems = [..DemoDataSeed.ActivityFeedItems];
         NotifyStateChanged();
     }
 
