@@ -703,3 +703,12 @@ For future tasks that touch demo data, perform a lightweight audit for:
 - production-style identifiers
 
 Prefer small, safe replacements over broad dataset rewrites unless explicitly requested.
+
+
+## Data Store Continuity Note
+- `Services/PrototypeDataStore` is the central in-memory session data source for vNext prototype evolution.
+- Future data/state prompts should extend this store rather than creating duplicate stores.
+
+- PrototypeDataStore now supports controlled in-memory writeback methods.
+- Browser refresh reset to seed data is intentional for workshop/demo safety.
+- Future UI actions should mutate shared state through PrototypeDataStore methods rather than page-local data copies.
