@@ -9,7 +9,7 @@ This roadmap tracks staged Codex implementation prompts for the vNext prototype.
 | Phase | Prompt IDs | Status | Dependencies | Testing / Checkpoint Notes |
 | --- | --- | --- | --- | --- |
 | P0 — Governance + Safety | P0.01, P0.02, P0.03, P0.04, P0.05, P0.06, P0.07, P0.08, P0.09, P0.10 | Complete | None | Governance baseline established before architecture work. |
-| P1 — Data + State Foundation | P1.01, P1.02 | Complete | P0 complete | Shared model/data scaffold plus central in-memory store created and registered; page migration deferred to later P1 prompts. |
+| P1 — Data + State Foundation | P1.01, P1.02, P1.03 | Complete | P0 complete | Shared model/data scaffold, central in-memory store, and session writeback foundation are in place; UI/page wiring deferred to later P1 prompts. |
 | P2 — Shell + Platform Framework | Pending | Pending | P1 | Keep routing/base-path stable while aligning shell architecture. |
 | P3 — Filter + Access Architecture | Pending | Pending | P1, P2 | Add shared filter state and access perspectives incrementally. |
 | P4 — Design System + Visual Alignment | Pending | Pending | P2 | No broad redesign; align visual patterns through incremental updates only. |
@@ -23,3 +23,6 @@ This roadmap tracks staged Codex implementation prompts for the vNext prototype.
 | P12 — Utilities + Toaster Systems | Pending | Pending | P2, P5 | Consolidate utility and toaster patterns without UX regression. |
 | P13 — Validation + Cleanup | Pending | Pending | P2-P12 | Full pass for regressions, dead code, and documentation drift. |
 | P14 — Final Consolidation | Pending | Pending | P13 | Final release hardening and readiness checkpoint. |
+
+
+Session-level writeback foundation added to PrototypeDataStore. UI wiring deferred to later prompts.
