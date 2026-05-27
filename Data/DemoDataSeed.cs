@@ -134,11 +134,38 @@ public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
 
     public static IReadOnlyList<OperationalEventRecord> OperationalEvents { get; } =
     [
-        new("EVT-001", "Ward", "WARD-RBWH-ICU", "Cleaning", "Medium", "One bed awaiting cleaning clearance.", DateTime.UtcNow.AddMinutes(-25)),
-        new("EVT-002", "Facility", "FAC-RBWH", "Pressure", "High", "ICU occupancy remains above 90%.", DateTime.UtcNow.AddMinutes(-10))
+        new OperationalEventRecord("EVT-001", "Facility", "FAC-RBWH", "Capacity", "Moderate", "Facility operating at Tier 2 capacity.", DateTime.UtcNow.AddHours(-6)) with { Title = "Capacity Tier 2", Scope = OperationalEventScope.Facility, CapacityStatus = CapacityStatus.Tier2, IsActive = true, RequiresAcknowledgement = true, CreatedBy = "Barbara Gordon", SourceSystem = "OpsHub" },
+        new OperationalEventRecord("EVT-002", "Facility", "FAC-PAH", "Capacity", "High", "Escalated to Tier 3 due to access block.", DateTime.UtcNow.AddHours(-2)) with { Title = "Capacity Tier 3 Escalation", Scope = OperationalEventScope.Facility, CapacityStatus = CapacityStatus.Tier3, IsActive = true, RequiresAcknowledgement = true, CreatedBy = "Peggy Carter", SourceSystem = "OpsHub" },
+        new OperationalEventRecord("EVT-003", "Facility", "FAC-RBWH", "Infrastructure", "Info", "Planned fire alarm testing 14:00-14:30.", DateTime.UtcNow.AddHours(-12)) with { Title = "Planned Fire Alarm Testing", StartsAtUtc = DateTime.UtcNow.AddHours(2), EndsAtUtc = DateTime.UtcNow.AddHours(2.5), IsActive = true, CreatedBy = "James Gordon" },
+        new OperationalEventRecord("EVT-004", "Facility", "FAC-RBWH", "Downtime", "Critical", "Bed tracking module downtime declared.", DateTime.UtcNow.AddMinutes(-40)) with { Title = "System Downtime", IsActive = true, RequiresAcknowledgement = true, SourceSystem = "JARVIS Ops", CreatedBy = "Maria Hill" },
+        new OperationalEventRecord("EVT-005", "Ward", "WARD-PAH-GEN", "Staffing", "High", "Ward staffing reduced by two RNs for evening shift.", DateTime.UtcNow.AddHours(-1)) with { Title = "Staffing Impact", IsActive = true, CreatedBy = "Nick Fury" },
+        new OperationalEventRecord("EVT-006", "Ward", "WARD-RBWH-ICU", "InfectionControl", "High", "Infection control escalation in ICU.", DateTime.UtcNow.AddHours(-3)) with { Title = "Infection Control Escalation", IsActive = false, EndsAtUtc = DateTime.UtcNow.AddMinutes(-20), CreatedBy = "Jean Grey" }
     ];
 
-    public static IReadOnlyList<InformationBannerRecord> InformationBanners { get; } =
+    public static IReadOnlyList<OperationalBannerRecord> OperationalBanners { get; } =
+    [
+        new("OBN-001", "Ward Advisory", "Isolation workflow escalation active.", OperationalEventSeverity.High, OperationalEventScope.Ward, null, null, "FAC-RBWH", "WARD-RBWH-ICU", true, true, true, DateTime.UtcNow.AddHours(-3), null),
+        new("OBN-002", "Facility Capacity", "Princess Alexandra Hospital operating at Tier 3 capacity.", OperationalEventSeverity.Critical, OperationalEventScope.Facility, CapacityStatus.Tier3, null, "FAC-PAH", null, false, true, true, DateTime.UtcNow.AddHours(-2), null)
+    ];
+
+    public static IReadOnlyList<OperationalTimelineEventRecord> OperationalTimelineEvents { get; } =
+    [
+        new("OTL-001", "EVT-002", DateTime.UtcNow.AddHours(-2), "Capacity escalated", "Capacity moved to Tier 3.", "Peggy Carter", "Escalation"),
+        new("OTL-002", "EVT-004", DateTime.UtcNow.AddMinutes(-35), "Downtime declared", "Downtime protocol activated.", "Maria Hill", "Downtime")
+    ];
+
+    public static IReadOnlyList<OperationalEscalationRecord> OperationalEscalations { get; } =
+    [
+        new("OES-001", "EVT-002", "Tier3", DateTime.UtcNow.AddHours(-2), "Peggy Carter", "Access block threshold exceeded", false, null)
+    ];
+
+    public static IReadOnlyList<OperationalImpactRecord> OperationalImpacts { get; } =
+    [
+        new("OIM-001", "EVT-002", "CapacityLoss", "12 beds unavailable due to access block.", "Facility", "4 hours", false),
+        new("OIM-002", "EVT-005", "Staffing", "Reduced elective throughput expected.", "Ward", "8 hours", false)
+    ];
+
+public static IReadOnlyList<InformationBannerRecord> InformationBanners { get; } =
     [
         new("BAN-001", "All", "Info", "Operational Update", "Demo seed data scaffold enabled for staged migration.", true)
     ];

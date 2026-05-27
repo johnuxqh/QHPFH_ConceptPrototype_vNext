@@ -24,6 +24,10 @@ public sealed class PrototypeDataStore
     private List<IncomingPatientRecord> _incomingPatientRecords = [];
     private List<TransferRequestRecord> _transferRequestRecords = [];
     private List<AllocationRequestRecord> _allocationRequestRecords = [];
+    private List<OperationalBannerRecord> _operationalBannerRecords = [];
+    private List<OperationalTimelineEventRecord> _operationalTimelineEventRecords = [];
+    private List<OperationalEscalationRecord> _operationalEscalationRecords = [];
+    private List<OperationalImpactRecord> _operationalImpactRecords = [];
 
     public event Action? OnChange;
 
@@ -44,6 +48,13 @@ public sealed class PrototypeDataStore
     public IReadOnlyList<AllocationRecord> GetAllocationsForWard(string wardId) => _allocationRecords.Where(x => x.WardId == wardId).ToList();
     public IReadOnlyList<AllocationRecord> GetAllocationsForPatient(string patientId) => _allocationRecords.Where(x => x.PatientId == patientId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEvents() => _operationalEventRecords;
+    public IReadOnlyList<OperationalBannerRecord> GetOperationalBanners() => _operationalBannerRecords;
+    public IReadOnlyList<OperationalTimelineEventRecord> GetOperationalTimelineEvents() => _operationalTimelineEventRecords;
+    public IReadOnlyList<OperationalEscalationRecord> GetOperationalEscalations() => _operationalEscalationRecords;
+    public IReadOnlyList<OperationalImpactRecord> GetOperationalImpacts() => _operationalImpactRecords;
+    public IReadOnlyList<OperationalEventRecord> GetActiveOperationalEvents() => _operationalEventRecords.Where(x => x.IsActive).ToList();
+    public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForFacility(string facilityId) => _operationalEventRecords.Where(x => x.FacilityId == facilityId).ToList();
+    public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForWard(string wardId) => _operationalEventRecords.Where(x => x.WardId == wardId).ToList();
     public IReadOnlyList<InformationBannerRecord> GetInformationBanners() => _informationBannerRecords;
     public IReadOnlyList<PatientAlertRecord> GetPatientAlerts() => _patientAlertRecords;
     public IReadOnlyList<PatientAlertRecord> GetPatientAlerts(string patientId) => _patientAlertRecords.Where(x => x.PatientId == patientId).ToList();
@@ -236,6 +247,51 @@ public sealed class PrototypeDataStore
         return true;
     }
 
+    public bool AddOperationalBanner(OperationalBannerRecord banner)
+    {
+        if (string.IsNullOrWhiteSpace(banner.Id) || _operationalBannerRecords.Any(x => x.Id == banner.Id)) return false;
+        _operationalBannerRecords.Add(banner);
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool UpdateOperationalBanner(OperationalBannerRecord banner)
+    {
+        var index = _operationalBannerRecords.FindIndex(x => x.Id == banner.Id);
+        if (index < 0) return false;
+        _operationalBannerRecords[index] = banner;
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool ResolveOperationalEvent(string eventId, string? notes = null)
+    {
+        if (string.IsNullOrWhiteSpace(eventId)) return false;
+        var index = _operationalEventRecords.FindIndex(x => x.Id == eventId);
+        if (index < 0) return false;
+        var current = _operationalEventRecords[index];
+        _operationalEventRecords[index] = current with { IsActive = false, EndsAtUtc = DateTime.UtcNow, Notes = notes ?? current.Notes };
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool EscalateOperationalEvent(string eventId, string escalationLevel, string escalatedBy, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(eventId) || string.IsNullOrWhiteSpace(escalationLevel)) return false;
+        if (!_operationalEventRecords.Any(x => x.Id == eventId)) return false;
+        _operationalEscalationRecords.Add(new OperationalEscalationRecord($"OES-{Guid.NewGuid():N}"[..12], eventId, escalationLevel, DateTime.UtcNow, escalatedBy, reason, false, null));
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool AddOperationalTimelineEntry(OperationalTimelineEventRecord timelineEvent)
+    {
+        if (string.IsNullOrWhiteSpace(timelineEvent.Id) || _operationalTimelineEventRecords.Any(x => x.Id == timelineEvent.Id)) return false;
+        _operationalTimelineEventRecords.Add(timelineEvent);
+        NotifyStateChanged();
+        return true;
+    }
+
     public void ResetToSeedData()
     {
         _hhsRecords = [..DemoDataSeed.HhsRecords];
@@ -257,6 +313,10 @@ public sealed class PrototypeDataStore
         _incomingPatientRecords = [..DemoDataSeed.IncomingPatients];
         _transferRequestRecords = [..DemoDataSeed.TransferRequests];
         _allocationRequestRecords = [..DemoDataSeed.AllocationRequests];
+        _operationalBannerRecords = [..DemoDataSeed.OperationalBanners];
+        _operationalTimelineEventRecords = [..DemoDataSeed.OperationalTimelineEvents];
+        _operationalEscalationRecords = [..DemoDataSeed.OperationalEscalations];
+        _operationalImpactRecords = [..DemoDataSeed.OperationalImpacts];
         NotifyStateChanged();
     }
 
