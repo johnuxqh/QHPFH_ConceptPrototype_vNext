@@ -94,3 +94,7 @@ P2.04 — Layout Variant Framework
 - Outcome: Layout Variant Framework created to centralize stacked, swappable, and compact operational layout behaviour without duplicating pages.
 - Proof-of-concept UI: Prototype Experience Bar now shows subtle layout interpretation badges, and the shell root receives reusable layout variant classes for future page-level adaptation.
 - Deferred UI wiring: Page panel systems, situational/insights swaps, compact card treatments, and table density changes will progressively consume the framework in later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.
