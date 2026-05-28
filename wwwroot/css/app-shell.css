@@ -828,3 +828,33 @@ button, input { font: inherit; }
     white-space: normal;
   }
 }
+
+.prototype-experience-bar__layout-badge {
+  border: 1px solid rgba(91, 111, 135, 0.26);
+  border-radius: 999px;
+  background: rgba(244, 247, 251, 0.76);
+  color: #48576b;
+  font-size: clamp(0.62rem, 0.64vw, 0.72rem);
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  white-space: nowrap;
+}
+.theme-dark .prototype-experience-bar__layout-badge {
+  border-color: #365172;
+  background: rgba(16, 26, 46, 0.72);
+  color: #c8d6e8;
+}
+.app-shell.layout-variant-stacked,
+.app-shell.layout-variant-swappable,
+.app-shell.layout-variant-compact {
+  --pfh-layout-variant-hook: active;
+}
+.app-shell.layout-variant-stacked { --pfh-layout-panel-treatment: stacked; }
+.app-shell.layout-variant-swappable { --pfh-layout-panel-treatment: swappable; }
+.app-shell.layout-variant-compact { --pfh-layout-panel-treatment: compact; }
+
+@media (max-width: 980px) {
+  .prototype-experience-bar__layout-badge {
+    white-space: normal;
+  }
+}

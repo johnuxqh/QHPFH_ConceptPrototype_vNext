@@ -1,6 +1,9 @@
+@using QHPFH_ConceptPrototype.Services.Layout
 @inject IJSRuntime JS
+@inject LayoutVariantEngine LayoutVariant
+@implements IDisposable
 
-<div class="app-shell app-shell--@_shellMode.ToStorage() @(_isConceptNavCompact ? "app-shell--concept-nav-compact" : null) @(_isDarkMode ? "theme-dark" : "theme-light")">
+<div class="@GetShellClasses()">
     @if (_shellMode == ShellMode.Std)
     {
         <section class="std-shell-host" @key="@("std-shell")">
@@ -30,6 +33,11 @@
     private bool _isConceptNavCompact;
 
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        LayoutVariant.OnChange += HandleLayoutVariantChanged;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -77,5 +85,31 @@
             ShellState.ConceptNavCompactStorageKey,
             _isConceptNavCompact.ToString().ToLowerInvariant()
         );
+    }
+
+    private string GetShellClasses()
+    {
+        var compactClass = _isConceptNavCompact ? "app-shell--concept-nav-compact" : null;
+        var themeClass = _isDarkMode ? "theme-dark" : "theme-light";
+
+        return string.Join(
+            " ",
+            new[]
+            {
+                "app-shell",
+                $"app-shell--{_shellMode.ToStorage()}",
+                compactClass,
+                themeClass,
+                LayoutVariant.GetLayoutVariantClass(),
+                LayoutVariant.GetPanelVariantClass(),
+                LayoutVariant.GetDensityClass()
+            }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
+
+    private void HandleLayoutVariantChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        LayoutVariant.OnChange -= HandleLayoutVariantChanged;
     }
 }
