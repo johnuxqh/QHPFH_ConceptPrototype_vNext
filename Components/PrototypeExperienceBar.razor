@@ -1,0 +1,103 @@
+@using QHPFH_ConceptPrototype.Models
+@using QHPFH_ConceptPrototype.Services
+@using QHPFH_ConceptPrototype.Services.Adaptive
+@inject PrototypeExperienceStateService ExperienceState
+@inject AdaptivePerspectiveEngine AdaptivePerspective
+@implements IDisposable
+
+<section class="prototype-experience-bar" aria-label="Prototype experience controls">
+    <div class="prototype-experience-bar__inner">
+        <div class="prototype-experience-bar__control">
+            <label for="prototype-access-view">Access View</label>
+            <select id="prototype-access-view" value="@Current.UserPerspectiveId" @onchange="OnAccessViewChanged">
+                @foreach (var option in ExperienceState.AccessViewOptions)
+                {
+                    <option value="@option.UserPerspectiveId">@option.Label</option>
+                }
+            </select>
+        </div>
+
+        <div class="prototype-experience-bar__control">
+            <label for="prototype-experience-mode">Experience Mode</label>
+            <select id="prototype-experience-mode" value="@Current.ExperienceMode" @onchange="OnExperienceModeChanged">
+                @foreach (var mode in ExperienceState.ExperienceModeOptions)
+                {
+                    <option value="@mode">@mode.ToDisplayName()</option>
+                }
+            </select>
+        </div>
+
+        <div class="prototype-experience-bar__control">
+            <label for="prototype-layout-variant">Layout Variant</label>
+            <select id="prototype-layout-variant" value="@Current.LayoutVariant" @onchange="OnLayoutVariantChanged">
+                @foreach (var variant in ExperienceState.LayoutVariantOptions)
+                {
+                    <option value="@variant">@variant.ToDisplayName()</option>
+                }
+            </select>
+        </div>
+
+        <div class="prototype-experience-bar__adaptive" aria-live="polite">
+            <span class="prototype-experience-bar__badge">@AdaptivePerspective.GetWorkflowEmphasis().ToDisplayName()</span>
+            <span class="prototype-experience-bar__scope" title="Adaptive filter visibility">
+                @if (AdaptivePerspective.ShouldShowHhsFilter())
+                {
+                    <span>HHS</span>
+                }
+                @if (AdaptivePerspective.ShouldShowFacilityFilter())
+                {
+                    <span>Facility</span>
+                }
+                @if (AdaptivePerspective.ShouldShowWardFilter())
+                {
+                    <span>Ward</span>
+                }
+            </span>
+        </div>
+
+        <div class="prototype-experience-bar__summary" aria-live="polite">
+            <span class="prototype-experience-bar__summary-label">Context</span>
+            <span class="prototype-experience-bar__summary-value">@Current.SummaryText</span>
+        </div>
+    </div>
+</section>
+
+@code {
+    private PrototypeExperienceState Current => ExperienceState.Current;
+
+    protected override void OnInitialized()
+    {
+        AdaptivePerspective.OnChange += HandleExperienceStateChanged;
+    }
+
+    private void OnAccessViewChanged(ChangeEventArgs args)
+    {
+        if (args.Value is string userPerspectiveId)
+        {
+            ExperienceState.SetAccessView(userPerspectiveId);
+        }
+    }
+
+    private void OnExperienceModeChanged(ChangeEventArgs args)
+    {
+        if (Enum.TryParse<PrototypeExperienceMode>(args.Value?.ToString(), out var mode))
+        {
+            ExperienceState.SetExperienceMode(mode);
+        }
+    }
+
+    private void OnLayoutVariantChanged(ChangeEventArgs args)
+    {
+        if (Enum.TryParse<PrototypeLayoutVariant>(args.Value?.ToString(), out var variant))
+        {
+            ExperienceState.SetLayoutVariant(variant);
+        }
+    }
+
+    private void HandleExperienceStateChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        AdaptivePerspective.OnChange -= HandleExperienceStateChanged;
+    }
+}
