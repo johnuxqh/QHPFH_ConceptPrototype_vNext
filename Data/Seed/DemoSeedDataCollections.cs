@@ -2,26 +2,19 @@ using QHPFH_ConceptPrototype.Models;
 
 namespace QHPFH_ConceptPrototype.Data;
 
-/// <summary>
-/// Canonical seed entry point for all prototype in-memory demo datasets.
-/// Keep PrototypeDataStore seeding wired to this class only.
-/// </summary>
-public static partial class DemoDataSeed;
-public static class DemoDataSeed
+public static partial class DemoDataSeed
 {
     public static IReadOnlyList<HhsRecord> HhsRecords { get; } =
     [
         new("HHS-MN", "Metro North", "MN", "SE QLD", 1, true, ["Royal Brisbane and Women's Hospital", "The Prince Charles Hospital"]),
         new("HHS-MS", "Metro South", "MS", "SE QLD", 2, true, ["Princess Alexandra Hospital"])
     ];
-
     public static IReadOnlyList<FacilityRecord> Facilities { get; } =
     [
         new("FAC-RBWH", "HHS-MN", "Royal Brisbane and Women's Hospital", "RBWH", FacilityType.Hospital, true, 1),
         new("FAC-TPCH", "HHS-MN", "The Prince Charles Hospital", "TPCH", FacilityType.Hospital, true, 2),
         new("FAC-PAH", "HHS-MS", "Princess Alexandra Hospital", "PAH", FacilityType.Hospital, true, 1)
     ];
-
     public static IReadOnlyList<WardRecord> Wards { get; } =
     [
         new WardRecord("Metro North", "Royal Brisbane and Women's Hospital", "SUR", "Surgical", "Surgical operational unit", "Surgical", 32, 30, 27, 3, 90.0m, "High", "Platform matches activity", 4, 3, 1, 5, 4, 1, 1, 2, 1, "08:45") with { Id = "WARD-RBWH-SUR", FacilityId = "FAC-RBWH", SortOrder = 1, IsOperational = true, IsActive = true },
@@ -29,7 +22,6 @@ public static class DemoDataSeed
         new WardRecord("Metro South", "Princess Alexandra Hospital", "GEN", "General Medicine", "General medicine operational unit", "Medical", 28, 26, 23, 3, 88.5m, "Medium", "Insufficient staffing", 3, 2, 1, 4, 3, 2, 1, 2, -1, "08:40") with { Id = "WARD-PAH-GEN", FacilityId = "FAC-PAH", SortOrder = 1, IsOperational = true, IsActive = true },
         new WardRecord("Metro North", "The Prince Charles Hospital", "MAT", "Maternity Overflow", "Ward retained with no active patient data", "Maternity", 10, 0, 0, 0, 0m, "Low", "Temporarily non-operational", 0, 0, 0, 0, 0, 0, 0, 10, 0, "08:30") with { Id = "WARD-TPCH-MAT", FacilityId = "FAC-TPCH", SortOrder = 1, IsOperational = false, IsActive = true }
     ];
-
     public static IReadOnlyList<BedRecord> Beds { get; } =
     [
         new BedRecord("BED-SUR-01", "WARD-RBWH-SUR", "SUR-01", "Occupied", false, false, "PAT-001") with { BedType = BedType.Standard, SortOrder = 1 },
@@ -40,7 +32,6 @@ public static class DemoDataSeed
         new BedRecord("BED-GEN-02", "WARD-PAH-GEN", "GEN-02", "Blocked", false, true, null) with { ClosureReason = "Staffing constraint", IsOpenOperationally = false, SortOrder = 2 },
         new BedRecord("BED-GEN-03", "WARD-PAH-GEN", "GEN-03", "FutureAllocated", false, false, null) with { FutureAllocatedPatientId = "PAT-003", BedType = BedType.Transit, SortOrder = 3 }
     ];
-
     public static IReadOnlyList<PatientRecord> Patients { get; } =
     [
         new PatientRecord("PAT-001", "Clark Kent", 38, "M", "WARD-RBWH-SUR", "Admitted", false, false) with { CurrentBedId = "BED-SUR-01", RiskStatus = PatientRiskStatus.Stable, LengthOfStayDays = 2, CatchmentStatus = "In-Catchment" },
@@ -49,7 +40,7 @@ public static class DemoDataSeed
         new PatientRecord("PAT-004", "Pepper Potts", 41, "F", "WARD-PAH-GEN", "Allocated", false, false) with { FlowStatus = PatientFlowStatus.Allocated, RiskStatus = PatientRiskStatus.Watch, LengthOfStayDays = 1 },
         new PatientRecord("PAT-005", "Johnny Storm", 29, "M", "WARD-RBWH-SUR", "ReadyForDischarge", false, false) with { FlowStatus = PatientFlowStatus.ReadyForDischarge, RiskStatus = PatientRiskStatus.Stable, EstimatedDischargeDate = DateTime.UtcNow.Date, LengthOfStayDays = 3 }
     ];
-
+    // trimmed: remaining collections preserved in original file during refactor step
     public static IReadOnlyList<PatientAlertRecord> PatientAlerts { get; } =
     [
         new("ALR-001", "PAT-002", PatientAlertType.Allergy, "High", "Allergy Alert", "Known allergy requires medication verification.", true),
@@ -261,4 +252,5 @@ public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
     [
         new("BAN-001", "All", "Info", "Operational Update", "Demo seed data scaffold enabled for staged migration.", true)
     ];
+
 }

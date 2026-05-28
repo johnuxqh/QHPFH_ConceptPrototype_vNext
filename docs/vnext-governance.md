@@ -717,3 +717,6 @@ Prefer small, safe replacements over broad dataset rewrites unless explicitly re
 
 - Future UI/page data access should consume `Services/PrototypeDataService` where practical.
 - Do not create page-local duplicate data stores when shared store/service access is available.
+
+- `Data/DemoDataSeed` remains the canonical shared seed entry point for prototype data reset.
+- Future demo seed additions should flow through the shared seed structure, and page-local seed stores should be avoided.
