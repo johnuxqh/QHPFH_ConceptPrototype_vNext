@@ -1,8 +1,10 @@
 @using QHPFH_ConceptPrototype.Models
 @using QHPFH_ConceptPrototype.Services
 @using QHPFH_ConceptPrototype.Services.Adaptive
+@using QHPFH_ConceptPrototype.Services.Experience
 @inject PrototypeExperienceStateService ExperienceState
 @inject AdaptivePerspectiveEngine AdaptivePerspective
+@inject ExperienceModeEngine ExperienceMode
 @implements IDisposable
 
 <section class="prototype-experience-bar" aria-label="Prototype experience controls">
@@ -38,7 +40,9 @@
         </div>
 
         <div class="prototype-experience-bar__adaptive" aria-live="polite">
+            <span class="prototype-experience-bar__mode-badge" title="@ExperienceMode.GetModeSummary()">@ExperienceMode.GetModeBadgeLabel()</span>
             <span class="prototype-experience-bar__badge">@AdaptivePerspective.GetWorkflowEmphasis().ToDisplayName()</span>
+            <span class="prototype-experience-bar__mode-summary">@ExperienceMode.GetOperationalDensity()</span>
             <span class="prototype-experience-bar__scope" title="Adaptive filter visibility">
                 @if (AdaptivePerspective.ShouldShowHhsFilter())
                 {
@@ -67,6 +71,7 @@
 
     protected override void OnInitialized()
     {
+        ExperienceMode.OnChange += HandleExperienceStateChanged;
         AdaptivePerspective.OnChange += HandleExperienceStateChanged;
     }
 
@@ -98,6 +103,7 @@
 
     public void Dispose()
     {
+        ExperienceMode.OnChange -= HandleExperienceStateChanged;
         AdaptivePerspective.OnChange -= HandleExperienceStateChanged;
     }
 }
