@@ -10,7 +10,7 @@ This roadmap tracks staged Codex implementation prompts for the vNext prototype.
 | --- | --- | --- | --- | --- |
 | P0 — Governance + Safety | P0.01, P0.02, P0.03, P0.04, P0.05, P0.06, P0.07, P0.08, P0.09, P0.10 | Complete | None | Governance baseline established before architecture work. |
 | P1 — Data + State Foundation | P1.01, P1.02, P1.03, P1.04, P1.05, P1.06, P1.07, P1.08, P1.09, P1.10, P1.11, P1.12, P1.13, P1.14 | Complete | P0 complete | Shared model/data scaffold, central in-memory store, and session writeback foundation are in place; shared HHS/facility/ward/bed model layer refined for future filters, access scopes, KPI calculations, and bed workflows; shared patient workflow models added for future patient slideouts, ward workflows, delayed discharge, and allocation workflows; shared allocation models added for future incoming streams, transfer coordination, future bed allocation, transit beds, and cross-page allocation workflows; shared operational event models added for future operational awareness, escalation, orchestration, downtime, and coordination workflows; shared activity feed models added for future operational audit trails, patient movement history, bed status changes, allocation activity, and escalation tracking; shared notification models added for future notification centre, toaster notifications, role-aware alerts, acknowledgement states, and cross-workspace messages; shared user perspective models added for adaptive operational experiences, access-aware workflows, operational emphasis switching, and future perspective-driven UI adaptation; shared scenario simulation models added for future what-if planning, operational modelling, capacity/demand scenarios, and orchestration workflows; shared mock API/data service layer created to wrap PrototypeDataStore and provide future page/component query and mutation access; shared demo data seeder refined for maintainable seeded hierarchy, patient, allocation, operational, notification, perspective, and scenario data; KPI calculation engine foundation added for centralized derived operational snapshots and rollups; UI wiring deferred to later P1 prompts. |
-| P2 — Shell + Platform Framework | Pending | Pending | P1 | Keep routing/base-path stable while aligning shell architecture. |
+| P2 — Shell + Platform Framework | P2.01 | In Progress | P1 | P2.01 complete: Prototype Experience Bar created as the global workshop control layer for Access View, Experience Mode, and Layout Variant selection. Keep routing/base-path stable while aligning shell architecture. |
 | P3 — Filter + Access Architecture | Pending | Pending | P1, P2 | Add shared filter state and access perspectives incrementally. |
 | P4 — Design System + Visual Alignment | Pending | Pending | P2 | No broad redesign; align visual patterns through incremental updates only. |
 | P5 — Slideout + Overlay Architecture | Pending | Pending | P2, P3 | Preserve existing overlays while moving to shared architecture. |
@@ -67,3 +67,9 @@ P1.14 — KPI calculation engine foundation
 - Status: Complete
 - Outcome: Centralized `KpiCalculationService` and typed KPI snapshots for statewide/HHS/facility/ward/bed/allocation/delayed discharge/pressure/workflow calculations.
 - Deferred UI wiring: KPI views will migrate to service-driven snapshots in later prompts without route/layout rewrites.
+
+
+P2.01 — Prototype Experience Bar
+- Status: Complete
+- Outcome: Prototype Experience Bar created as the global workshop control layer for Access View, Experience Mode, and Layout Variant selection.
+- Deferred UI wiring: Page content adaptation to selected access view, experience mode, and layout variant will follow in later P2/P3 prompts without creating duplicate pages.
