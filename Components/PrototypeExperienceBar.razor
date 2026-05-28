@@ -72,6 +72,7 @@
     protected override void OnInitialized()
     {
         ExperienceMode.OnChange += HandleExperienceStateChanged;
+        AdaptivePerspective.OnChange += HandleExperienceStateChanged;
     }
 
     private void OnAccessViewChanged(ChangeEventArgs args)
@@ -103,5 +104,6 @@
     public void Dispose()
     {
         ExperienceMode.OnChange -= HandleExperienceStateChanged;
+        AdaptivePerspective.OnChange -= HandleExperienceStateChanged;
     }
 }
