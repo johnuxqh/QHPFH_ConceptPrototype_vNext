@@ -178,6 +178,18 @@ public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
         new("ACT-007", "Operational event escalated", "Capacity event escalated to Tier 3 coordination level.", ActivityFeedCategory.OperationalEvent, ActivityFeedSeverity.Critical, ActivityFeedScope.OperationalEvent, DateTime.UtcNow.AddMinutes(-10), "Jean Grey", null, "FAC-PAH", null, null, null, null, "EVT-002", "OperationalEscalationRecord", "OES-001", false, true, null)
     ];
 
+    
+
+    public static IReadOnlyList<NotificationRecord> Notifications { get; } =
+    [
+        new("NTF-001", "System update", "PrototypeDataStore seed refreshed for session.", NotificationType.System, NotificationSeverity.Info, NotificationStatus.Read, NotificationAudienceScope.All, DateTime.UtcNow.AddHours(-8), null, DateTime.UtcNow.AddHours(-7), null, false, null, null, null, null, null, null, null, null, "ACT-001", null, null, "OpsHub", "Barbara Gordon", false, true),
+        new("NTF-002", "Capacity escalation", "Facility capacity moved to Tier 3.", NotificationType.Operational, NotificationSeverity.Critical, NotificationStatus.Unread, NotificationAudienceScope.Facility, DateTime.UtcNow.AddHours(-2), null, null, null, true, null, null, "FAC-PAH", null, null, null, null, "EVT-002", "ACT-007", "Open event", "/allocation-centre", "OpsHub", "Peggy Carter", true, false),
+        new("NTF-003", "Allocation update", "New IHT request awaiting review.", NotificationType.Allocation, NotificationSeverity.Warning, NotificationStatus.Unread, NotificationAudienceScope.Facility, DateTime.UtcNow.AddMinutes(-70), null, null, null, false, null, null, "FAC-RBWH", "WARD-RBWH-SUR", "PAT-004", null, "ALL-001", null, "ACT-005", "Review", "/allocation-centre", "OpsHub", "Natasha Romanoff", false, true),
+        new("NTF-004", "Discharge reminder", "Delayed discharge patient has pending external package.", NotificationType.Discharge, NotificationSeverity.Warning, NotificationStatus.Unread, NotificationAudienceScope.Ward, DateTime.UtcNow.AddMinutes(-40), null, null, null, false, null, null, "FAC-PAH", "WARD-PAH-GEN", "PAT-003", null, null, null, "ACT-004", "View patient", "/ward-operations", "OpsHub", "Stephen Strange", false, true),
+        new("NTF-005", "Downtime report", "Downtime pack generated for bed tracking outage.", NotificationType.Downtime, NotificationSeverity.Critical, NotificationStatus.Acknowledged, NotificationAudienceScope.Facility, DateTime.UtcNow.AddMinutes(-30), DateTime.UtcNow.AddHours(4), DateTime.UtcNow.AddMinutes(-25), DateTime.UtcNow.AddMinutes(-20), true, null, null, "FAC-RBWH", null, null, null, null, "EVT-004", "ACT-006", "Open downtime", "/bed-management", "JARVIS Ops", "Maria Hill", true, false),
+        new("NTF-006", "Ward staffing impact", "Ward staffing impact added for evening shift.", NotificationType.Operational, NotificationSeverity.Warning, NotificationStatus.Unread, NotificationAudienceScope.Ward, DateTime.UtcNow.AddMinutes(-15), null, null, null, false, null, null, "FAC-PAH", "WARD-PAH-GEN", null, null, null, "EVT-005", null, null, null, "OpsHub", "Nick Fury", false, true)
+    ];
+
     public static IReadOnlyList<InformationBannerRecord> InformationBanners { get; } =
     [
         new("BAN-001", "All", "Info", "Operational Update", "Demo seed data scaffold enabled for staged migration.", true)

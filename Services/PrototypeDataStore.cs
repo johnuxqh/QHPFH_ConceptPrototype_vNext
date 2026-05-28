@@ -29,6 +29,7 @@ public sealed class PrototypeDataStore
     private List<OperationalEscalationRecord> _operationalEscalationRecords = [];
     private List<OperationalImpactRecord> _operationalImpactRecords = [];
     private List<ActivityFeedItemRecord> _activityFeedItems = [];
+    private List<NotificationRecord> _notifications = [];
 
     public event Action? OnChange;
 
@@ -58,6 +59,12 @@ public sealed class PrototypeDataStore
     public IReadOnlyList<ActivityFeedItemRecord> GetActivityFeedForWard(string wardId) => _activityFeedItems.Where(x => x.WardId == wardId).ToList();
     public IReadOnlyList<ActivityFeedItemRecord> GetActivityFeedForPatient(string patientId) => _activityFeedItems.Where(x => x.PatientId == patientId).ToList();
     public IReadOnlyList<ActivityFeedItemRecord> GetActivityFeedForAllocation(string allocationId) => _activityFeedItems.Where(x => x.AllocationId == allocationId).ToList();
+    public IReadOnlyList<NotificationRecord> GetNotifications() => _notifications;
+    public IReadOnlyList<NotificationRecord> GetUnreadNotifications() => _notifications.Where(x => x.Status == NotificationStatus.Unread).ToList();
+    public IReadOnlyList<NotificationRecord> GetActiveNotifications() => _notifications.Where(x => x.Status is NotificationStatus.Unread or NotificationStatus.Read or NotificationStatus.Acknowledged).ToList();
+    public IReadOnlyList<NotificationRecord> GetNotificationsForFacility(string facilityId) => _notifications.Where(x => x.FacilityId == facilityId).ToList();
+    public IReadOnlyList<NotificationRecord> GetNotificationsForWard(string wardId) => _notifications.Where(x => x.WardId == wardId).ToList();
+    public IReadOnlyList<NotificationRecord> GetNotificationsForPatient(string patientId) => _notifications.Where(x => x.PatientId == patientId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetActiveOperationalEvents() => _operationalEventRecords.Where(x => x.IsActive).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForFacility(string facilityId) => _operationalEventRecords.Where(x => x.FacilityId == facilityId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForWard(string wardId) => _operationalEventRecords.Where(x => x.WardId == wardId).ToList();
@@ -72,6 +79,50 @@ public sealed class PrototypeDataStore
     public IReadOnlyList<PatientNoteRecord> GetPatientNotes() => _patientNoteRecords;
     public IReadOnlyList<PatientDischargeRecord> GetPatientDischarges() => _patientDischargeRecords;
     public PatientDischargeRecord? GetPatientDischarge(string patientId) => _patientDischargeRecords.FirstOrDefault(x => x.PatientId == patientId);
+
+    public bool AddNotification(NotificationRecord notification)
+    {
+        if (string.IsNullOrWhiteSpace(notification.Id) || _notifications.Any(x => x.Id == notification.Id)) return false;
+        _notifications.Add(notification);
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool MarkNotificationRead(string notificationId)
+    {
+        if (string.IsNullOrWhiteSpace(notificationId)) return false;
+        var index = _notifications.FindIndex(x => x.Id == notificationId);
+        if (index < 0) return false;
+        var current = _notifications[index];
+        _notifications[index] = current with { Status = NotificationStatus.Read, ReadAtUtc = DateTime.UtcNow };
+        AddSystemActivity("Notification read", $"Notification {notificationId} marked read.", ActivityFeedCategory.Notification, ActivityFeedSeverity.Info, ActivityFeedScope.Facility, "System");
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool AcknowledgeNotification(string notificationId)
+    {
+        if (string.IsNullOrWhiteSpace(notificationId)) return false;
+        var index = _notifications.FindIndex(x => x.Id == notificationId);
+        if (index < 0) return false;
+        var current = _notifications[index];
+        _notifications[index] = current with { Status = NotificationStatus.Acknowledged, AcknowledgedAtUtc = DateTime.UtcNow };
+        AddSystemActivity("Notification acknowledged", $"Notification {notificationId} acknowledged.", ActivityFeedCategory.Notification, ActivityFeedSeverity.Success, ActivityFeedScope.Facility, "System");
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool DismissNotification(string notificationId)
+    {
+        if (string.IsNullOrWhiteSpace(notificationId)) return false;
+        var index = _notifications.FindIndex(x => x.Id == notificationId);
+        if (index < 0) return false;
+        var current = _notifications[index];
+        _notifications[index] = current with { Status = NotificationStatus.Dismissed };
+        AddSystemActivity("Notification dismissed", $"Notification {notificationId} dismissed.", ActivityFeedCategory.Notification, ActivityFeedSeverity.Info, ActivityFeedScope.Facility, "System");
+        NotifyStateChanged();
+        return true;
+    }
 
     public bool AddActivityFeedItem(ActivityFeedItemRecord item)
     {
@@ -342,6 +393,7 @@ public sealed class PrototypeDataStore
         _operationalEscalationRecords = [..DemoDataSeed.OperationalEscalations];
         _operationalImpactRecords = [..DemoDataSeed.OperationalImpacts];
         _activityFeedItems = [..DemoDataSeed.ActivityFeedItems];
+        _notifications = [..DemoDataSeed.Notifications];
         NotifyStateChanged();
     }
 
