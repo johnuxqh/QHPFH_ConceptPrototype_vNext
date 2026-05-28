@@ -1,6 +1,8 @@
 @using QHPFH_ConceptPrototype.Models
 @using QHPFH_ConceptPrototype.Services
+@using QHPFH_ConceptPrototype.Services.Adaptive
 @inject PrototypeExperienceStateService ExperienceState
+@inject AdaptivePerspectiveEngine AdaptivePerspective
 @implements IDisposable
 
 <section class="prototype-experience-bar" aria-label="Prototype experience controls">
@@ -35,6 +37,24 @@
             </select>
         </div>
 
+        <div class="prototype-experience-bar__adaptive" aria-live="polite">
+            <span class="prototype-experience-bar__badge">@AdaptivePerspective.GetWorkflowEmphasis().ToDisplayName()</span>
+            <span class="prototype-experience-bar__scope" title="Adaptive filter visibility">
+                @if (AdaptivePerspective.ShouldShowHhsFilter())
+                {
+                    <span>HHS</span>
+                }
+                @if (AdaptivePerspective.ShouldShowFacilityFilter())
+                {
+                    <span>Facility</span>
+                }
+                @if (AdaptivePerspective.ShouldShowWardFilter())
+                {
+                    <span>Ward</span>
+                }
+            </span>
+        </div>
+
         <div class="prototype-experience-bar__summary" aria-live="polite">
             <span class="prototype-experience-bar__summary-label">Context</span>
             <span class="prototype-experience-bar__summary-value">@Current.SummaryText</span>
@@ -47,7 +67,7 @@
 
     protected override void OnInitialized()
     {
-        ExperienceState.OnChange += HandleExperienceStateChanged;
+        AdaptivePerspective.OnChange += HandleExperienceStateChanged;
     }
 
     private void OnAccessViewChanged(ChangeEventArgs args)
@@ -78,6 +98,6 @@
 
     public void Dispose()
     {
-        ExperienceState.OnChange -= HandleExperienceStateChanged;
+        AdaptivePerspective.OnChange -= HandleExperienceStateChanged;
     }
 }
