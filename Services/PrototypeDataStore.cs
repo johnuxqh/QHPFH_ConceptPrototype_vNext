@@ -32,6 +32,12 @@ public sealed class PrototypeDataStore
     private List<NotificationRecord> _notifications = [];
     private List<UserPerspectiveRecord> _userPerspectives = [];
     private UserPerspectiveRecord? _currentPerspective;
+    private List<ScenarioRecord> _scenarios = [];
+    private List<ScenarioInputRecord> _scenarioInputs = [];
+    private List<ScenarioAssumptionRecord> _scenarioAssumptions = [];
+    private List<ScenarioResultRecord> _scenarioResults = [];
+    private List<ScenarioImpactRecord> _scenarioImpacts = [];
+    private List<ScenarioActionRecord> _scenarioActions = [];
 
     public event Action? OnChange;
     public event Action? OnPerspectiveChanged;
@@ -71,6 +77,15 @@ public sealed class PrototypeDataStore
     public IReadOnlyList<UserPerspectiveRecord> GetUserPerspectives() => _userPerspectives;
     public UserPerspectiveRecord? GetCurrentPerspective() => _currentPerspective;
     public UserAccessScope GetCurrentAccessScope() => _currentPerspective?.AccessScope ?? UserAccessScope.Statewide;
+    public IReadOnlyList<ScenarioRecord> GetScenarios() => _scenarios;
+    public ScenarioRecord? GetScenarioById(string scenarioId) => _scenarios.FirstOrDefault(x => x.Id == scenarioId);
+    public IReadOnlyList<ScenarioInputRecord> GetScenarioInputs() => _scenarioInputs;
+    public IReadOnlyList<ScenarioAssumptionRecord> GetScenarioAssumptions() => _scenarioAssumptions;
+    public IReadOnlyList<ScenarioResultRecord> GetScenarioResults() => _scenarioResults;
+    public IReadOnlyList<ScenarioResultRecord> GetScenarioResults(string scenarioId) => _scenarioResults.Where(x => x.ScenarioId == scenarioId).ToList();
+    public IReadOnlyList<ScenarioImpactRecord> GetScenarioImpacts() => _scenarioImpacts;
+    public IReadOnlyList<ScenarioActionRecord> GetScenarioActions() => _scenarioActions;
+    public IReadOnlyList<ScenarioActionRecord> GetScenarioActions(string scenarioId) => _scenarioActions.Where(x => x.ScenarioId == scenarioId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetActiveOperationalEvents() => _operationalEventRecords.Where(x => x.IsActive).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForFacility(string facilityId) => _operationalEventRecords.Where(x => x.FacilityId == facilityId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForWard(string wardId) => _operationalEventRecords.Where(x => x.WardId == wardId).ToList();
@@ -100,8 +115,48 @@ public sealed class PrototypeDataStore
     public void ResetPerspective()
     {
         _currentPerspective = _userPerspectives.FirstOrDefault();
+        _scenarios = [..DemoDataSeed.Scenarios];
+        _scenarioInputs = [..DemoDataSeed.ScenarioInputs];
+        _scenarioAssumptions = [..DemoDataSeed.ScenarioAssumptions];
+        _scenarioResults = [..DemoDataSeed.ScenarioResults];
+        _scenarioImpacts = [..DemoDataSeed.ScenarioImpacts];
+        _scenarioActions = [..DemoDataSeed.ScenarioActions];
         OnPerspectiveChanged?.Invoke();
         NotifyStateChanged();
+    }
+
+    public bool AddScenario(ScenarioRecord scenario)
+    {
+        if (string.IsNullOrWhiteSpace(scenario.Id) || _scenarios.Any(x => x.Id == scenario.Id)) return false;
+        _scenarios.Add(scenario);
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool UpdateScenarioStatus(string scenarioId, ScenarioStatus status)
+    {
+        if (string.IsNullOrWhiteSpace(scenarioId)) return false;
+        var index = _scenarios.FindIndex(x => x.Id == scenarioId);
+        if (index < 0) return false;
+        var current = _scenarios[index];
+        _scenarios[index] = current with { Status = status, IsActive = status != ScenarioStatus.Archived };
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool SelectScenarioAction(string actionId, bool isSelected)
+    {
+        if (string.IsNullOrWhiteSpace(actionId)) return false;
+        var index = _scenarioActions.FindIndex(x => x.Id == actionId);
+        if (index < 0) return false;
+        _scenarioActions[index] = _scenarioActions[index] with { IsSelected = isSelected };
+        NotifyStateChanged();
+        return true;
+    }
+
+    public bool ArchiveScenario(string scenarioId)
+    {
+        return UpdateScenarioStatus(scenarioId, ScenarioStatus.Archived);
     }
 
     public bool AddNotification(NotificationRecord notification)
@@ -420,6 +475,12 @@ public sealed class PrototypeDataStore
         _notifications = [..DemoDataSeed.Notifications];
         _userPerspectives = [..DemoDataSeed.UserPerspectives];
         _currentPerspective = _userPerspectives.FirstOrDefault();
+        _scenarios = [..DemoDataSeed.Scenarios];
+        _scenarioInputs = [..DemoDataSeed.ScenarioInputs];
+        _scenarioAssumptions = [..DemoDataSeed.ScenarioAssumptions];
+        _scenarioResults = [..DemoDataSeed.ScenarioResults];
+        _scenarioImpacts = [..DemoDataSeed.ScenarioImpacts];
+        _scenarioActions = [..DemoDataSeed.ScenarioActions];
         OnPerspectiveChanged?.Invoke();
         NotifyStateChanged();
     }

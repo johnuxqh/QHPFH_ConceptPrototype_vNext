@@ -202,6 +202,56 @@ public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
         new("USP-DDC-001", "Delayed Discharge Coordinator", "Stephen Strange", UserPerspectiveType.DelayedDischargeCoordinator, UserAccessScope.Facility, UserWorkflowFocus.Reporting, UserOperationalMode.HybridOperational, "FAC-PAH", null, ["HHS-MS"], ["FAC-PAH"], ["WARD-PAH-GEN"], false, false, true, true, false, false, true, true, true, false, "Balanced", "DelayedDischarge", "Stephen Strange", null, "#4F6D3A")
     ];
 
+    
+
+    public static IReadOnlyList<ScenarioRecord> Scenarios { get; } =
+    [
+        new("SCN-001", "ED Demand Surge", "Model ED presentations increasing by 15% over next shift.", ScenarioType.Demand, ScenarioStatus.Active, DateTime.UtcNow.AddHours(-5), "Reed Richards", "HHS-MN", "FAC-RBWH", null, "Next 12 hours", true, true, null),
+        new("SCN-002", "Bed Closure Staffing", "Model closure of 10 beds due to staffing constraints.", ScenarioType.Staffing, ScenarioStatus.Reviewed, DateTime.UtcNow.AddHours(-4), "Barbara Gordon", "HHS-MS", "FAC-PAH", null, "Next 24 hours", true, false, null),
+        new("SCN-003", "Delayed Discharge Improvement", "Model expedited discharge barrier review reducing delayed discharges.", ScenarioType.Discharge, ScenarioStatus.Active, DateTime.UtcNow.AddHours(-3), "Maria Hill", "HHS-MS", "FAC-PAH", "WARD-PAH-GEN", "Next 24 hours", true, false, null),
+        new("SCN-004", "Transit Bed Expansion", "Model opening 4 transit beds for access block mitigation.", ScenarioType.Capacity, ScenarioStatus.Draft, DateTime.UtcNow.AddHours(-2), "Peggy Carter", "HHS-MN", "FAC-RBWH", null, "Tomorrow AM", true, false, null)
+    ];
+
+    public static IReadOnlyList<ScenarioInputRecord> ScenarioInputs { get; } =
+    [
+        new("SCI-001", "SCN-001", "Demand", "ED presentations", 120, 138, "patients/day", "Facility", null),
+        new("SCI-002", "SCN-002", "Capacity", "Open beds", 56, 46, "beds", "Facility", "Staffing reduction"),
+        new("SCI-003", "SCN-003", "Discharge", "Delayed discharge patients", 18, 13, "patients", "Ward", null),
+        new("SCI-004", "SCN-004", "Capacity", "Transit beds", 2, 6, "beds", "Facility", null)
+    ];
+
+    public static IReadOnlyList<ScenarioAssumptionRecord> ScenarioAssumptions { get; } =
+    [
+        new("SCA-001", "SCN-001", "Ambulance surge sustained", "Assumes sustained ambulance arrivals over 12 hours.", ScenarioConfidence.Medium, "Ops workshop"),
+        new("SCA-002", "SCN-002", "Agency coverage unavailable", "Assumes no backfill for two RN vacancies.", ScenarioConfidence.High, "Roster planning"),
+        new("SCA-003", "SCN-003", "Community package turnaround", "Assumes package approvals improve by one day.", ScenarioConfidence.Medium, "Discharge team"),
+        new("SCA-004", "SCN-004", "Transit conversion feasible", "Assumes two treatment spaces can convert to transit beds.", ScenarioConfidence.Low, "Site walkthrough")
+    ];
+
+    public static IReadOnlyList<ScenarioResultRecord> ScenarioResults { get; } =
+    [
+        new("SCR-001", "SCN-001", "ED holds", 18, 31, 13, "patients", NotificationSeverity.Critical, "ED holds increase materially under surge."),
+        new("SCR-002", "SCN-002", "Available beds", 12, 4, -8, "beds", NotificationSeverity.Warning, "Capacity cushion narrows significantly."),
+        new("SCR-003", "SCN-003", "Delayed discharge pressure", 18, 13, -5, "patients", NotificationSeverity.Success, "Pressure improves with barrier reduction."),
+        new("SCR-004", "SCN-004", "Occupancy", 94, 90, -4, "%", NotificationSeverity.Info, "Transit expansion eases occupancy pressure.")
+    ];
+
+    public static IReadOnlyList<ScenarioImpactRecord> ScenarioImpacts { get; } =
+    [
+        new("SCP-001", "SCN-001", ScenarioImpactType.DemandIncrease, OperationalEventScope.Facility, null, "FAC-RBWH", null, NotificationSeverity.Critical, "ED access block risk", "Increased ED queue and admission delays.", DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(12)),
+        new("SCP-002", "SCN-002", ScenarioImpactType.BedClosure, OperationalEventScope.Facility, null, "FAC-PAH", null, NotificationSeverity.Warning, "Ward closure impact", "Ten beds unavailable due to staffing.", DateTime.UtcNow.AddHours(2), DateTime.UtcNow.AddHours(24)),
+        new("SCP-003", "SCN-003", ScenarioImpactType.Improvement, OperationalEventScope.Ward, null, "FAC-PAH", "WARD-PAH-GEN", NotificationSeverity.Success, "Discharge improvement", "Reduced delayed discharge cohort.", DateTime.UtcNow.AddHours(4), DateTime.UtcNow.AddHours(24)),
+        new("SCP-004", "SCN-004", ScenarioImpactType.CapacityRisk, OperationalEventScope.Facility, null, "FAC-RBWH", null, NotificationSeverity.Info, "Transit bed mitigation", "Improved short-stay throughput.", DateTime.UtcNow.AddHours(8), DateTime.UtcNow.AddHours(24))
+    ];
+
+    public static IReadOnlyList<ScenarioActionRecord> ScenarioActions { get; } =
+    [
+        new("SCT-001", "SCN-001", "Activate Tier 3 escalation", "Activate command coordination for ED surge.", "Escalation", AllocationPriority.Critical, "FAC-RBWH", null, true, true, null),
+        new("SCT-002", "SCN-002", "Reduce elective intake", "Temporarily reduce electives while staffing constrained.", "FlowControl", AllocationPriority.High, "FAC-PAH", null, true, false, null),
+        new("SCT-003", "SCN-003", "Prioritise barrier review", "Expedite social/discharge barrier huddles.", "Discharge", AllocationPriority.Medium, "FAC-PAH", "WARD-PAH-GEN", true, true, null),
+        new("SCT-004", "SCN-004", "Open transit beds", "Convert nominated spaces to transit beds.", "Capacity", AllocationPriority.High, "FAC-RBWH", null, true, false, null)
+    ];
+
     public static IReadOnlyList<InformationBannerRecord> InformationBanners { get; } =
     [
         new("BAN-001", "All", "Info", "Operational Update", "Demo seed data scaffold enabled for staged migration.", true)
