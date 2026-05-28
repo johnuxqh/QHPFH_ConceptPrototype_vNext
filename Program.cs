@@ -12,5 +12,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddMudServices();
 builder.Services.AddScoped<QHPFH_ConceptPrototype.Components.Shells.NavigationState>();
 builder.Services.AddScoped<PrototypeDataStore>();
+builder.Services.AddScoped<PrototypeDataService>();
 
 await builder.Build().RunAsync();

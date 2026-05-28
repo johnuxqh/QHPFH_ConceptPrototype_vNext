@@ -714,3 +714,6 @@ Prefer small, safe replacements over broad dataset rewrites unless explicitly re
 - Future UI actions should mutate shared state through PrototypeDataStore methods rather than page-local data copies.
 
 - Allocation workflow models in this prototype support operational simulation only and do not represent production PAS/HBCIS writeback.
+
+- Future UI/page data access should consume `Services/PrototypeDataService` where practical.
+- Do not create page-local duplicate data stores when shared store/service access is available.
