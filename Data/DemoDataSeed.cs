@@ -190,6 +190,18 @@ public static IReadOnlyList<AdmissionRecord> Admissions { get; } =
         new("NTF-006", "Ward staffing impact", "Ward staffing impact added for evening shift.", NotificationType.Operational, NotificationSeverity.Warning, NotificationStatus.Unread, NotificationAudienceScope.Ward, DateTime.UtcNow.AddMinutes(-15), null, null, null, false, null, null, "FAC-PAH", "WARD-PAH-GEN", null, null, null, "EVT-005", null, null, null, "OpsHub", "Nick Fury", false, true)
     ];
 
+    
+
+    public static IReadOnlyList<UserPerspectiveRecord> UserPerspectives { get; } =
+    [
+        new("USP-EXEC-001", "Statewide Executive", "Bruce Wayne", UserPerspectiveType.Executive, UserAccessScope.Statewide, UserWorkflowFocus.Awareness, UserOperationalMode.InsightsOnly, null, null, ["HHS-MN","HHS-MS"], ["FAC-RBWH","FAC-TPCH","FAC-PAH"], [], true, true, true, true, false, false, true, true, true, true, "Comfort", "Executive", "Bruce Wayne", null, "#2F5D8A"),
+        new("USP-HHS-001", "HHS Coordinator", "Barbara Gordon", UserPerspectiveType.HHSCoordinator, UserAccessScope.HHS, UserWorkflowFocus.Coordination, UserOperationalMode.HybridOperational, null, null, ["HHS-MN"], ["FAC-RBWH","FAC-TPCH"], ["WARD-RBWH-SUR","WARD-RBWH-ICU","WARD-TPCH-MAT"], false, true, true, true, true, true, true, true, true, false, "Balanced", "Standard", "Barbara Gordon", null, "#3B7A57"),
+        new("USP-BED-001", "Facility Bed Manager", "Peggy Carter", UserPerspectiveType.BedManager, UserAccessScope.Facility, UserWorkflowFocus.Orchestration, UserOperationalMode.OperationalCommand, "FAC-PAH", null, ["HHS-MS"], ["FAC-PAH"], ["WARD-PAH-GEN"], false, false, true, true, true, true, true, true, true, false, "Dense", "Operations", "Peggy Carter", null, "#B35C1E"),
+        new("USP-WARD-001", "Ward Clinician", "Jean Grey", UserPerspectiveType.WardClinician, UserAccessScope.Ward, UserWorkflowFocus.Workflow, UserOperationalMode.HybridOperational, "FAC-RBWH", "WARD-RBWH-ICU", ["HHS-MN"], ["FAC-RBWH"], ["WARD-RBWH-ICU"], false, false, false, true, false, true, false, true, false, false, "Dense", "Clinical", "Jean Grey", null, "#7A3E9D"),
+        new("USP-ALC-001", "Allocation Coordinator", "Natasha Romanoff", UserPerspectiveType.AllocationCoordinator, UserAccessScope.Facility, UserWorkflowFocus.Coordination, UserOperationalMode.OperationalCommand, "FAC-RBWH", null, ["HHS-MN"], ["FAC-RBWH"], ["WARD-RBWH-SUR","WARD-RBWH-ICU"], false, false, true, true, true, true, true, true, true, false, "Dense", "Allocation", "Natasha Romanoff", null, "#A33A3A"),
+        new("USP-DDC-001", "Delayed Discharge Coordinator", "Stephen Strange", UserPerspectiveType.DelayedDischargeCoordinator, UserAccessScope.Facility, UserWorkflowFocus.Reporting, UserOperationalMode.HybridOperational, "FAC-PAH", null, ["HHS-MS"], ["FAC-PAH"], ["WARD-PAH-GEN"], false, false, true, true, false, false, true, true, true, false, "Balanced", "DelayedDischarge", "Stephen Strange", null, "#4F6D3A")
+    ];
+
     public static IReadOnlyList<InformationBannerRecord> InformationBanners { get; } =
     [
         new("BAN-001", "All", "Info", "Operational Update", "Demo seed data scaffold enabled for staged migration.", true)

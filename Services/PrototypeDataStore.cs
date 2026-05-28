@@ -30,8 +30,11 @@ public sealed class PrototypeDataStore
     private List<OperationalImpactRecord> _operationalImpactRecords = [];
     private List<ActivityFeedItemRecord> _activityFeedItems = [];
     private List<NotificationRecord> _notifications = [];
+    private List<UserPerspectiveRecord> _userPerspectives = [];
+    private UserPerspectiveRecord? _currentPerspective;
 
     public event Action? OnChange;
+    public event Action? OnPerspectiveChanged;
 
     public PrototypeDataStore() => ResetToSeedData();
 
@@ -65,6 +68,9 @@ public sealed class PrototypeDataStore
     public IReadOnlyList<NotificationRecord> GetNotificationsForFacility(string facilityId) => _notifications.Where(x => x.FacilityId == facilityId).ToList();
     public IReadOnlyList<NotificationRecord> GetNotificationsForWard(string wardId) => _notifications.Where(x => x.WardId == wardId).ToList();
     public IReadOnlyList<NotificationRecord> GetNotificationsForPatient(string patientId) => _notifications.Where(x => x.PatientId == patientId).ToList();
+    public IReadOnlyList<UserPerspectiveRecord> GetUserPerspectives() => _userPerspectives;
+    public UserPerspectiveRecord? GetCurrentPerspective() => _currentPerspective;
+    public UserAccessScope GetCurrentAccessScope() => _currentPerspective?.AccessScope ?? UserAccessScope.Statewide;
     public IReadOnlyList<OperationalEventRecord> GetActiveOperationalEvents() => _operationalEventRecords.Where(x => x.IsActive).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForFacility(string facilityId) => _operationalEventRecords.Where(x => x.FacilityId == facilityId).ToList();
     public IReadOnlyList<OperationalEventRecord> GetOperationalEventsForWard(string wardId) => _operationalEventRecords.Where(x => x.WardId == wardId).ToList();
@@ -79,6 +85,24 @@ public sealed class PrototypeDataStore
     public IReadOnlyList<PatientNoteRecord> GetPatientNotes() => _patientNoteRecords;
     public IReadOnlyList<PatientDischargeRecord> GetPatientDischarges() => _patientDischargeRecords;
     public PatientDischargeRecord? GetPatientDischarge(string patientId) => _patientDischargeRecords.FirstOrDefault(x => x.PatientId == patientId);
+
+    public bool SetCurrentPerspective(string perspectiveId)
+    {
+        if (string.IsNullOrWhiteSpace(perspectiveId)) return false;
+        var perspective = _userPerspectives.FirstOrDefault(x => x.Id == perspectiveId);
+        if (perspective is null) return false;
+        _currentPerspective = perspective;
+        OnPerspectiveChanged?.Invoke();
+        NotifyStateChanged();
+        return true;
+    }
+
+    public void ResetPerspective()
+    {
+        _currentPerspective = _userPerspectives.FirstOrDefault();
+        OnPerspectiveChanged?.Invoke();
+        NotifyStateChanged();
+    }
 
     public bool AddNotification(NotificationRecord notification)
     {
@@ -394,6 +418,9 @@ public sealed class PrototypeDataStore
         _operationalImpactRecords = [..DemoDataSeed.OperationalImpacts];
         _activityFeedItems = [..DemoDataSeed.ActivityFeedItems];
         _notifications = [..DemoDataSeed.Notifications];
+        _userPerspectives = [..DemoDataSeed.UserPerspectives];
+        _currentPerspective = _userPerspectives.FirstOrDefault();
+        OnPerspectiveChanged?.Invoke();
         NotifyStateChanged();
     }
 
