@@ -99,6 +99,7 @@ P3.04 — Automatic Parent Awareness Logic
 - Parent inference: Facility selections infer parent HHS context, and Ward selections infer parent Facility/HHS context without visually mutating parent filter selections.
 - Context integration: ContextAwarenessService receives exact HHS, Facility, and Ward context only when resolved safely; multi-select and ambiguous selections use summary context only.
 - Proof-of-concept UI: Bed Management benefits from automatic parent context while preserving existing layout, access-view behaviour, KPI cards, insights, operational banners, and routing.
+- Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, future service-stream filters, and P3.03 access-scope enforcement can consume the same multi-select filter state without creating another framework.
 
 
 P2.01 — Prototype Experience Bar

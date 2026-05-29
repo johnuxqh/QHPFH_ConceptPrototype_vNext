@@ -4,6 +4,9 @@ using QHPFH_ConceptPrototype.Models.Filters;
 using QHPFH_ConceptPrototype.Services.Adaptive;
 using QHPFH_ConceptPrototype.Services.Context;
 using QHPFH_ConceptPrototype.Services.Navigation;
+using QHPFH_ConceptPrototype.Services.Context;
+using QHPFH_ConceptPrototype.Services.Navigation;
+using QHPFH_ConceptPrototype.Services.Adaptive;
 
 namespace QHPFH_ConceptPrototype.Services.Filters;
 
