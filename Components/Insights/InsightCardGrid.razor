@@ -1,0 +1,23 @@
+@using QHPFH_ConceptPrototype.Models.Insights
+@using QHPFH_ConceptPrototype.Services.Insights
+@inject InsightFrameworkService InsightFramework
+
+<section class="@GetGridClass()" aria-label="Operational insights">
+    @foreach (var insight in InsightFramework.PrioritizeInsights(Insights))
+    {
+        <InsightCard Insight="@insight"
+                     IsSelected="@(ActiveInsightId == insight.Id)"
+                     ShowDetail="@InsightFramework.ShouldShowDetailedInsightText()"
+                     OnSelected="OnInsightSelected"
+                     AdditionalClasses="@CardAdditionalClasses" />
+    }
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<InsightRecord> Insights { get; set; } = Array.Empty<InsightRecord>();
+    [Parameter] public string ActiveInsightId { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnInsightSelected { get; set; }
+    [Parameter] public string? CardAdditionalClasses { get; set; }
+
+    private string GetGridClass() => $"shared-insight-grid {InsightFramework.GetGridDensityClass()}";
+}

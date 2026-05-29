@@ -3,7 +3,9 @@
 @using MudBlazor
 @using QHPFH_ConceptPrototype.Components.Shared
 @using QHPFH_ConceptPrototype.Services.Kpi
+@using QHPFH_ConceptPrototype.Services.Insights
 @inject KpiFrameworkService KpiFramework
+@inject InsightFrameworkService InsightFramework
 
 <WorkspaceShell WorkspaceId="bed-management"
                 Title="Bed Management"
@@ -105,24 +107,10 @@
                         <span class="bm-system-insights-count">←</span>
                         <span>Back to System Status</span>
                     </button>
-                    <section class="bm-insight-grid actionable">
-                        @foreach (var insight in ActiveInsights.Take(10))
-                        {
-                            <article class="bm-insight-card @insight.SeverityClass @(IsInsightActive(insight.InsightKey) ? "selected" : null)" @onclick='() => ApplyInsightFilter(insight.InsightKey)'>
-                                <div class="bm-insight-main">
-                                    <div class="bm-insight-icon"><MudIcon Icon="@insight.Icon" Size="Size.Small" /></div>
-                                    <div class="bm-insight-text">
-                                        <h4>@insight.Title</h4>
-                                        <p>@insight.Description</p>
-                                        <div class="bm-insight-foot">
-                                            <strong>Wards: @insight.Count</strong>
-                                            <button type="button" class="bm-insight-action" @onclick:stopPropagation="true" @onclick='() => ApplyInsightFilter(insight.InsightKey)'>@insight.ActionLabel</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-                        }
-                    </section>
+                    <InsightCardGrid Insights="@ActiveInsights.Take(10).ToList()"
+                                     ActiveInsightId="@ActiveInsightFilter"
+                                     OnInsightSelected="ApplyInsightFilter"
+                                     CardAdditionalClasses="bm-insight-card" />
                 </div>
             </section>
         </section>
@@ -137,24 +125,10 @@
                          OnTabChanged="OnQchActivityTabChanged"
                          CardAdditionalClasses="bm-kpi-card" />
         </section>
-        <section class="bm-insight-grid actionable">
-        @foreach (var insight in ActiveInsights)
-        {
-            <article class="bm-insight-card @insight.SeverityClass @(IsInsightActive(insight.InsightKey) ? "selected" : null)" @onclick='() => ApplyInsightFilter(insight.InsightKey)'>
-                <div class="bm-insight-main">
-                    <div class="bm-insight-icon"><MudIcon Icon="@insight.Icon" Size="Size.Small" /></div>
-                    <div class="bm-insight-text">
-                        <h4>@insight.Title</h4>
-                        <p>@insight.Description</p>
-                        <div class="bm-insight-foot">
-                            <strong>Wards: @insight.Count</strong>
-                            <button type="button" class="bm-insight-action" @onclick:stopPropagation="true" @onclick='() => ApplyInsightFilter(insight.InsightKey)'>@insight.ActionLabel</button>
-                        </div>
-                    </div>
-                </div>
-            </article>
-        }
-    </section>
+        <InsightCardGrid Insights="@ActiveInsights"
+                         ActiveInsightId="@ActiveInsightFilter"
+                         OnInsightSelected="ApplyInsightFilter"
+                         CardAdditionalClasses="bm-insight-card" />
     }
 
     @if (!string.IsNullOrWhiteSpace(ActiveInsightTitle))
@@ -380,7 +354,7 @@
     private void OnQchActivityTabChanged(string tab) => QchActivityView = tab;
     private void CloseKpiInfo() => OpenKpiInfoTitle = null;
     private void HandleKeydown(KeyboardEventArgs args) { if (args.Key == "Escape") OpenKpiInfoTitle = null; }
-    private string ActiveInsightTitle => ActiveInsights.FirstOrDefault(x => x.InsightKey == ActiveInsightFilter)?.Title ?? string.Empty;
+    private string ActiveInsightTitle => ActiveInsights.FirstOrDefault(x => x.Id == ActiveInsightFilter)?.Title ?? string.Empty;
     private HashSet<string> ActiveInsightWardIds =>
         ActiveInsights.FirstOrDefault(x => x.InsightKey == ActiveInsightFilter)?.RelatedWardIds
         ?? new HashSet<string>();
@@ -403,10 +377,10 @@
     private void ClearInsightFilter() => ActiveInsightFilter = string.Empty;
     private bool IsInsightActive(string insightKey) => ActiveInsightFilter == insightKey;
 
-    private List<SituationalInsight> ActiveInsights => BuildSituationalInsights(GetBaseScopedRows().ToList());
-    private static List<SituationalInsight> BuildSituationalInsights(List<BedOverviewRow> rows)
+    private IReadOnlyList<InsightRecord> ActiveInsights => BuildSituationalInsights(GetBaseScopedRows().ToList());
+    private IReadOnlyList<InsightRecord> BuildSituationalInsights(List<BedOverviewRow> rows)
     {
-        var insights = new List<SituationalInsight>
+        var insights = new List<InsightRecord>
         {
             CreateInsight("wards-over-capacity", "Wards Over Capacity", "Wards operating above safe occupancy threshold and requiring immediate focus.", "critical", "capacity", rows.Where(r => r.OccupancyValue >= 95 || r.OpenBeds <= 1), Icons.Material.Filled.Warning, "View wards"),
             CreateInsight("delayed-discharge-risk", "Delayed Discharge Risk", "Delayed flow and discharge barriers are constraining throughput.", "warning", "delayed-discharge", rows.Where(r => r.DelayedDischarge >= 3), Icons.Material.Filled.PersonOff, "Review delayed discharge"),
@@ -416,14 +390,146 @@
             CreateInsight("operational-escalation-risk", "Operational Escalation Risk", "Wards approaching Tier 3 pressure due to occupancy and constraints.", "critical", "escalation", rows.Where(r => (r.Pressure == "Critical" || r.Pressure == "High") && (r.OccupancyValue >= 92 || r.DelayedDischarge >= 4)), Icons.Material.Filled.CrisisAlert, "Open escalation")
         };
 
-        return insights.Where(x => x.Count > 0).ToList();
+        return InsightFramework.PrioritizeInsights(insights.Where(x => x.AffectedCount > 0));
     }
 
-    private static SituationalInsight CreateInsight(string key, string title, string description, string severityClass, string filterType, IEnumerable<BedOverviewRow> rows, string icon, string actionLabel)
+    private InsightRecord CreateInsight(string key, string title, string description, string severityClass, string filterType, IEnumerable<BedOverviewRow> rows, string icon, string actionLabel)
     {
         var matchedRows = rows.DistinctBy(x => x.Ward).ToList();
-        return new SituationalInsight(key, title, description, severityClass, matchedRows.Select(x => x.Ward).ToHashSet(), filterType, matchedRows.Count, icon, actionLabel);
+        return InsightFramework.CreateInsight(
+            id: key,
+            title: title,
+            summary: description,
+            detailedDescription: BuildInsightDetail(title, matchedRows),
+            category: ResolveInsightCategory(filterType),
+            severity: ResolveInsightSeverity(severityClass),
+            recommendedAction: ResolveInsightRecommendation(filterType),
+            actionLabel: actionLabel,
+            actionType: ResolveInsightActionType(filterType),
+            context: IsQchAccess ? QchFacility : SelectedFacility,
+            relatedKpi: ResolveRelatedKpi(filterType),
+            trendSignal: ResolveInsightTrendSignal(filterType, matchedRows.Count),
+            iconName: icon,
+            affectedCount: matchedRows.Count,
+            relatedEntityIds: matchedRows.Select(x => x.Ward).ToHashSet());
     }
+
+    private IReadOnlyList<KpiCardRecord> GetBedManagementKpiCards() =>
+        (IsQchAccess ? QchKpis : Kpis)
+            .Select(ToKpiCardRecord)
+            .ToList();
+
+    private KpiCardRecord ToKpiCardRecord(KpiItem kpi) =>
+        KpiFramework.CreateCard(
+            id: $"bed-management-{kpi.Title.ToLowerInvariant().Replace(" ", "-").Replace("/", "-")}",
+            title: kpi.Title,
+            value: kpi.Value,
+            subtitle: kpi.Subtitle,
+            iconName: kpi.IconName,
+            colorClass: kpi.ColorClass,
+            infoText: kpi.InfoText,
+            trend: ResolveKpiTrend(kpi),
+            trendLabel: ResolveKpiTrendLabel(kpi),
+            context: IsQchAccess ? QchFacility : SelectedFacility,
+            lastUpdated: DateTime.Now,
+            actionLabel: kpi.TileType == "activity" ? "Review activity" : null,
+            showInfoIcon: kpi.ShowInfoIcon,
+            tileType: kpi.TileType,
+            breakdownItems: kpi.BreakdownItems.Select(item => new KpiBreakdownRecord(item.Label, item.Value)).ToList(),
+            tabs: kpi.Tabs);
+
+    private static KpiTrendDirection ResolveKpiTrend(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value.StartsWith("+", StringComparison.Ordinal) ? KpiTrendDirection.Up : KpiTrendDirection.Down,
+        "Operational Pressure" => KpiTrendDirection.Up,
+        "Beds Returning" or "Beds Pending" => KpiTrendDirection.Down,
+        "Activity" => KpiTrendDirection.Stable,
+        _ => KpiTrendDirection.Unknown
+    };
+
+    private static string ResolveKpiTrendLabel(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value,
+        "Operational Pressure" => "Pressure watch",
+        "Beds Returning" or "Beds Pending" => "Operational recovery",
+        "Activity" => "Activity view",
+        _ => "Current snapshot"
+    };
+
+
+
+    private static string BuildInsightDetail(string title, IReadOnlyList<BedOverviewRow> matchedRows)
+    {
+        if (matchedRows.Count == 0)
+        {
+            return $"{title} is not currently affecting wards in the selected operational scope.";
+        }
+
+        var wardList = string.Join(", ", matchedRows.Take(4).Select(x => x.Ward));
+        var suffix = matchedRows.Count > 4 ? $" and {matchedRows.Count - 4} more" : string.Empty;
+        return $"{title} affects {matchedRows.Count} ward{(matchedRows.Count == 1 ? string.Empty : "s")}: {wardList}{suffix}. Review the related wards and coordinate the next operational action.";
+    }
+
+    private static InsightCategory ResolveInsightCategory(string filterType) => filterType switch
+    {
+        "capacity" => InsightCategory.Capacity,
+        "delayed-discharge" => InsightCategory.DelayedDischarge,
+        "ed-admissions" => InsightCategory.EdPressure,
+        "outliers" => InsightCategory.PatientFlow,
+        "predicted-discharges" => InsightCategory.BedAvailability,
+        "escalation" => InsightCategory.OperationalRisk,
+        _ => InsightCategory.Information
+    };
+
+    private static InsightSeverity ResolveInsightSeverity(string severityClass) => severityClass switch
+    {
+        "critical" => InsightSeverity.Critical,
+        "high" => InsightSeverity.High,
+        "warning" => InsightSeverity.Elevated,
+        "info" => InsightSeverity.Watch,
+        _ => InsightSeverity.Normal
+    };
+
+    private static InsightActionType ResolveInsightActionType(string filterType) => filterType switch
+    {
+        "escalation" => InsightActionType.Escalate,
+        "delayed-discharge" => InsightActionType.ReviewWorkflow,
+        "ed-admissions" or "outliers" => InsightActionType.Coordinate,
+        _ => InsightActionType.ViewContext
+    };
+
+    private static string ResolveInsightRecommendation(string filterType) => filterType switch
+    {
+        "capacity" => "Review wards nearing capacity and prioritise discharge or transfer options.",
+        "delayed-discharge" => "Review discharge barriers and coordinate next actions with ward teams.",
+        "ed-admissions" => "Coordinate incoming ED demand against available and pending beds.",
+        "outliers" => "Review outlier cohorts and placement flexibility.",
+        "predicted-discharges" => "Confirm predicted discharges and protect near-term capacity recovery.",
+        "escalation" => "Open escalation pathway and confirm ownership for pressure relief.",
+        _ => "Review operational context."
+    };
+
+    private static string ResolveRelatedKpi(string filterType) => filterType switch
+    {
+        "capacity" => "Operational Pressure",
+        "delayed-discharge" => "Delayed Flow Patients",
+        "ed-admissions" => "Admissions Today",
+        "outliers" => "Patient Flow",
+        "predicted-discharges" => "Capacity Delta (24h)",
+        "escalation" => "Operational Pressure",
+        _ => "Operational state"
+    };
+
+    private static string ResolveInsightTrendSignal(string filterType, int matchedCount) => filterType switch
+    {
+        "capacity" => $"{matchedCount} capacity signal{(matchedCount == 1 ? string.Empty : "s")}",
+        "delayed-discharge" => $"{matchedCount} discharge barrier signal{(matchedCount == 1 ? string.Empty : "s")}",
+        "ed-admissions" => $"{matchedCount} ED demand signal{(matchedCount == 1 ? string.Empty : "s")}",
+        "outliers" => $"{matchedCount} outlier signal{(matchedCount == 1 ? string.Empty : "s")}",
+        "predicted-discharges" => $"{matchedCount} recovery opportunit{(matchedCount == 1 ? "y" : "ies")}",
+        "escalation" => $"{matchedCount} escalation risk signal{(matchedCount == 1 ? string.Empty : "s")}",
+        _ => "Current operational signal"
+    };
 
     private IReadOnlyList<KpiCardRecord> GetBedManagementKpiCards() =>
         (IsQchAccess ? QchKpis : Kpis)
@@ -581,8 +687,7 @@
         public IReadOnlyList<SituationalKpiTile.KpiBreakdownItem> BreakdownItems { get; } = BreakdownItems ?? Array.Empty<SituationalKpiTile.KpiBreakdownItem>();
         public IReadOnlyList<string> Tabs { get; } = Tabs ?? Array.Empty<string>();
     }
-    private record SituationalInsight(string InsightKey, string Title, string Description, string SeverityClass, HashSet<string> RelatedWardIds, string FilterType, int Count, string Icon, string ActionLabel);
-    private record PredictedBedState(string Ward, string CurrentState, string PredictedDischargeTime, string NextPlannedPatient, string CleaningEta, string TransferState, string PressureClass);
+        private record PredictedBedState(string Ward, string CurrentState, string PredictedDischargeTime, string NextPlannedPatient, string CleaningEta, string TransferState, string PressureClass);
     private record TransferStatus(string Ward, string Status, string WaitingState);
     private record StaffingImpact(string Ward, string Message);
     private record OperationalEscalation(string Type, string Message);
