@@ -414,6 +414,165 @@
             relatedEntityIds: matchedRows.Select(x => x.Ward).ToHashSet());
     }
 
+    private IReadOnlyList<KpiCardRecord> GetBedManagementKpiCards() =>
+        (IsQchAccess ? QchKpis : Kpis)
+            .Select(ToKpiCardRecord)
+            .ToList();
+
+    private KpiCardRecord ToKpiCardRecord(KpiItem kpi) =>
+        KpiFramework.CreateCard(
+            id: $"bed-management-{kpi.Title.ToLowerInvariant().Replace(" ", "-").Replace("/", "-")}",
+            title: kpi.Title,
+            value: kpi.Value,
+            subtitle: kpi.Subtitle,
+            iconName: kpi.IconName,
+            colorClass: kpi.ColorClass,
+            infoText: kpi.InfoText,
+            trend: ResolveKpiTrend(kpi),
+            trendLabel: ResolveKpiTrendLabel(kpi),
+            context: IsQchAccess ? QchFacility : SelectedFacility,
+            lastUpdated: DateTime.Now,
+            actionLabel: kpi.TileType == "activity" ? "Review activity" : null,
+            showInfoIcon: kpi.ShowInfoIcon,
+            tileType: kpi.TileType,
+            breakdownItems: kpi.BreakdownItems.Select(item => new KpiBreakdownRecord(item.Label, item.Value)).ToList(),
+            tabs: kpi.Tabs);
+
+    private static KpiTrendDirection ResolveKpiTrend(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value.StartsWith("+", StringComparison.Ordinal) ? KpiTrendDirection.Up : KpiTrendDirection.Down,
+        "Operational Pressure" => KpiTrendDirection.Up,
+        "Beds Returning" or "Beds Pending" => KpiTrendDirection.Down,
+        "Activity" => KpiTrendDirection.Stable,
+        _ => KpiTrendDirection.Unknown
+    };
+
+    private static string ResolveKpiTrendLabel(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value,
+        "Operational Pressure" => "Pressure watch",
+        "Beds Returning" or "Beds Pending" => "Operational recovery",
+        "Activity" => "Activity view",
+        _ => "Current snapshot"
+    };
+
+
+
+    private static string BuildInsightDetail(string title, IReadOnlyList<BedOverviewRow> matchedRows)
+    {
+        if (matchedRows.Count == 0)
+        {
+            return $"{title} is not currently affecting wards in the selected operational scope.";
+        }
+
+        var wardList = string.Join(", ", matchedRows.Take(4).Select(x => x.Ward));
+        var suffix = matchedRows.Count > 4 ? $" and {matchedRows.Count - 4} more" : string.Empty;
+        return $"{title} affects {matchedRows.Count} ward{(matchedRows.Count == 1 ? string.Empty : "s")}: {wardList}{suffix}. Review the related wards and coordinate the next operational action.";
+    }
+
+    private static InsightCategory ResolveInsightCategory(string filterType) => filterType switch
+    {
+        "capacity" => InsightCategory.Capacity,
+        "delayed-discharge" => InsightCategory.DelayedDischarge,
+        "ed-admissions" => InsightCategory.EdPressure,
+        "outliers" => InsightCategory.PatientFlow,
+        "predicted-discharges" => InsightCategory.BedAvailability,
+        "escalation" => InsightCategory.OperationalRisk,
+        _ => InsightCategory.Information
+    };
+
+    private static InsightSeverity ResolveInsightSeverity(string severityClass) => severityClass switch
+    {
+        "critical" => InsightSeverity.Critical,
+        "high" => InsightSeverity.High,
+        "warning" => InsightSeverity.Elevated,
+        "info" => InsightSeverity.Watch,
+        _ => InsightSeverity.Normal
+    };
+
+    private static InsightActionType ResolveInsightActionType(string filterType) => filterType switch
+    {
+        "escalation" => InsightActionType.Escalate,
+        "delayed-discharge" => InsightActionType.ReviewWorkflow,
+        "ed-admissions" or "outliers" => InsightActionType.Coordinate,
+        _ => InsightActionType.ViewContext
+    };
+
+    private static string ResolveInsightRecommendation(string filterType) => filterType switch
+    {
+        "capacity" => "Review wards nearing capacity and prioritise discharge or transfer options.",
+        "delayed-discharge" => "Review discharge barriers and coordinate next actions with ward teams.",
+        "ed-admissions" => "Coordinate incoming ED demand against available and pending beds.",
+        "outliers" => "Review outlier cohorts and placement flexibility.",
+        "predicted-discharges" => "Confirm predicted discharges and protect near-term capacity recovery.",
+        "escalation" => "Open escalation pathway and confirm ownership for pressure relief.",
+        _ => "Review operational context."
+    };
+
+    private static string ResolveRelatedKpi(string filterType) => filterType switch
+    {
+        "capacity" => "Operational Pressure",
+        "delayed-discharge" => "Delayed Flow Patients",
+        "ed-admissions" => "Admissions Today",
+        "outliers" => "Patient Flow",
+        "predicted-discharges" => "Capacity Delta (24h)",
+        "escalation" => "Operational Pressure",
+        _ => "Operational state"
+    };
+
+    private static string ResolveInsightTrendSignal(string filterType, int matchedCount) => filterType switch
+    {
+        "capacity" => $"{matchedCount} capacity signal{(matchedCount == 1 ? string.Empty : "s")}",
+        "delayed-discharge" => $"{matchedCount} discharge barrier signal{(matchedCount == 1 ? string.Empty : "s")}",
+        "ed-admissions" => $"{matchedCount} ED demand signal{(matchedCount == 1 ? string.Empty : "s")}",
+        "outliers" => $"{matchedCount} outlier signal{(matchedCount == 1 ? string.Empty : "s")}",
+        "predicted-discharges" => $"{matchedCount} recovery opportunit{(matchedCount == 1 ? "y" : "ies")}",
+        "escalation" => $"{matchedCount} escalation risk signal{(matchedCount == 1 ? string.Empty : "s")}",
+        _ => "Current operational signal"
+    };
+
+    private IReadOnlyList<KpiCardRecord> GetBedManagementKpiCards() =>
+        (IsQchAccess ? QchKpis : Kpis)
+            .Select(ToKpiCardRecord)
+            .ToList();
+
+    private KpiCardRecord ToKpiCardRecord(KpiItem kpi) =>
+        KpiFramework.CreateCard(
+            id: $"bed-management-{kpi.Title.ToLowerInvariant().Replace(" ", "-").Replace("/", "-")}",
+            title: kpi.Title,
+            value: kpi.Value,
+            subtitle: kpi.Subtitle,
+            iconName: kpi.IconName,
+            colorClass: kpi.ColorClass,
+            infoText: kpi.InfoText,
+            trend: ResolveKpiTrend(kpi),
+            trendLabel: ResolveKpiTrendLabel(kpi),
+            context: IsQchAccess ? QchFacility : SelectedFacility,
+            lastUpdated: DateTime.Now,
+            actionLabel: kpi.TileType == "activity" ? "Review activity" : null,
+            showInfoIcon: kpi.ShowInfoIcon,
+            tileType: kpi.TileType,
+            breakdownItems: kpi.BreakdownItems.Select(item => new KpiBreakdownRecord(item.Label, item.Value)).ToList(),
+            tabs: kpi.Tabs);
+
+    private static KpiTrendDirection ResolveKpiTrend(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value.StartsWith("+", StringComparison.Ordinal) ? KpiTrendDirection.Up : KpiTrendDirection.Down,
+        "Operational Pressure" => KpiTrendDirection.Up,
+        "Beds Returning" or "Beds Pending" => KpiTrendDirection.Down,
+        "Activity" => KpiTrendDirection.Stable,
+        _ => KpiTrendDirection.Unknown
+    };
+
+    private static string ResolveKpiTrendLabel(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value,
+        "Operational Pressure" => "Pressure watch",
+        "Beds Returning" or "Beds Pending" => "Operational recovery",
+        "Activity" => "Activity view",
+        _ => "Current snapshot"
+    };
+
 
 
     private static string BuildInsightDetail(string title, IReadOnlyList<BedOverviewRow> matchedRows)
@@ -645,7 +804,7 @@
         public IReadOnlyList<SituationalKpiTile.KpiBreakdownItem> BreakdownItems { get; } = BreakdownItems ?? Array.Empty<SituationalKpiTile.KpiBreakdownItem>();
         public IReadOnlyList<string> Tabs { get; } = Tabs ?? Array.Empty<string>();
     }
-    private record PredictedBedState(string Ward, string CurrentState, string PredictedDischargeTime, string NextPlannedPatient, string CleaningEta, string TransferState, string PressureClass);
+        private record PredictedBedState(string Ward, string CurrentState, string PredictedDischargeTime, string NextPlannedPatient, string CleaningEta, string TransferState, string PressureClass);
     private record TransferStatus(string Ward, string Status, string WaitingState);
     private record StaffingImpact(string Ward, string Message);
     private record OperationalEscalation(string Type, string Message);
