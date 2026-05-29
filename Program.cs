@@ -14,6 +14,7 @@ using QHPFH_ConceptPrototype.Services.Actions;
 using QHPFH_ConceptPrototype.Services.Operational;
 using QHPFH_ConceptPrototype.Services.Insights;
 using QHPFH_ConceptPrototype.Services.Panels;
+using QHPFH_ConceptPrototype.Services.Rules;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 

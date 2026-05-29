@@ -172,3 +172,9 @@ P2.15 — Shared Operational Panel Framework
 - Outcome: Shared Operational Panel Framework created to standardize situational, insight, workflow, allocation, discharge, escalation, and review panel patterns across workspace contexts.
 - Proof-of-concept UI: Bed Management Actionable Insights now render inside OperationalPanel while preserving the existing InsightCardGrid content, filtering, and page layout flow.
 - Deferred UI wiring: Bed Management situational panels, Ward Operations panels, Allocation Centre panels, Delayed Discharge panels, slideout content panels, and orchestration panels can progressively migrate to the shared panel framework.
+- Proof-of-concept UI: Concept navigation supports a compact collapsed pill that temporarily reveals primary/secondary navigation options, routes selections correctly, and collapses back after selection.
+- Deferred UI wiring: Standard shell menu route activation, adaptive navigation visibility, and full shared navigation rendering remain deferred for later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.

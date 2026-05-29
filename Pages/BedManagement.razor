@@ -659,7 +659,7 @@
         public IReadOnlyList<SituationalKpiTile.KpiBreakdownItem> BreakdownItems { get; } = BreakdownItems ?? Array.Empty<SituationalKpiTile.KpiBreakdownItem>();
         public IReadOnlyList<string> Tabs { get; } = Tabs ?? Array.Empty<string>();
     }
-    private record PredictedBedState(string Ward, string CurrentState, string PredictedDischargeTime, string NextPlannedPatient, string CleaningEta, string TransferState, string PressureClass);
+        private record PredictedBedState(string Ward, string CurrentState, string PredictedDischargeTime, string NextPlannedPatient, string CleaningEta, string TransferState, string PressureClass);
     private record TransferStatus(string Ward, string Status, string WaitingState);
     private record StaffingImpact(string Ward, string Message);
     private record OperationalEscalation(string Type, string Message);
