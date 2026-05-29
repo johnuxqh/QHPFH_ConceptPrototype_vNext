@@ -115,3 +115,7 @@ P2.07 — Unified Navigation State Engine
 - Outcome: Unified Navigation State Engine created to centralize route, workspace, primary/secondary nav, shell, and collapse state for future standard/concept navigation alignment.
 - Proof-of-concept wiring: Concept primary navigation, ShellSwitcher shell/collapse state, STD menu collapse state, Workspace Shell, and Context Awareness now update/read centralized navigation state without changing routes or redesigning navigation.
 - Deferred UI wiring: Standard menu item routing, adaptive nav visibility, workspace-specific secondary nav, and full shared nav rendering will progressively consume the engine in later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.
