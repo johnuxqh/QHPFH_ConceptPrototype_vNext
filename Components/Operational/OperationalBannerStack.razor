@@ -1,0 +1,38 @@
+@using QHPFH_ConceptPrototype.Models.Operational
+@using QHPFH_ConceptPrototype.Services.Operational
+@inject OperationalAwarenessService OperationalAwareness
+@implements IDisposable
+
+@if (Banners.Count > 0)
+{
+    <section class="operational-banner-stack" aria-label="Operational awareness banners">
+        @foreach (var banner in Banners)
+        {
+            <OperationalAwarenessBanner Banner="@banner" OnDismiss="DismissBanner" />
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public int MaxBanners { get; set; } = 3;
+    [Parameter] public bool UseCurrentContext { get; set; } = true;
+
+    private IReadOnlyList<OperationalBannerViewModel> Banners =>
+        (UseCurrentContext ? OperationalAwareness.GetBannersForCurrentContext() : OperationalAwareness.GetActiveBanners())
+            .Take(MaxBanners)
+            .ToList();
+
+    protected override void OnInitialized()
+    {
+        OperationalAwareness.OnChange += HandleBannersChanged;
+    }
+
+    private void DismissBanner(string bannerId) => OperationalAwareness.DismissBanner(bannerId);
+
+    private void HandleBannersChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        OperationalAwareness.OnChange -= HandleBannersChanged;
+    }
+}

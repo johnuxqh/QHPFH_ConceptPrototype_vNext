@@ -1,0 +1,26 @@
+@using QHPFH_ConceptPrototype.Models.Kpi
+@using QHPFH_ConceptPrototype.Services.Kpi
+@inject KpiFrameworkService KpiFramework
+
+<section class="@GetGridClass()" aria-label="Operational KPI cards">
+    @foreach (var card in Cards)
+    {
+        <KpiCard Card="@card"
+                 IsInfoOpen="@(OpenInfoTitle == card.Title)"
+                 OnInfoClick="() => OnInfoClick.InvokeAsync(card.Title)"
+                 ActiveTab="@ActiveTab"
+                 OnTabChanged="OnTabChanged"
+                 AdditionalClasses="@CardAdditionalClasses" />
+    }
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<KpiCardRecord> Cards { get; set; } = Array.Empty<KpiCardRecord>();
+    [Parameter] public string OpenInfoTitle { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnInfoClick { get; set; }
+    [Parameter] public string ActiveTab { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnTabChanged { get; set; }
+    [Parameter] public string? CardAdditionalClasses { get; set; }
+
+    private string GetGridClass() => $"shared-kpi-grid {KpiFramework.GetGridDensityClass()}";
+}

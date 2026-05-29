@@ -1,3 +1,5 @@
+@using QHPFH_ConceptPrototype.Services.Navigation
+@inject NavigationStateService NavigationStateService
 <div class="std-shell" role="application">
     <header class="std-header" role="banner">
         <div class="std-header-bg std-header-bg-left" aria-hidden="true"></div>
@@ -15,6 +17,8 @@
             <img class="std-avatar" src="images/header/profilepic.png" alt="Dr Iam Groot profile photo" />
         </div>
     </header>
+
+    <PrototypeExperienceBar />
 
     <div class="std-body">
         <nav class="std-rail" aria-label="STD menu">
@@ -49,5 +53,9 @@
     [Parameter] public ShellMode CurrentShellMode { get; set; }
     [Parameter] public EventCallback<ShellMode> OnShellModeChanged { get; set; }
 
-    private void ToggleMenu() => _isMenuOpen = !_isMenuOpen;
+    private void ToggleMenu()
+    {
+        _isMenuOpen = !_isMenuOpen;
+        NavigationStateService.SetPrimaryNavCollapsed(!_isMenuOpen);
+    }
 }
