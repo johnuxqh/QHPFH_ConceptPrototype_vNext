@@ -106,5 +106,7 @@
     public void Dispose()
     {
         LayoutVariant.OnChange -= HandleExperienceStateChanged;
+        ExperienceMode.OnChange -= HandleExperienceStateChanged;
+        AdaptivePerspective.OnChange -= HandleExperienceStateChanged;
     }
 }

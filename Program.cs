@@ -7,6 +7,7 @@ using QHPFH_ConceptPrototype.Services.Kpi;
 using QHPFH_ConceptPrototype.Services.Adaptive;
 using QHPFH_ConceptPrototype.Services.Experience;
 using QHPFH_ConceptPrototype.Services.Layout;
+using QHPFH_ConceptPrototype.Services.Rules;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -22,5 +23,6 @@ builder.Services.AddScoped<PrototypeExperienceStateService>();
 builder.Services.AddScoped<AdaptivePerspectiveEngine>();
 builder.Services.AddScoped<ExperienceModeEngine>();
 builder.Services.AddScoped<LayoutVariantEngine>();
+builder.Services.AddScoped<OperationalRulesService>();
 
 await builder.Build().RunAsync();

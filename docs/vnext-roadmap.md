@@ -101,3 +101,7 @@ P2.05 — Shared Workspace Shell Framework
 - Outcome: Shared Workspace Shell Framework created to standardize reusable operational workspace structure, adaptive shell behaviour, and future orchestration-ready workspace architecture.
 - Proof-of-concept UI: Bed Management is safely wrapped in the shared Workspace Shell while preserving existing page content, filters, overlays, and workflows.
 - Deferred UI wiring: Other operational pages, workspace toolbars, insight/operational region migration, side-panel orchestration, and page-level adaptive density behaviours will progressively consume the framework in later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.
