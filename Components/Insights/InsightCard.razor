@@ -1,0 +1,79 @@
+@using QHPFH_ConceptPrototype.Models.Insights
+
+<article class="@GetCardClass()" role="button" tabindex="0" aria-pressed="@IsSelected" aria-label="@($"{Insight.Title} insight")" @onclick="SelectInsight" @onkeydown="HandleKeydown">
+    <div class="shared-insight-accent" aria-hidden="true"></div>
+    <div class="shared-insight-main">
+        <div class="shared-insight-icon" aria-hidden="true">
+            <MudIcon Icon="@Insight.IconName" Size="Size.Small" />
+        </div>
+        <div class="shared-insight-body">
+            <header class="shared-insight-header">
+                <div>
+                    <p class="shared-insight-category">@GetCategoryLabel()</p>
+                    <h4>@Insight.Title</h4>
+                </div>
+                <InsightPriorityBadge Priority="@Insight.Priority" />
+            </header>
+
+            <p class="shared-insight-summary">@Insight.Summary</p>
+            @if (ShowDetail && !string.IsNullOrWhiteSpace(Insight.DetailedDescription))
+            {
+                <p class="shared-insight-detail">@Insight.DetailedDescription</p>
+            }
+
+            <div class="shared-insight-meta" aria-label="Insight context">
+                <span>@Insight.StatusBadge</span>
+                <span>@Insight.TrendSignal</span>
+                @if (Insight.AffectedCount > 0)
+                {
+                    <span>@AffectedLabel</span>
+                }
+            </div>
+
+            <footer class="shared-insight-footer">
+                <strong>@Insight.RecommendedAction</strong>
+                @if (!string.IsNullOrWhiteSpace(Insight.ActionLabel))
+                {
+                    <button type="button" class="shared-insight-action" @onclick:stopPropagation="true" @onclick="SelectInsight">@Insight.ActionLabel</button>
+                }
+            </footer>
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public InsightRecord Insight { get; set; } = default!;
+    [Parameter] public bool IsSelected { get; set; }
+    [Parameter] public bool ShowDetail { get; set; } = true;
+    [Parameter] public EventCallback<string> OnSelected { get; set; }
+    [Parameter] public string? AdditionalClasses { get; set; }
+
+    private string AffectedLabel => Insight.AffectedCount == 1 ? "1 ward" : $"{Insight.AffectedCount} wards";
+
+    private Task SelectInsight() => OnSelected.InvokeAsync(Insight.Id);
+
+    private Task HandleKeydown(KeyboardEventArgs args) =>
+        args.Key is "Enter" or " " ? SelectInsight() : Task.CompletedTask;
+
+    private string GetCardClass() => string.Join(
+        " ",
+        new[]
+        {
+            "shared-insight-card",
+            $"shared-insight-card--{Insight.Severity.ToString().ToLowerInvariant()}",
+            $"shared-insight-category--{Insight.Category.ToString().ToLowerInvariant()}",
+            IsSelected ? "selected" : null,
+            AdditionalClasses
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    private string GetCategoryLabel() => Insight.Category switch
+    {
+        InsightCategory.BedAvailability => "Bed availability",
+        InsightCategory.PatientFlow => "Patient flow",
+        InsightCategory.DelayedDischarge => "Delayed discharge",
+        InsightCategory.ElectiveDemand => "Elective demand",
+        InsightCategory.EdPressure => "ED pressure",
+        InsightCategory.OperationalRisk => "Operational risk",
+        _ => Insight.Category.ToString()
+    };
+}

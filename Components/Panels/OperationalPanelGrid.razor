@@ -1,0 +1,19 @@
+@using QHPFH_ConceptPrototype.Services.Panels
+@inject OperationalPanelFrameworkService PanelFramework
+
+<section class="@GetGridClass()" aria-label="Operational panels">
+    @ChildContent
+</section>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? AdditionalClasses { get; set; }
+
+    private string GetGridClass() => string.Join(
+        " ",
+        new[]
+        {
+            PanelFramework.GetGridClass(),
+            AdditionalClasses
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+}

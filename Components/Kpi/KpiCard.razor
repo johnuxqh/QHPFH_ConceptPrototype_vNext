@@ -1,0 +1,109 @@
+@using QHPFH_ConceptPrototype.Models.Kpi
+
+<article class="@GetCardClass()" aria-label="@($"{Card.Title} KPI")">
+    @if (Card.ShowInfoIcon && !string.IsNullOrWhiteSpace(Card.InfoText))
+    {
+        <div class="shared-kpi-info-wrap" @onclick:stopPropagation="true">
+            <button type="button" class="shared-kpi-info-btn" aria-label="More information about @Card.Title" @onclick="OnInfoClick">
+                <img src="images/icons/info-lightgrey.png" alt="" />
+            </button>
+            @if (IsInfoOpen)
+            {
+                <div class="shared-kpi-info-popover" role="tooltip">@Card.InfoText</div>
+            }
+        </div>
+    }
+
+    <header class="shared-kpi-header">
+        <div>
+            <p class="shared-kpi-category">@Card.Category</p>
+            <h3>@Card.Title.ToUpperInvariant()</h3>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Card.StatusBadge))
+        {
+            <span class="shared-kpi-status">@Card.StatusBadge</span>
+        }
+    </header>
+
+    @if (Card.TileType == "breakdown")
+    {
+        <div class="shared-kpi-main shared-kpi-breakdown-main">
+            <img class="shared-kpi-icon" src="@MainIconPath" alt="" />
+            <div class="shared-kpi-breakdown-values">
+                @foreach (var item in Card.BreakdownItems)
+                {
+                    <div class="shared-kpi-breakdown-row"><span>@item.Label</span><strong>@item.Value</strong></div>
+                }
+            </div>
+        </div>
+        <div class="shared-kpi-breakdown-total">@Card.Subtitle <strong>@Card.Value</strong></div>
+    }
+    else if (Card.TileType == "activity")
+    {
+        <div class="shared-kpi-main shared-kpi-breakdown-main">
+            <img class="shared-kpi-icon" src="@MainIconPath" alt="" />
+            <div class="shared-kpi-breakdown-values">
+                @foreach (var item in Card.BreakdownItems)
+                {
+                    <div class="shared-kpi-breakdown-row"><span>@item.Label</span><strong>@item.Value</strong></div>
+                }
+            </div>
+        </div>
+        <div class="shared-kpi-tabs">
+            @foreach (var tab in Card.Tabs)
+            {
+                <button type="button" class="@(tab == ActiveTab ? "active" : null)" @onclick="() => OnTabChanged.InvokeAsync(tab)">@tab</button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="shared-kpi-main">
+            <img class="shared-kpi-icon" src="@MainIconPath" alt="" />
+            <div class="shared-kpi-value">
+                <span>@Card.Value</span>
+                @if (!string.IsNullOrWhiteSpace(Card.Unit))
+                {
+                    <small>@Card.Unit</small>
+                }
+            </div>
+        </div>
+        <div class="shared-kpi-subtitle">@Card.Subtitle</div>
+    }
+
+    <footer class="shared-kpi-footer">
+        <KpiTrendIndicator Direction="@Card.Trend" Label="@Card.TrendLabel" />
+        @if (Card.DrilldownEnabled && !string.IsNullOrWhiteSpace(Card.ActionLabel))
+        {
+            <span class="shared-kpi-action">@Card.ActionLabel</span>
+        }
+    </footer>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public KpiCardRecord Card { get; set; } = default!;
+    [Parameter] public bool IsInfoOpen { get; set; }
+    [Parameter] public EventCallback OnInfoClick { get; set; }
+    [Parameter] public string ActiveTab { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnTabChanged { get; set; }
+    [Parameter] public string? AdditionalClasses { get; set; }
+
+    private string MainIconPath
+        => Card.Title.Equals("Physical Capacity", StringComparison.OrdinalIgnoreCase)
+            ? "images/icons/open-bed-default.png"
+            : Card.Title.Equals("Beds Returning", StringComparison.OrdinalIgnoreCase)
+                ? "images/icons/cleaning-orange.png"
+                : $"images/icons/{Card.IconName}.png";
+
+    private string GetCardClass() => string.Join(
+        " ",
+        new[]
+        {
+            "shared-kpi-card",
+            Card.ColorClass,
+            $"shared-kpi-card--{Card.Severity.ToString().ToLowerInvariant()}",
+            $"shared-kpi-category--{Card.Category.ToString().ToLowerInvariant()}",
+            $"kpi-type-{Card.TileType}",
+            AdditionalClasses
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+}

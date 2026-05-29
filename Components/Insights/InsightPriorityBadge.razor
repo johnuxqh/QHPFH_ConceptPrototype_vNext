@@ -1,0 +1,20 @@
+@using QHPFH_ConceptPrototype.Models.Insights
+
+<span class="@GetBadgeClass()" aria-label="Insight priority @GetPriorityLabel()">
+    @GetPriorityLabel()
+</span>
+
+@code {
+    [Parameter] public InsightPriority Priority { get; set; } = InsightPriority.Informational;
+
+    private string GetBadgeClass() => $"insight-priority-badge insight-priority-badge--{Priority.ToString().ToLowerInvariant()}";
+
+    private string GetPriorityLabel() => Priority switch
+    {
+        InsightPriority.AttentionRequired => "Attention required",
+        InsightPriority.HighPriority => "High priority",
+        InsightPriority.Critical => "Critical",
+        InsightPriority.Watch => "Watch",
+        _ => "Informational"
+    };
+}
