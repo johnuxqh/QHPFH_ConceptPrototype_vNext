@@ -414,6 +414,48 @@
             relatedEntityIds: matchedRows.Select(x => x.Ward).ToHashSet());
     }
 
+    private IReadOnlyList<KpiCardRecord> GetBedManagementKpiCards() =>
+        (IsQchAccess ? QchKpis : Kpis)
+            .Select(ToKpiCardRecord)
+            .ToList();
+
+    private KpiCardRecord ToKpiCardRecord(KpiItem kpi) =>
+        KpiFramework.CreateCard(
+            id: $"bed-management-{kpi.Title.ToLowerInvariant().Replace(" ", "-").Replace("/", "-")}",
+            title: kpi.Title,
+            value: kpi.Value,
+            subtitle: kpi.Subtitle,
+            iconName: kpi.IconName,
+            colorClass: kpi.ColorClass,
+            infoText: kpi.InfoText,
+            trend: ResolveKpiTrend(kpi),
+            trendLabel: ResolveKpiTrendLabel(kpi),
+            context: IsQchAccess ? QchFacility : SelectedFacility,
+            lastUpdated: DateTime.Now,
+            actionLabel: kpi.TileType == "activity" ? "Review activity" : null,
+            showInfoIcon: kpi.ShowInfoIcon,
+            tileType: kpi.TileType,
+            breakdownItems: kpi.BreakdownItems.Select(item => new KpiBreakdownRecord(item.Label, item.Value)).ToList(),
+            tabs: kpi.Tabs);
+
+    private static KpiTrendDirection ResolveKpiTrend(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value.StartsWith("+", StringComparison.Ordinal) ? KpiTrendDirection.Up : KpiTrendDirection.Down,
+        "Operational Pressure" => KpiTrendDirection.Up,
+        "Beds Returning" or "Beds Pending" => KpiTrendDirection.Down,
+        "Activity" => KpiTrendDirection.Stable,
+        _ => KpiTrendDirection.Unknown
+    };
+
+    private static string ResolveKpiTrendLabel(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value,
+        "Operational Pressure" => "Pressure watch",
+        "Beds Returning" or "Beds Pending" => "Operational recovery",
+        "Activity" => "Activity view",
+        _ => "Current snapshot"
+    };
+
 
 
     private static string BuildInsightDetail(string title, IReadOnlyList<BedOverviewRow> matchedRows)

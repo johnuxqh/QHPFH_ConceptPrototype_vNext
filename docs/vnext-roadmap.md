@@ -165,3 +165,9 @@ P2.14 — Shared Insights Card Framework
 - Outcome: Shared Insights Card Framework created to standardize operational insight presentation, prioritization, severity interpretation, action recommendations, density adaptation, and context-aware operational sense-making across workspace contexts.
 - Proof-of-concept UI: Bed Management Actionable Insights now render through InsightCardGrid/InsightCard while preserving the existing insight content, ward filtering, action labels, and layout flow.
 - Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, statewide insights, facility insights, and orchestration insights can progressively migrate to the shared insight framework.
+- Proof-of-concept UI: Concept navigation supports a compact collapsed pill that temporarily reveals primary/secondary navigation options, routes selections correctly, and collapses back after selection.
+- Deferred UI wiring: Standard shell menu route activation, adaptive navigation visibility, and full shared navigation rendering remain deferred for later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.
