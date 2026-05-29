@@ -3,7 +3,14 @@
 @using MudBlazor
 @using QHPFH_ConceptPrototype.Components.Shared
 
-<section class="page-shell-card bed-mgmt-page bm-overview-page" @onclick="CloseKpiInfo" @onkeydown="HandleKeydown" tabindex="0">
+<WorkspaceShell WorkspaceId="bed-management"
+                Title="Bed Management"
+                Subtitle="Operational bed state, readiness, allocation pressure, and future availability"
+                OperationalContext="Facility and ward bed flow workspace"
+                WorkspaceStatus="Live prototype context"
+                PrimaryBadge="Bed flow"
+                SecondaryBadge="Workspace header pattern">
+    <section class="page-shell-card bed-mgmt-page bm-overview-page" @onclick="CloseKpiInfo" @onkeydown="HandleKeydown" tabindex="0">
     @if (IsQchAccess)
     {
         <section class="bm-notification-banner">
@@ -300,7 +307,8 @@
             </div>
         }
     </section>
-</section>
+    </section>
+</WorkspaceShell>
 
 @code {
     private const string AccessStatewide = "statewide";

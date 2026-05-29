@@ -1,3 +1,8 @@
+@using QHPFH_ConceptPrototype.Models.Actions
+@using QHPFH_ConceptPrototype.Services.Actions
+@inject GlobalActionService GlobalActions
+@implements IDisposable
+
 <footer class="utility-shell" aria-label="Utility navigation">
     @if (_isChatOpen)
     {
@@ -196,17 +201,16 @@
     }
 
     <div class="utility-bar" role="tablist" aria-label="Footer utilities">
-        @foreach (var item in Items)
+        @foreach (var action in UtilityActions)
         {
-            var isSelected = item == _activeItem;
-            <button type="button" class="utility-tab @(isSelected ? "selected" : null)" role="tab" aria-selected="@isSelected" @onclick="() => SelectItem(item)">@item</button>
+            var isSelected = action.Id == _activeActionId;
+            <button type="button" class="utility-tab @(isSelected ? "selected" : null)" role="tab" aria-selected="@isSelected" title="@action.Description" @onclick="() => SelectAction(action)">@action.Label</button>
         }
     </div>
 </footer>
 
 @code {
-    private readonly string[] Items = ["Bed Managers Chat", "On Call", "Reports", "Downtime", "Support"];
-    private string _activeItem = string.Empty;
+    private string _activeActionId = string.Empty;
     private bool _isChatOpen;
     private bool _isOnCallOpen;
     private bool _isSupportOpen;
@@ -220,6 +224,20 @@
     private string _supportSearch = string.Empty;
     private int _openFaqId = 1;
     private readonly string[] AvatarOptions = ["🤣", "😎", "🚑", "👩‍⚕️", "🛏️"];
+
+    private IReadOnlyList<GlobalActionRecord> UtilityActions =>
+        GlobalActions.GetActionsForCurrentWorkspace()
+            .Where(action => action.Type is GlobalActionType.Chat
+                or GlobalActionType.OnCall
+                or GlobalActionType.Reports
+                or GlobalActionType.Downtime
+                or GlobalActionType.Support)
+            .ToList();
+
+    protected override void OnInitialized()
+    {
+        GlobalActions.OnChange += HandleGlobalActionsChanged;
+    }
 
     private readonly List<ChatMessage> _chatMessages =
     [
@@ -295,19 +313,26 @@
 
     [Parameter] public bool IsDarkMode { get; set; }
 
-    private void SelectItem(string item)
+    private void SelectAction(GlobalActionRecord action)
     {
-        _isChatOpen = item == "Bed Managers Chat" && !_isChatOpen;
-        _isOnCallOpen = item == "On Call" && !_isOnCallOpen;
-        _isReportsOpen = item == "Reports" && !_isReportsOpen;
-        _isDowntimeOpen = item == "Downtime" && !_isDowntimeOpen;
-        _isSupportOpen = item == "Support" && !_isSupportOpen;
+        if (!GlobalActions.CanRunAction(action.Id))
+        {
+            return;
+        }
+
+        GlobalActions.TriggerAction(action.Id);
+
+        _isChatOpen = action.Type == GlobalActionType.Chat && !_isChatOpen;
+        _isOnCallOpen = action.Type == GlobalActionType.OnCall && !_isOnCallOpen;
+        _isReportsOpen = action.Type == GlobalActionType.Reports && !_isReportsOpen;
+        _isDowntimeOpen = action.Type == GlobalActionType.Downtime && !_isDowntimeOpen;
+        _isSupportOpen = action.Type == GlobalActionType.Support && !_isSupportOpen;
         _isDirectoryOpen = false;
 
-        _activeItem = item;
+        _activeActionId = action.Id;
         if (!_isChatOpen && !_isOnCallOpen && !_isReportsOpen && !_isDowntimeOpen && !_isSupportOpen)
         {
-            _activeItem = string.Empty;
+            _activeActionId = string.Empty;
         }
     }
 
@@ -328,14 +353,25 @@
         _draftMessage = string.Empty;
     }
 
-    private void CloseChat() { _isChatOpen = false; if (_activeItem == "Bed Managers Chat") _activeItem = string.Empty; }
-    private void CloseOnCall() { _isOnCallOpen = false; if (_activeItem == "On Call") _activeItem = string.Empty; }
-    private void CloseReports() { _isReportsOpen = false; if (_activeItem == "Reports") _activeItem = string.Empty; }
-    private void CloseDowntime() { _isDowntimeOpen = false; if (_activeItem == "Downtime") _activeItem = string.Empty; }
+    private void CloseChat() { _isChatOpen = false; if (_activeActionId == GlobalActionService.ChatActionId) _activeActionId = string.Empty; }
+    private void CloseOnCall() { _isOnCallOpen = false; if (_activeActionId == GlobalActionService.OnCallActionId) _activeActionId = string.Empty; }
+    private void CloseReports() { _isReportsOpen = false; if (_activeActionId == GlobalActionService.ReportsActionId) _activeActionId = string.Empty; }
+    private void CloseDowntime() { _isDowntimeOpen = false; if (_activeActionId == GlobalActionService.DowntimeActionId) _activeActionId = string.Empty; }
     private void CloseDirectory() => _isDirectoryOpen = false;
-    private void CloseSupport() { _isSupportOpen = false; if (_activeItem == "Support") _activeItem = string.Empty; }
-    private void OpenDirectory() => _isDirectoryOpen = true;
+    private void CloseSupport() { _isSupportOpen = false; if (_activeActionId == GlobalActionService.SupportActionId) _activeActionId = string.Empty; }
+    private void OpenDirectory()
+    {
+        GlobalActions.TriggerAction(GlobalActionService.ContactDirectoryActionId);
+        _isDirectoryOpen = true;
+    }
     private void ToggleFaq(int id) => _openFaqId = _openFaqId == id ? -1 : id;
+
+    private void HandleGlobalActionsChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        GlobalActions.OnChange -= HandleGlobalActionsChanged;
+    }
 
     private sealed record ChatMessage(string Sender, string Text, string Timestamp, string Avatar, bool IsMine);
     private sealed record ReportItem(string Title, string Description);
