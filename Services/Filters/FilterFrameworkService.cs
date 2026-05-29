@@ -20,7 +20,7 @@ public sealed class FilterFrameworkService
     private readonly NavigationStateService _navigationState;
     private readonly FilterVisibilityService _filterVisibility;
     private readonly Dictionary<string, FilterSelectionState> _workspaceSelections = new(StringComparer.OrdinalIgnoreCase);
-    private FilterSelectionState? _currentSelection;
+    private FilterSelectionState? _sharedSelection;
 
     public FilterFrameworkService(
         PrototypeDataStore dataStore,
@@ -37,10 +37,13 @@ public sealed class FilterFrameworkService
     public FilterSelectionState CreateDefaultSelection(string accessView = "statewide") =>
         FilterSelectionState.CreateDefault(AllHhsLabel, AllFacilitiesLabel, AllWardsLabel, AllServiceStreamsLabel, accessView);
 
-    public FilterSelectionState GetSelection(string workspaceId, FilterSelectionState fallback) =>
-        _workspaceSelections.TryGetValue(workspaceId, out var workspaceSelection)
-            ? workspaceSelection
-            : _currentSelection ?? fallback;
+    public FilterSelectionState GetSelection(
+        string workspaceId,
+        FilterSelectionState fallback,
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext) =>
+        persistenceMode == FilterPersistenceMode.WorkspaceOverride
+            ? GetWorkspaceSelection(workspaceId) ?? _sharedSelection ?? fallback
+            : _sharedSelection ?? GetWorkspaceSelection(workspaceId) ?? fallback;
 
     public FilterContextRecord CreateContext(
         string workspaceId,
@@ -128,11 +131,47 @@ public sealed class FilterFrameworkService
 
     public FilterSelectionState SelectAllWards(FilterSelectionState selection) => selection with { SelectedWardValues = Array.Empty<string>() };
 
-    public void ApplySelection(string workspaceId, FilterSelectionState selection, IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null)
+    public FilterSelectionState RestoreSelection(
+        string workspaceId,
+        FilterSelectionState fallback,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
+        IReadOnlyCollection<string>? allowedHhs = null,
+        IReadOnlyCollection<string>? allowedFacilities = null,
+        IReadOnlyCollection<string>? allowedWards = null,
+        IReadOnlyCollection<string>? serviceStreams = null,
+        FilterVisibilityProfile? visibilityProfile = null,
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext)
     {
-        var normalizedSelection = NormalizeSelection(selection, workspaceWards);
-        _workspaceSelections[workspaceId] = normalizedSelection;
-        _currentSelection = normalizedSelection;
+        var restoredSelection = GetSelection(workspaceId, fallback, persistenceMode);
+        return ApplySelection(
+            workspaceId,
+            restoredSelection,
+            workspaceWards,
+            allowedHhs,
+            allowedFacilities,
+            allowedWards,
+            serviceStreams,
+            visibilityProfile,
+            persistenceMode);
+    }
+
+    public FilterSelectionState ApplySelection(
+        string workspaceId,
+        FilterSelectionState selection,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
+        IReadOnlyCollection<string>? allowedHhs = null,
+        IReadOnlyCollection<string>? allowedFacilities = null,
+        IReadOnlyCollection<string>? allowedWards = null,
+        IReadOnlyCollection<string>? serviceStreams = null,
+        FilterVisibilityProfile? visibilityProfile = null,
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext)
+    {
+        var effectiveProfile = _filterVisibility.GetCurrentProfile(visibilityProfile);
+        var effectiveAllowedHhs = MergeAllowedValues(allowedHhs, effectiveProfile.AllowedHhsValues);
+        var effectiveAllowedFacilities = MergeAllowedValues(allowedFacilities, effectiveProfile.AllowedFacilityValues);
+        var effectiveAllowedWards = MergeAllowedValues(allowedWards, effectiveProfile.AllowedWardValues);
+        var normalizedSelection = NormalizeSelection(selection, workspaceWards, effectiveAllowedHhs, effectiveAllowedFacilities, effectiveAllowedWards, serviceStreams);
+        PersistSelection(workspaceId, normalizedSelection, persistenceMode);
 
         var navigationState = _navigationState.GetNavigationState();
         if (!string.IsNullOrWhiteSpace(navigationState.CurrentWorkspace))
@@ -141,6 +180,22 @@ public sealed class FilterFrameworkService
         }
 
         ApplyLocationContext(normalizedSelection, workspaceWards);
+        return normalizedSelection;
+    }
+
+    private FilterSelectionState? GetWorkspaceSelection(string workspaceId) =>
+        _workspaceSelections.TryGetValue(workspaceId, out var workspaceSelection)
+            ? workspaceSelection
+            : null;
+
+    private void PersistSelection(string workspaceId, FilterSelectionState selection, FilterPersistenceMode persistenceMode)
+    {
+        _workspaceSelections[workspaceId] = selection;
+
+        if (persistenceMode == FilterPersistenceMode.SharedContext)
+        {
+            _sharedSelection = selection;
+        }
     }
 
     public IReadOnlyList<T> ApplyToRows<T>(IEnumerable<T> rows, FilterSelectionState selection, Func<T, string> hhsSelector, Func<T, string> facilitySelector, Func<T, string> wardSelector)

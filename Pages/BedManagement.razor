@@ -386,16 +386,15 @@
         ?? new HashSet<string>();
     protected override void OnInitialized()
     {
-        BedFilterSelection = FilterFramework.GetSelection(BedManagementWorkspaceId, BedFilterSelection);
+        BedFilterSelection = FilterFramework.RestoreSelection(
+            BedManagementWorkspaceId,
+            BedFilterSelection,
+            GetBedManagementWardScope(),
+            visibilityProfile: BedFilterVisibility);
 
         if (IsQchAccess)
         {
             ApplyAccessScope(persistContext: true);
-        }
-        else
-        {
-            BedFilterSelection = FilterFramework.NormalizeSelection(BedFilterSelection, GetBedManagementWardScope());
-            FilterFramework.ApplySelection(BedManagementWorkspaceId, BedFilterSelection, GetBedManagementWardScope());
         }
     }
 
@@ -408,8 +407,11 @@
 
     private void OnFilterSelectionChanged(FilterSelectionState selection)
     {
-        BedFilterSelection = FilterFramework.NormalizeSelection(selection, GetBedManagementWardScope());
-        FilterFramework.ApplySelection(BedManagementWorkspaceId, BedFilterSelection, GetBedManagementWardScope());
+        BedFilterSelection = FilterFramework.ApplySelection(
+            BedManagementWorkspaceId,
+            selection,
+            GetBedManagementWardScope(),
+            visibilityProfile: BedFilterVisibility);
         ClearInsightFilter();
         CurrentPage = 1;
     }
@@ -434,7 +436,11 @@
 
         if (persistContext)
         {
-            FilterFramework.ApplySelection(BedManagementWorkspaceId, BedFilterSelection, GetBedManagementWardScope());
+            BedFilterSelection = FilterFramework.ApplySelection(
+                BedManagementWorkspaceId,
+                BedFilterSelection,
+                GetBedManagementWardScope(),
+                visibilityProfile: BedFilterVisibility);
         }
     }
 
