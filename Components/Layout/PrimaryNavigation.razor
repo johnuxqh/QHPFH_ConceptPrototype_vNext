@@ -112,6 +112,13 @@
     {
         var subItem = GetSubItemsForKey(key).FirstOrDefault() ?? string.Empty;
         NavigateForSelection(key, subItem, collapseAfterSelection: true);
+    private string GetActivePrimaryLabel() =>
+        PrimaryItems.FirstOrDefault(x => x.Key == _activePrimaryKey)?.Label ?? "Home";
+
+    protected override void OnInitialized()
+    {
+        NavigationStateService.OnNavigationStateChanged += HandleNavigationStateChanged;
+        SyncSelectionFromNavigationState();
     }
 
     private void SelectSubItemFromCollapsed(string subItem)

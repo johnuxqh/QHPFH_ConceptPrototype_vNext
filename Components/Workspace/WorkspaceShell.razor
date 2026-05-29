@@ -78,6 +78,7 @@
         return string.IsNullOrWhiteSpace(OperationalContext)
             ? contextSummary
             : $"{OperationalContext} · {contextSummary}";
+        LayoutVariant.OnChange += HandleShellContextChanged;
     }
 
     private string GetWorkspaceClasses()
@@ -137,5 +138,6 @@
     public void Dispose()
     {
         ContextAwareness.OnContextChanged -= HandleShellContextChanged;
+        LayoutVariant.OnChange -= HandleShellContextChanged;
     }
 }
