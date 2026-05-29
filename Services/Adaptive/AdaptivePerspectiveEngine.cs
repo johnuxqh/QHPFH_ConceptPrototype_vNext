@@ -70,7 +70,7 @@ public sealed class AdaptivePerspectiveEngine : IDisposable
     public bool ShouldShowFacilityFilter()
     {
         var scope = GetCurrentPerspective()?.AccessScope;
-        return scope is UserAccessScope.Statewide or UserAccessScope.HHS or UserAccessScope.Facility;
+        return scope is UserAccessScope.Statewide or UserAccessScope.HHS;
     }
 
     public bool ShouldShowWardFilter()
