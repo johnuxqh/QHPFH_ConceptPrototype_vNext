@@ -1,0 +1,84 @@
+@using QHPFH_ConceptPrototype.Models.Filters
+
+<div class="@CssClass">
+    <label>@Label</label>
+    @if (Searchable)
+    {
+        <input class="filter-search-input" value="@SearchText" @oninput="OnSearchChanged" placeholder="@($"Search {Label.ToLowerInvariant()}")" />
+    }
+    <select value="@CurrentSelectValue" multiple="@MultiSelect" size="@SelectSize" disabled="@Disabled" @onchange="OnValueChanged">
+        @foreach (var option in FilteredOptions)
+        {
+            <option value="@option.Value" selected="@IsSelected(option.Value)">@option.Label</option>
+        }
+    </select>
+    @if (MultiSelect)
+    {
+        <div class="filter-dropdown-actions" aria-label="@Label multi-select actions">
+            <button type="button" class="bm-ghost bm-mini-btn" disabled="@Disabled" @onclick="SelectAll">Select all</button>
+            <button type="button" class="bm-ghost bm-mini-btn" disabled="@Disabled" @onclick="ClearSelection">Clear</button>
+            <span>@SummaryLabel</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public IReadOnlyList<string> Values { get; set; } = Array.Empty<string>();
+    [Parameter] public IReadOnlyList<FilterOptionRecord> Options { get; set; } = Array.Empty<FilterOptionRecord>();
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public EventCallback<IReadOnlyList<string>> ValuesChanged { get; set; }
+    [Parameter] public bool Searchable { get; set; }
+    [Parameter] public bool MultiSelect { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string CssClass { get; set; } = "bm-filter";
+    [Parameter] public string AllLabel { get; set; } = string.Empty;
+
+    private string SearchText { get; set; } = string.Empty;
+
+    private string CurrentSelectValue => MultiSelect ? string.Empty : Value;
+    private int SelectSize => MultiSelect ? Math.Min(Math.Max(FilteredOptions.Count(), 2), 4) : 1;
+    private string SummaryLabel => Values.Count switch
+    {
+        0 => AllLabel,
+        1 => Options.FirstOrDefault(x => string.Equals(x.Value, Values[0], StringComparison.OrdinalIgnoreCase))?.Label ?? Values[0],
+        _ => $"{Values.Count} selected"
+    };
+
+    private IEnumerable<FilterOptionRecord> FilteredOptions => string.IsNullOrWhiteSpace(SearchText)
+        ? Options
+        : Options.Where(x => x.Label.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+            || x.Value.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+    private Task OnValueChanged(ChangeEventArgs args)
+    {
+        if (!MultiSelect)
+        {
+            return ValueChanged.InvokeAsync(args.Value?.ToString() ?? string.Empty);
+        }
+
+        var values = NormalizeMultiValue(args.Value);
+        return ValuesChanged.InvokeAsync(values.Contains(AllLabel, StringComparer.OrdinalIgnoreCase) ? Array.Empty<string>() : values);
+    }
+
+    private Task SelectAll() => MultiSelect
+        ? ValuesChanged.InvokeAsync(Array.Empty<string>())
+        : ValueChanged.InvokeAsync(AllLabel);
+
+    private Task ClearSelection() => SelectAll();
+
+    private bool IsSelected(string value) => MultiSelect
+        ? Values.Contains(value, StringComparer.OrdinalIgnoreCase) || (Values.Count == 0 && string.Equals(value, AllLabel, StringComparison.OrdinalIgnoreCase))
+        : string.Equals(Value, value, StringComparison.OrdinalIgnoreCase);
+
+    private static IReadOnlyList<string> NormalizeMultiValue(object? value) => value switch
+    {
+        string[] values => values.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+        IEnumerable<string> values => values.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+        string single when !string.IsNullOrWhiteSpace(single) => [single],
+        _ => Array.Empty<string>()
+    };
+
+    private void OnSearchChanged(ChangeEventArgs args) => SearchText = args.Value?.ToString() ?? string.Empty;
+}

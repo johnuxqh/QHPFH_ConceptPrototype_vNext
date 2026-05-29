@@ -11,6 +11,7 @@ public sealed class ContextAwarenessService : IDisposable
     private string? _currentHhsId;
     private string? _currentFacilityId;
     private string? _currentWardId;
+    private string? _locationSummaryOverride;
     private string? _currentWorkspace;
     private string? _currentPageTitle;
     private string? _currentPatientId;
@@ -33,6 +34,7 @@ public sealed class ContextAwarenessService : IDisposable
 
     public void SetCurrentHhs(string? hhsId)
     {
+        _locationSummaryOverride = null;
         _currentHhsId = string.IsNullOrWhiteSpace(hhsId) ? null : hhsId;
         if (_currentHhsId is null)
         {
@@ -50,6 +52,7 @@ public sealed class ContextAwarenessService : IDisposable
 
     public void SetCurrentFacility(string? facilityId)
     {
+        _locationSummaryOverride = null;
         _currentFacilityId = string.IsNullOrWhiteSpace(facilityId) ? null : facilityId;
         var facility = _currentFacilityId is null ? null : _dataStore.GetFacilities().FirstOrDefault(x => x.Id == _currentFacilityId);
         _currentHhsId = facility?.HhsId ?? _currentHhsId;
@@ -68,6 +71,7 @@ public sealed class ContextAwarenessService : IDisposable
 
     public void SetCurrentWard(string? wardId)
     {
+        _locationSummaryOverride = null;
         _currentWardId = string.IsNullOrWhiteSpace(wardId) ? null : wardId;
         var ward = _currentWardId is null ? null : _dataStore.GetWards().FirstOrDefault(x => x.Id == _currentWardId);
         _currentFacilityId = ward?.FacilityId ?? _currentFacilityId;
@@ -75,6 +79,21 @@ public sealed class ContextAwarenessService : IDisposable
         var facility = _currentFacilityId is null ? null : _dataStore.GetFacilities().FirstOrDefault(x => x.Id == _currentFacilityId);
         _currentHhsId = facility?.HhsId ?? _currentHhsId;
 
+        NotifyContextChanged();
+    }
+
+    public void SetCurrentLocationSummary(string? summary)
+    {
+        _locationSummaryOverride = NormalizeValue(summary);
+        NotifyContextChanged();
+    }
+
+    public void SetCurrentLocationContext(string? hhsId, string? facilityId, string? wardId, string? summary)
+    {
+        _currentHhsId = NormalizeValue(hhsId);
+        _currentFacilityId = NormalizeValue(facilityId);
+        _currentWardId = NormalizeValue(wardId);
+        _locationSummaryOverride = NormalizeValue(summary);
         NotifyContextChanged();
     }
 
@@ -140,7 +159,8 @@ public sealed class ContextAwarenessService : IDisposable
             facility?.Name,
             _currentWardId,
             ward?.Name,
-            ResolveLocationScope());
+            ResolveLocationScope(),
+            _locationSummaryOverride);
     }
 
     public ContextSelection GetCurrentWorkspace() => new(
@@ -158,11 +178,15 @@ public sealed class ContextAwarenessService : IDisposable
 
     public bool HasOperationalContext() => HasFacilityContext() || HasWardContext() || !string.IsNullOrWhiteSpace(_currentWorkspace);
 
-    public void ClearLocationContext()
+    public void ClearLocationContext(bool preserveSummary = false)
     {
         _currentHhsId = null;
         _currentFacilityId = null;
         _currentWardId = null;
+        if (!preserveSummary)
+        {
+            _locationSummaryOverride = null;
+        }
         NotifyContextChanged();
     }
 

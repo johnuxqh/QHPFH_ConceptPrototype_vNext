@@ -1,0 +1,86 @@
+@using QHPFH_ConceptPrototype.Models.Filters
+
+<section class="operational-filter-chips" aria-label="Active operational filter chips">
+    @foreach (var chip in Chips)
+    {
+        <span class="@chip.CssClass" aria-label="@chip.AriaLabel">
+            <span class="operational-filter-chip__scope">@chip.Scope</span>
+            <span class="operational-filter-chip__value">@chip.Value</span>
+        </span>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public FilterContextRecord Context { get; set; } = default!;
+
+    private IReadOnlyList<FilterChip> Chips => BuildChips();
+
+    private IReadOnlyList<FilterChip> BuildChips()
+    {
+        var chips = new List<FilterChip>();
+
+        AddChip(chips, "HHS", Context.Selection.SelectedHhsValues, Context.HhsOptions, "HHSs", Context.CanSelectHhs, Context.IsHhsLocked);
+        AddChip(chips, "Facility", Context.Selection.SelectedFacilityValues, Context.FacilityOptions, "Facilities", Context.CanSelectFacility, Context.IsFacilityLocked);
+        AddChip(chips, "Ward", Context.Selection.SelectedWardValues, Context.WardOptions, "Wards", Context.CanSelectWard, Context.IsWardLocked);
+        AddChip(chips, "Service", Context.Selection.SelectedServiceStreamValues, Context.ServiceStreamOptions, "Service Streams", Context.CanSelectServiceStream, Context.IsServiceStreamLocked);
+
+        if (chips.Count == 0)
+        {
+            chips.Add(new("Scope", "Statewide scope", "operational-filter-chip", "Active operational scope: Statewide"));
+        }
+
+        return chips;
+    }
+
+    private static void AddChip(
+        ICollection<FilterChip> chips,
+        string scope,
+        IReadOnlyList<string> values,
+        IReadOnlyList<FilterOptionRecord> options,
+        string pluralLabel,
+        bool isVisible,
+        bool isLocked)
+    {
+        if (values.Count == 0)
+        {
+            return;
+        }
+
+        var value = GetSummary(values, options, pluralLabel);
+        var cssClass = "operational-filter-chip";
+        var qualifiers = new List<string>();
+
+        if (!isVisible)
+        {
+            cssClass += " operational-filter-chip--implicit";
+            qualifiers.Add("hidden context");
+        }
+
+        if (isLocked)
+        {
+            cssClass += " operational-filter-chip--locked";
+            qualifiers.Add("locked context");
+        }
+
+        var qualifierText = qualifiers.Count > 0 ? $" ({string.Join(", ", qualifiers)})" : string.Empty;
+        chips.Add(new(scope, value, cssClass, $"Active {scope} filter: {value}{qualifierText}"));
+    }
+
+    private static string GetSummary(IReadOnlyList<string> values, IReadOnlyList<FilterOptionRecord> options, string pluralLabel) => values.Count switch
+    {
+        <= 2 => string.Join(", ", values.Select(value => GetOptionLabel(value, options))),
+        _ => $"{values.Count} {pluralLabel} selected"
+    };
+
+    private static string GetOptionLabel(string value, IReadOnlyList<FilterOptionRecord> options) =>
+        options.FirstOrDefault(option => string.Equals(option.Value, value, StringComparison.OrdinalIgnoreCase))?.Label
+        ?? ParseWardValue(value);
+
+    private static string ParseWardValue(string value)
+    {
+        var parts = value.Split(new[] { "||" }, StringSplitOptions.None);
+        return parts.Length == 3 ? parts[2] : value;
+    }
+
+    private sealed record FilterChip(string Scope, string Value, string CssClass, string AriaLabel);
+}

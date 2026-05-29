@@ -1,0 +1,51 @@
+@using QHPFH_ConceptPrototype.Models.Filters
+
+@if (Segments.Count > 0)
+{
+    <nav class="operational-filter-breadcrumbs" aria-label="Active operational filter context">
+        @for (var i = 0; i < Segments.Count; i++)
+        {
+            <span class="operational-filter-breadcrumbs__segment">@Segments[i]</span>
+            @if (i < Segments.Count - 1)
+            {
+                <span class="operational-filter-breadcrumbs__separator" aria-hidden="true">›</span>
+            }
+        }
+    </nav>
+}
+
+@code {
+    [Parameter, EditorRequired] public FilterContextRecord Context { get; set; } = default!;
+
+    private IReadOnlyList<string> Segments => BuildSegments();
+
+    private IReadOnlyList<string> BuildSegments()
+    {
+        var segments = new[]
+        {
+            GetSummary(Context.Selection.SelectedHhsValues, Context.HhsOptions, "HHSs"),
+            GetSummary(Context.Selection.SelectedFacilityValues, Context.FacilityOptions, "Facilities"),
+            GetSummary(Context.Selection.SelectedWardValues, Context.WardOptions, "Wards"),
+            GetSummary(Context.Selection.SelectedServiceStreamValues, Context.ServiceStreamOptions, "Service Streams")
+        }.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
+        return segments.Count > 0 ? segments : ["Statewide"];
+    }
+
+    private static string? GetSummary(IReadOnlyList<string> values, IReadOnlyList<FilterOptionRecord> options, string pluralLabel) => values.Count switch
+    {
+        0 => null,
+        <= 2 => string.Join(", ", values.Select(value => GetOptionLabel(value, options))),
+        _ => $"{values.Count} {pluralLabel}"
+    };
+
+    private static string GetOptionLabel(string value, IReadOnlyList<FilterOptionRecord> options) =>
+        options.FirstOrDefault(option => string.Equals(option.Value, value, StringComparison.OrdinalIgnoreCase))?.Label
+        ?? ParseWardValue(value);
+
+    private static string ParseWardValue(string value)
+    {
+        var parts = value.Split(new[] { "||" }, StringSplitOptions.None);
+        return parts.Length == 3 ? parts[2] : value;
+    }
+}

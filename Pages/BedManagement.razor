@@ -4,8 +4,11 @@
 @using QHPFH_ConceptPrototype.Components.Shared
 @using QHPFH_ConceptPrototype.Services.Kpi
 @using QHPFH_ConceptPrototype.Services.Insights
+@using QHPFH_ConceptPrototype.Services.Filters
 @inject KpiFrameworkService KpiFramework
 @inject InsightFrameworkService InsightFramework
+@inject FilterFrameworkService FilterFramework
+@inject FilterVisibilityService FilterVisibility
 
 <WorkspaceShell WorkspaceId="bed-management"
                 Title="Bed Management"
@@ -68,15 +71,10 @@
         </section>
     }
 
-    <section class="bm-filter-row bm-filter-row-compact">
-        <div class="bm-filter-group">
-            @if (!IsQchAccess)
-            {
-                <div class="bm-filter"><label>HHS</label><select @bind="SelectedHhs" @bind:after="OnHhsChanged">@foreach (var hhs in HhsOptions){<option value="@hhs">@hhs</option>}</select></div>
-                <div class="bm-filter"><label>Facility</label><select @bind="SelectedFacility">@foreach (var facility in FacilityOptions){<option value="@facility">@facility</option>}</select></div>
-            }
-            <div class="bm-filter"><label>Ward</label><select @bind="SelectedWard">@foreach (var ward in WardOptions){<option value="@ward">@ward</option>}</select></div>
-        </div>
+    <UniversalFilterBar Context="@BedFilterContext"
+                        SelectionChanged="OnFilterSelectionChanged"
+                        MultiSelect="true"
+                        AdditionalClasses="bm-filter-row bm-filter-row-compact">
         <div class="bm-access-selector">
             <label>Access view</label>
             <select @bind="SelectedAccessView" @bind:after="OnAccessViewChanged">
@@ -84,7 +82,10 @@
                 <option value="qch-bed-manager">QCH Bed Manager</option>
             </select>
         </div>
-    </section>
+    </UniversalFilterBar>
+
+    <OperationalFilterBreadcrumbs Context="@BedFilterContext" />
+    <OperationalFilterChips Context="@BedFilterContext" />
 
     @if (SelectedVersion == "V2")
     {
@@ -270,7 +271,7 @@
 @code {
     private const string AccessStatewide = "statewide";
     private const string AccessQchBedManager = "qch-bed-manager";
-    private const string QchHhs = "Children's Health Queensland";
+    private const string QchHhs = "Children’s Health Queensland";
     private const string QchFacility = "Queensland Children's Hospital";
     private int EditingNotificationId = -1;
     private bool IsCreatingNotification;
@@ -282,10 +283,23 @@
     };
     private string QchActivityView = "Today";
 
-    private string SelectedAccessView = AccessStatewide;
-    private string SelectedHhs = DemoReferenceData.All;
-    private string SelectedFacility = DemoReferenceData.All;
-    private string SelectedWard = AllWards;
+    private const string BedManagementWorkspaceId = "bed-management";
+    private FilterSelectionState BedFilterSelection = FilterSelectionState.CreateDefault(
+        FilterFrameworkService.AllHhsLabel,
+        FilterFrameworkService.AllFacilitiesLabel,
+        FilterFrameworkService.AllWardsLabel,
+        FilterFrameworkService.AllServiceStreamsLabel,
+        AccessStatewide);
+
+    private string SelectedAccessView
+    {
+        get => BedFilterSelection.SelectedAccessView;
+        set => BedFilterSelection = BedFilterSelection with { SelectedAccessView = value };
+    }
+
+    private string SelectedHhs => BedFilterSelection.SelectedHhs;
+    private string SelectedFacility => BedFilterSelection.SelectedFacility;
+    private string SelectedWard => BedFilterSelection.SelectedWard;
     private string ActiveInsightFilter = string.Empty;
     private string SelectedView = "List";
     private string SelectedVersion = "V1";
@@ -294,17 +308,25 @@
     private bool SortAsc = true;
     private int CurrentPage = 1;
     private int PageSize = 12;
-    private const string AllWards = "All wards";
+    private const string AllWards = FilterFrameworkService.AllWardsLabel;
     private bool IsQchAccess => SelectedAccessView == AccessQchBedManager;
-    private IReadOnlyList<string> HhsOptions => DemoReferenceData.HhsOptions;
-    private IReadOnlyList<string> FacilityOptions =>
-        new[] { DemoReferenceData.All }
-            .Concat(
-                SelectedHhs == DemoReferenceData.All
-                    ? DemoReferenceData.FacilitiesByHhs.SelectMany(x => x.Value).Distinct().Order()
-                    : DemoReferenceData.FacilitiesByHhs.GetValueOrDefault(SelectedHhs, new List<string>()).Order())
-            .ToList();
-    private IReadOnlyList<string> WardOptions => GetAvailableWardOptions();
+    private FilterVisibilityProfile BedFilterVisibility => IsQchAccess
+        ? FilterVisibility.CreateCustomProfile(
+            showHhsFilter: false,
+            showFacilityFilter: false,
+            showWardFilter: true,
+            showServiceStreamFilter: false,
+            lockHhsFilter: true,
+            lockFacilityFilter: true,
+            allowedHhsValues: [QchHhs],
+            allowedFacilityValues: [QchFacility],
+            summaryLabel: "QCH Bed Manager")
+        : FilterVisibility.GetProfileForScope(FilterAccessScope.Statewide);
+    private FilterContextRecord BedFilterContext => FilterFramework.CreateContext(
+        BedManagementWorkspaceId,
+        BedFilterSelection,
+        GetBedManagementWardScope(),
+        visibilityProfile: BedFilterVisibility);
     private List<BedOverviewRow> FilteredRows => GetScopedBedManagementRows();
     private List<BedOverviewRow> SortedRows => SortAsc ? FilteredRows.OrderBy(GetSortValue).ToList() : FilteredRows.OrderByDescending(GetSortValue).ToList();
     private List<BedOverviewRow> PagedRows => SortedRows.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
@@ -365,20 +387,71 @@
     private HashSet<string> ActiveInsightWardIds =>
         ActiveInsights.FirstOrDefault(x => x.Id == ActiveInsightFilter)?.RelatedEntityIds.ToHashSet()
         ?? new HashSet<string>();
-    private void OnAccessViewChanged() { ApplyAccessScope(); ClearInsightFilter(); }
-    private void OnHhsChanged() { if (SelectedHhs != QchHhs && SelectedFacility == QchFacility) SelectedFacility = DemoReferenceData.All; }
-    private void ApplyAccessScope() { if (IsQchAccess) { SelectedHhs = QchHhs; SelectedFacility = QchFacility; SelectedWard = AllWards; } else { SelectedHhs = DemoReferenceData.All; SelectedFacility = DemoReferenceData.All; SelectedWard = AllWards; } }
-    private List<string> GetAvailableWardOptions()
+    protected override void OnInitialized()
     {
-        var sourceRows = IsQchAccess
-            ? Rows.Where(x => x.Hhs == QchHhs && x.Facility == QchFacility)
-            : Rows.Where(x => SelectedFacility == DemoReferenceData.All || x.Facility == SelectedFacility);
+        BedFilterSelection = FilterFramework.RestoreSelection(
+            BedManagementWorkspaceId,
+            BedFilterSelection,
+            GetBedManagementWardScope(),
+            visibilityProfile: BedFilterVisibility);
 
-        return new[] { AllWards }
-            .Concat(sourceRows.Select(x => x.Ward).Distinct().Order())
-            .ToList();
+        if (IsQchAccess)
+        {
+            ApplyAccessScope(persistContext: true);
+        }
     }
-    private IEnumerable<BedOverviewRow> GetBaseScopedRows() { IEnumerable<BedOverviewRow> scoped = Rows; if (IsQchAccess) scoped = scoped.Where(r => r.Hhs == QchHhs && r.Facility == QchFacility); else { if (SelectedHhs != DemoReferenceData.All) scoped = scoped.Where(r => r.Hhs == SelectedHhs); if (SelectedFacility != DemoReferenceData.All) scoped = scoped.Where(r => r.Facility == SelectedFacility);} if (SelectedWard != AllWards) scoped = scoped.Where(r => r.Ward == SelectedWard); return scoped; }
+
+    private void OnAccessViewChanged()
+    {
+        ApplyAccessScope(persistContext: true);
+        ClearInsightFilter();
+        CurrentPage = 1;
+    }
+
+    private void OnFilterSelectionChanged(FilterSelectionState selection)
+    {
+        BedFilterSelection = FilterFramework.ApplySelection(
+            BedManagementWorkspaceId,
+            selection,
+            GetBedManagementWardScope(),
+            visibilityProfile: BedFilterVisibility);
+        ClearInsightFilter();
+        CurrentPage = 1;
+    }
+
+    private void ApplyAccessScope(bool persistContext)
+    {
+        BedFilterSelection = IsQchAccess
+            ? BedFilterSelection with
+            {
+                SelectedHhsValues = [QchHhs],
+                SelectedFacilityValues = [QchFacility]
+            }
+            : BedFilterSelection with
+            {
+                SelectedHhsValues = Array.Empty<string>(),
+                SelectedFacilityValues = Array.Empty<string>(),
+                SelectedWardValues = Array.Empty<string>()
+            };
+
+        BedFilterSelection = FilterFramework.NormalizeSelection(BedFilterSelection, GetBedManagementWardScope());
+
+        if (persistContext)
+        {
+            BedFilterSelection = FilterFramework.ApplySelection(
+                BedManagementWorkspaceId,
+                BedFilterSelection,
+                GetBedManagementWardScope(),
+                visibilityProfile: BedFilterVisibility);
+        }
+    }
+
+    private IReadOnlyList<FilterWorkspaceWardRecord> GetBedManagementWardScope() => Rows
+        .Select(row => new FilterWorkspaceWardRecord(row.Hhs, row.Facility, row.Ward, row.WardType))
+        .ToList();
+
+    private IEnumerable<BedOverviewRow> GetBaseScopedRows() =>
+        FilterFramework.ApplyToRows(Rows, BedFilterSelection, row => row.Hhs, row => row.Facility, row => row.Ward);
     private List<BedOverviewRow> GetScopedBedManagementRows() { var scoped = GetBaseScopedRows(); if (!string.IsNullOrWhiteSpace(ActiveInsightFilter)) { var ids = ActiveInsightWardIds; scoped = scoped.Where(r => ids.Contains(r.Ward)); } return scoped.ToList(); }
     private void ApplyInsightFilter(string filterKey) => ActiveInsightFilter = ActiveInsightFilter == filterKey ? string.Empty : filterKey;
     private void ClearInsightFilter() => ActiveInsightFilter = string.Empty;
