@@ -151,3 +151,9 @@ P2.12 — Operational Awareness Banner System
 - Outcome: Operational Awareness Banner System created for shared capacity, downtime, staffing, infection-control, and operational event messaging across workspace contexts.
 - Proof-of-concept UI: WorkspaceShell renders OperationalBannerStack below the shared Workspace Header, sourced from OperationalAwarenessService and existing operational banner/event/information banner seed data.
 - Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, notification centre, downtime workflows, and operational event creation can progressively consume the shared banner service in later prompts.
+- Proof-of-concept UI: Concept navigation supports a compact collapsed pill that temporarily reveals primary/secondary navigation options, routes selections correctly, and collapses back after selection.
+- Deferred UI wiring: Standard shell menu route activation, adaptive navigation visibility, and full shared navigation rendering remain deferred for later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.
