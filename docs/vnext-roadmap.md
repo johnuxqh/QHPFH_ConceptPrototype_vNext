@@ -121,6 +121,7 @@ P3.07 — Operational Filter Chips + Breadcrumbs
 - Context communication: Shared OperationalFilterBreadcrumbs and OperationalFilterChips components consume FilterContextRecord directly so active scope is visible without duplicating filter state.
 - Proof-of-concept UI: Bed Management renders compact breadcrumbs and passive chips near the UniversalFilterBar while preserving existing filters, access selector, KPI cards, insights, operational panels, and routing.
 - Deferred behaviour: Clear/remove chip actions remain deferred until guardrails are specified for hidden, locked, persisted, and access-scoped contexts.
+- Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, future service-stream filters, and P3.03 access-scope enforcement can consume the same multi-select filter state without creating another framework.
 
 
 P2.01 — Prototype Experience Bar
