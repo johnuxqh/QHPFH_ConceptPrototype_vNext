@@ -8,6 +8,7 @@
 @inject KpiFrameworkService KpiFramework
 @inject InsightFrameworkService InsightFramework
 @inject FilterFrameworkService FilterFramework
+@inject FilterVisibilityService FilterVisibility
 
 <WorkspaceShell WorkspaceId="bed-management"
                 Title="Bed Management"
@@ -306,14 +307,23 @@
     private int PageSize = 12;
     private const string AllWards = FilterFrameworkService.AllWardsLabel;
     private bool IsQchAccess => SelectedAccessView == AccessQchBedManager;
+    private FilterVisibilityProfile BedFilterVisibility => IsQchAccess
+        ? FilterVisibility.CreateCustomProfile(
+            showHhsFilter: false,
+            showFacilityFilter: false,
+            showWardFilter: true,
+            showServiceStreamFilter: false,
+            lockHhsFilter: true,
+            lockFacilityFilter: true,
+            allowedHhsValues: [QchHhs],
+            allowedFacilityValues: [QchFacility],
+            summaryLabel: "QCH Bed Manager")
+        : FilterVisibility.GetProfileForScope(FilterAccessScope.Statewide);
     private FilterContextRecord BedFilterContext => FilterFramework.CreateContext(
         BedManagementWorkspaceId,
         BedFilterSelection,
         GetBedManagementWardScope(),
-        canSelectHhs: !IsQchAccess,
-        canSelectFacility: !IsQchAccess,
-        canSelectWard: true,
-        canSelectServiceStream: false);
+        visibilityProfile: BedFilterVisibility);
     private List<BedOverviewRow> FilteredRows => GetScopedBedManagementRows();
     private List<BedOverviewRow> SortedRows => SortAsc ? FilteredRows.OrderBy(GetSortValue).ToList() : FilteredRows.OrderByDescending(GetSortValue).ToList();
     private List<BedOverviewRow> PagedRows => SortedRows.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();

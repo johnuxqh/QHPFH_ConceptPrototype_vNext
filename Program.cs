@@ -30,6 +30,7 @@ builder.Services.AddScoped<KpiCalculationService>();
 builder.Services.AddScoped<KpiFrameworkService>();
 builder.Services.AddScoped<InsightFrameworkService>();
 builder.Services.AddScoped<OperationalPanelFrameworkService>();
+builder.Services.AddScoped<FilterVisibilityService>();
 builder.Services.AddScoped<FilterFrameworkService>();
 builder.Services.AddScoped<PrototypeExperienceStateService>();
 builder.Services.AddScoped<AdaptivePerspectiveEngine>();

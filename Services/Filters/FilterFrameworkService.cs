@@ -1,12 +1,8 @@
 using QHPFH_ConceptPrototype.Data;
 using QHPFH_ConceptPrototype.Models;
 using QHPFH_ConceptPrototype.Models.Filters;
-using QHPFH_ConceptPrototype.Services.Adaptive;
 using QHPFH_ConceptPrototype.Services.Context;
 using QHPFH_ConceptPrototype.Services.Navigation;
-using QHPFH_ConceptPrototype.Services.Context;
-using QHPFH_ConceptPrototype.Services.Navigation;
-using QHPFH_ConceptPrototype.Services.Adaptive;
 
 namespace QHPFH_ConceptPrototype.Services.Filters;
 
@@ -22,7 +18,7 @@ public sealed class FilterFrameworkService
     private readonly PrototypeDataStore _dataStore;
     private readonly ContextAwarenessService _contextAwareness;
     private readonly NavigationStateService _navigationState;
-    private readonly AdaptivePerspectiveEngine _adaptivePerspective;
+    private readonly FilterVisibilityService _filterVisibility;
     private readonly Dictionary<string, FilterSelectionState> _workspaceSelections = new(StringComparer.OrdinalIgnoreCase);
     private FilterSelectionState? _currentSelection;
 
@@ -30,12 +26,12 @@ public sealed class FilterFrameworkService
         PrototypeDataStore dataStore,
         ContextAwarenessService contextAwareness,
         NavigationStateService navigationState,
-        AdaptivePerspectiveEngine adaptivePerspective)
+        FilterVisibilityService filterVisibility)
     {
         _dataStore = dataStore;
         _contextAwareness = contextAwareness;
         _navigationState = navigationState;
-        _adaptivePerspective = adaptivePerspective;
+        _filterVisibility = filterVisibility;
     }
 
     public FilterSelectionState CreateDefaultSelection(string accessView = "statewide") =>
@@ -57,21 +53,31 @@ public sealed class FilterFrameworkService
         IReadOnlyCollection<string>? allowedHhs = null,
         IReadOnlyCollection<string>? allowedFacilities = null,
         IReadOnlyCollection<string>? allowedWards = null,
-        IReadOnlyCollection<string>? serviceStreams = null)
+        IReadOnlyCollection<string>? serviceStreams = null,
+        FilterVisibilityProfile? visibilityProfile = null)
     {
-        var normalizedSelection = NormalizeSelection(selection, workspaceWards, allowedHhs, allowedFacilities, allowedWards, serviceStreams);
+        var effectiveProfile = _filterVisibility.GetCurrentProfile(visibilityProfile);
+        var effectiveAllowedHhs = MergeAllowedValues(allowedHhs, effectiveProfile.AllowedHhsValues);
+        var effectiveAllowedFacilities = MergeAllowedValues(allowedFacilities, effectiveProfile.AllowedFacilityValues);
+        var effectiveAllowedWards = MergeAllowedValues(allowedWards, effectiveProfile.AllowedWardValues);
+        var normalizedSelection = NormalizeSelection(selection, workspaceWards, effectiveAllowedHhs, effectiveAllowedFacilities, effectiveAllowedWards, serviceStreams);
 
         return new FilterContextRecord(
             workspaceId,
             normalizedSelection,
-            BuildHhsOptions(allowedHhs),
-            BuildFacilityOptions(normalizedSelection, allowedFacilities),
-            BuildWardOptions(normalizedSelection, workspaceWards, allowedWards),
+            BuildHhsOptions(effectiveAllowedHhs),
+            BuildFacilityOptions(normalizedSelection, effectiveAllowedFacilities),
+            BuildWardOptions(normalizedSelection, workspaceWards, effectiveAllowedWards),
             BuildServiceStreamOptions(serviceStreams),
-            canSelectHhs ?? _adaptivePerspective.ShouldShowHhsFilter(),
-            canSelectFacility ?? _adaptivePerspective.ShouldShowFacilityFilter(),
-            canSelectWard ?? _adaptivePerspective.ShouldShowWardFilter(),
-            canSelectServiceStream,
+            canSelectHhs ?? effectiveProfile.ShowHhsFilter,
+            canSelectFacility ?? effectiveProfile.ShowFacilityFilter,
+            canSelectWard ?? effectiveProfile.ShowWardFilter,
+            canSelectServiceStream || effectiveProfile.ShowServiceStreamFilter,
+            effectiveProfile.LockHhsFilter,
+            effectiveProfile.LockFacilityFilter,
+            effectiveProfile.LockWardFilter,
+            effectiveProfile.LockServiceStreamFilter,
+            effectiveProfile,
             AllHhsLabel,
             AllFacilitiesLabel,
             AllWardsLabel,
@@ -443,6 +449,29 @@ public sealed class FilterFrameworkService
         <= 2 => string.Join(", ", values.Select(x => ParseWardValue(x).Ward)),
         _ => $"{values.Count} {pluralLabel}"
     };
+
+    private static IReadOnlyCollection<string>? MergeAllowedValues(IReadOnlyCollection<string>? explicitValues, IReadOnlyCollection<string> profileValues)
+    {
+        if ((explicitValues is null || explicitValues.Count == 0) && profileValues.Count == 0)
+        {
+            return null;
+        }
+
+        if (explicitValues is null || explicitValues.Count == 0)
+        {
+            return profileValues;
+        }
+
+        if (profileValues.Count == 0)
+        {
+            return explicitValues;
+        }
+
+        return explicitValues
+            .Where(value => profileValues.Any(profileValue => Matches(profileValue, value)))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
 
     private static bool IsAllowed(string value, IReadOnlyCollection<string>? allowedValues) =>
         allowedValues is null || allowedValues.Count == 0 || allowedValues.Any(x => Matches(x, value));

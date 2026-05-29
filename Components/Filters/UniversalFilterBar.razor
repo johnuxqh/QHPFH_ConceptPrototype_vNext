@@ -12,7 +12,8 @@
                             ValuesChanged="OnHhsValuesChanged"
                             Searchable="@Searchable"
                             MultiSelect="@MultiSelect"
-                            AllLabel="@Context.AllHhsLabel" />
+                            AllLabel="@Context.AllHhsLabel"
+                            Disabled="@Context.IsHhsLocked" />
         }
         @if (Context.CanSelectFacility)
         {
@@ -24,7 +25,8 @@
                             ValuesChanged="OnFacilityValuesChanged"
                             Searchable="@Searchable"
                             MultiSelect="@MultiSelect"
-                            AllLabel="@Context.AllFacilitiesLabel" />
+                            AllLabel="@Context.AllFacilitiesLabel"
+                            Disabled="@Context.IsFacilityLocked" />
         }
         @if (Context.CanSelectWard)
         {
@@ -36,7 +38,8 @@
                             ValuesChanged="OnWardValuesChanged"
                             Searchable="@Searchable"
                             MultiSelect="@MultiSelect"
-                            AllLabel="@Context.AllWardsLabel" />
+                            AllLabel="@Context.AllWardsLabel"
+                            Disabled="@Context.IsWardLocked" />
         }
         @if (Context.CanSelectServiceStream)
         {
@@ -48,7 +51,8 @@
                             ValuesChanged="OnServiceStreamValuesChanged"
                             Searchable="@Searchable"
                             MultiSelect="@MultiSelect"
-                            AllLabel="@Context.AllServiceStreamsLabel" />
+                            AllLabel="@Context.AllServiceStreamsLabel"
+                            Disabled="@Context.IsServiceStreamLocked" />
         }
     </div>
 
