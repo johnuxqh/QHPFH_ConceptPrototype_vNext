@@ -24,6 +24,7 @@ builder.Services.AddScoped<QHPFH_ConceptPrototype.Components.Shells.NavigationSt
 builder.Services.AddScoped<PrototypeDataStore>();
 builder.Services.AddScoped<PrototypeDataService>();
 builder.Services.AddScoped<KpiCalculationService>();
+builder.Services.AddScoped<KpiFrameworkService>();
 builder.Services.AddScoped<PrototypeExperienceStateService>();
 builder.Services.AddScoped<AdaptivePerspectiveEngine>();
 builder.Services.AddScoped<ExperienceModeEngine>();
