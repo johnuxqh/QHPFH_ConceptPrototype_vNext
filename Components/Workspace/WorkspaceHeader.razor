@@ -1,0 +1,136 @@
+@using QHPFH_ConceptPrototype.Models
+@using QHPFH_ConceptPrototype.Services
+@using QHPFH_ConceptPrototype.Services.Adaptive
+@using QHPFH_ConceptPrototype.Services.Context
+@using QHPFH_ConceptPrototype.Services.Experience
+@using QHPFH_ConceptPrototype.Services.Layout
+@using QHPFH_ConceptPrototype.Services.Navigation
+@inject PrototypeExperienceStateService ExperienceState
+@inject AdaptivePerspectiveEngine AdaptivePerspective
+@inject ExperienceModeEngine ExperienceMode
+@inject LayoutVariantEngine LayoutVariant
+@inject ContextAwarenessService ContextAwareness
+@inject NavigationStateService NavigationStateService
+@implements IDisposable
+
+<header class="workspace-header" aria-label="@GetHeaderAriaLabel()">
+    <div class="workspace-header__body">
+        <div class="workspace-header__title-block">
+            <p class="workspace-header__eyebrow">@Eyebrow</p>
+            <h1>@Title</h1>
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <p class="workspace-header__subtitle">@Subtitle</p>
+            }
+        </div>
+
+        <div class="workspace-header__meta" aria-label="Workspace operational context">
+            @if (!string.IsNullOrWhiteSpace(OperationalContext))
+            {
+                <span class="workspace-header__context-chip workspace-header__context-chip--primary">@OperationalContext</span>
+            }
+            <span class="workspace-header__context-chip">@GetLocationSummary()</span>
+            @if (ShowPerspectiveBadge)
+            {
+                <span class="workspace-header__context-chip">@ExperienceState.Current.AccessViewLabel</span>
+            }
+            @if (ShowModeBadge)
+            {
+                <span class="workspace-header__context-chip">@ExperienceMode.GetModeBadgeLabel()</span>
+            }
+            @if (ShowLayoutBadge)
+            {
+                <span class="workspace-header__context-chip">@LayoutVariant.GetVariantLabel()</span>
+            }
+            <span class="workspace-header__context-chip">@AdaptivePerspective.GetWorkflowEmphasis().ToDisplayName()</span>
+        </div>
+
+        @if (HasStatusContent)
+        {
+            <div class="workspace-header__status" aria-label="Workspace status">
+                @if (!string.IsNullOrWhiteSpace(WorkspaceStatus))
+                {
+                    <span class="workspace-header__status-label">Status</span>
+                    <span class="workspace-header__status-value">@WorkspaceStatus</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(PrimaryBadge))
+                {
+                    <span class="workspace-header__badge workspace-header__badge--primary">@PrimaryBadge</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(SecondaryBadge))
+                {
+                    <span class="workspace-header__badge">@SecondaryBadge</span>
+                }
+            </div>
+        }
+
+        @if (EffectiveActions is not null)
+        {
+            <div class="workspace-header__actions">
+                @EffectiveActions
+            </div>
+        }
+    </div>
+
+    @if (Badges is not null || ChildContent is not null)
+    {
+        <div class="workspace-header__supplemental">
+            @Badges
+            @ChildContent
+        </div>
+    }
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Eyebrow { get; set; } = "Operational workspace";
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? OperationalContext { get; set; }
+    [Parameter] public string? WorkspaceStatus { get; set; }
+    [Parameter] public string? PrimaryBadge { get; set; }
+    [Parameter] public string? SecondaryBadge { get; set; }
+    [Parameter] public bool ShowPerspectiveBadge { get; set; } = true;
+    [Parameter] public bool ShowModeBadge { get; set; } = true;
+    [Parameter] public bool ShowLayoutBadge { get; set; } = true;
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+    [Parameter] public RenderFragment? ActionsContent { get; set; }
+    [Parameter] public RenderFragment? Badges { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool HasStatusContent =>
+        !string.IsNullOrWhiteSpace(WorkspaceStatus)
+        || !string.IsNullOrWhiteSpace(PrimaryBadge)
+        || !string.IsNullOrWhiteSpace(SecondaryBadge);
+
+    private RenderFragment? EffectiveActions => ActionsContent ?? HeaderActions;
+
+    protected override void OnInitialized()
+    {
+        ContextAwareness.OnContextChanged += HandleWorkspaceContextChanged;
+        NavigationStateService.OnNavigationStateChanged += HandleWorkspaceContextChanged;
+        AdaptivePerspective.OnChange += HandleWorkspaceContextChanged;
+        ExperienceMode.OnChange += HandleWorkspaceContextChanged;
+        LayoutVariant.OnChange += HandleWorkspaceContextChanged;
+    }
+
+    private string GetHeaderAriaLabel() => $"{Title} workspace header";
+
+    private string GetLocationSummary()
+    {
+        var locationSummary = ContextAwareness.GetCurrentLocation().SummaryText;
+        return string.IsNullOrWhiteSpace(locationSummary)
+            ? NavigationStateService.GetCurrentWorkspaceLabel()
+            : locationSummary;
+    }
+
+    private void HandleWorkspaceContextChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ContextAwareness.OnContextChanged -= HandleWorkspaceContextChanged;
+        NavigationStateService.OnNavigationStateChanged -= HandleWorkspaceContextChanged;
+        AdaptivePerspective.OnChange -= HandleWorkspaceContextChanged;
+        ExperienceMode.OnChange -= HandleWorkspaceContextChanged;
+        LayoutVariant.OnChange -= HandleWorkspaceContextChanged;
+    }
+}
