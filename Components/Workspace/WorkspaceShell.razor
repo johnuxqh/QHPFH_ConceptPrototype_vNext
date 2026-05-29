@@ -93,6 +93,7 @@
         return string.IsNullOrWhiteSpace(OperationalContext)
             ? contextSummary
             : $"{OperationalContext} · {contextSummary}";
+        LayoutVariant.OnChange += HandleShellContextChanged;
     }
 
     private string GetWorkspaceClasses()
@@ -157,5 +158,6 @@
     {
         ContextAwareness.OnContextChanged -= HandleShellContextChanged;
         WorkspaceDensity.OnChange -= HandleShellContextChanged;
+        LayoutVariant.OnChange -= HandleShellContextChanged;
     }
 }

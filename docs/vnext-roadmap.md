@@ -137,3 +137,9 @@ P2.10 — Workspace Density Modes
 - Outcome: Workspace Density Modes created to support comfortable, balanced, and compact operational workspace density without duplicating pages.
 - Proof-of-concept UI: WorkspaceShell applies shared density classes and the Prototype Experience Bar surfaces the interpreted density profile.
 - Deferred UI wiring: KPI cards, tables, panels, slideouts, workflow boards, and operational action areas can progressively consume the shared density hooks in later prompts.
+- Proof-of-concept UI: Concept navigation supports a compact collapsed pill that temporarily reveals primary/secondary navigation options, routes selections correctly, and collapses back after selection.
+- Deferred UI wiring: Standard shell menu route activation, adaptive navigation visibility, and full shared navigation rendering remain deferred for later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.

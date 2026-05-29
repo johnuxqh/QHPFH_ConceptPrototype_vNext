@@ -82,6 +82,7 @@
     {
         ContextAwareness.OnContextChanged += HandleExperienceStateChanged;
         WorkspaceDensity.OnChange += HandleExperienceStateChanged;
+        LayoutVariant.OnChange += HandleExperienceStateChanged;
     }
 
     private void OnAccessViewChanged(ChangeEventArgs args)
@@ -114,5 +115,8 @@
     {
         ContextAwareness.OnContextChanged -= HandleExperienceStateChanged;
         WorkspaceDensity.OnChange -= HandleExperienceStateChanged;
+        LayoutVariant.OnChange -= HandleExperienceStateChanged;
+        ExperienceMode.OnChange -= HandleExperienceStateChanged;
+        AdaptivePerspective.OnChange -= HandleExperienceStateChanged;
     }
 }
