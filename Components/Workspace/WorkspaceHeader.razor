@@ -1,0 +1,54 @@
+@using QHPFH_ConceptPrototype.Models
+@using QHPFH_ConceptPrototype.Services
+@using QHPFH_ConceptPrototype.Services.Adaptive
+@using QHPFH_ConceptPrototype.Services.Experience
+@using QHPFH_ConceptPrototype.Services.Layout
+@inject PrototypeExperienceStateService ExperienceState
+@inject AdaptivePerspectiveEngine AdaptivePerspective
+@inject ExperienceModeEngine ExperienceMode
+@inject LayoutVariantEngine LayoutVariant
+
+<header class="workspace-header">
+    <div class="workspace-header__main">
+        <div>
+            <p class="workspace-header__eyebrow">Operational workspace</p>
+            <h1>@Title</h1>
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <p class="workspace-header__subtitle">@Subtitle</p>
+            }
+        </div>
+        @if (HeaderActions is not null)
+        {
+            <div class="workspace-header__actions">
+                @HeaderActions
+            </div>
+        }
+    </div>
+
+    <div class="workspace-header__context" aria-label="Workspace adaptive context">
+        @if (!string.IsNullOrWhiteSpace(OperationalContext))
+        {
+            <span>@OperationalContext</span>
+        }
+        <span>@ExperienceState.Current.AccessViewLabel</span>
+        <span>@ExperienceMode.GetModeBadgeLabel()</span>
+        <span>@LayoutVariant.GetVariantLabel()</span>
+        <span>@AdaptivePerspective.GetWorkflowEmphasis().ToDisplayName()</span>
+    </div>
+
+    @if (Badges is not null)
+    {
+        <div class="workspace-header__badges">
+            @Badges
+        </div>
+    }
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? OperationalContext { get; set; }
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+    [Parameter] public RenderFragment? Badges { get; set; }
+}
