@@ -42,16 +42,16 @@
     @if (IsCompact && _isCollapsedMenuOpen)
     {
         <div class="collapsed-nav-menu" role="menu" aria-label="Collapsed navigation options">
-            <button type="button" class="@GetCollapsedHomeClass()" @onclick='() => SelectPrimaryFromCollapsed("home")'>Home</button>
+            <button type="button" class="collapsed-nav-item @GetSelectedClass("home")" @onclick='() => SelectPrimaryFromCollapsed("home")'>Home</button>
             @foreach (var item in PrimaryItems)
             {
-                <button type="button" class="@GetCollapsedPrimaryClass(item.Key)" @onclick="() => SelectPrimaryFromCollapsed(item.Key)">@item.Label</button>
+                <button type="button" class="collapsed-nav-item @(item.Key == _activePrimaryKey ? "selected" : null)" @onclick="() => SelectPrimaryFromCollapsed(item.Key)">@item.Label</button>
                 @if (item.Key == _activePrimaryKey && item.SubItems.Count > 0)
                 {
                     <div class="collapsed-sub-nav" role="group" aria-label="@item.Label secondary navigation">
                         @foreach (var subItem in item.SubItems)
                         {
-                            <button type="button" class="@GetCollapsedSecondaryClass(subItem)" @onclick="() => SelectSubItemFromCollapsed(subItem)">@subItem</button>
+                            <button type="button" class="collapsed-sub-nav-item @(subItem == _activeSubItem ? "selected" : null)" @onclick="() => SelectSubItemFromCollapsed(subItem)">@subItem</button>
                         }
                     </div>
                 }
@@ -110,6 +110,8 @@
     {
         var subItem = GetSubItemsForKey(key).FirstOrDefault() ?? string.Empty;
         NavigateForSelection(key, subItem, collapseAfterSelection: true);
+        NavigationStateService.OnNavigationStateChanged += HandleNavigationStateChanged;
+        SyncSelectionFromNavigationState();
     }
 
     private void SelectSubItemFromCollapsed(string subItem)
