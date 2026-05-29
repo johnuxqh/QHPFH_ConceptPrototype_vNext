@@ -1,0 +1,153 @@
+@using QHPFH_ConceptPrototype.Models
+@using QHPFH_ConceptPrototype.Services.Adaptive
+@using QHPFH_ConceptPrototype.Services.Experience
+@using QHPFH_ConceptPrototype.Services.Layout
+@using QHPFH_ConceptPrototype.Services.Context
+@using QHPFH_ConceptPrototype.Services.Navigation
+@inject AdaptivePerspectiveEngine AdaptivePerspective
+@inject ExperienceModeEngine ExperienceMode
+@inject LayoutVariantEngine LayoutVariant
+@inject ContextAwarenessService ContextAwareness
+@inject NavigationStateService NavigationStateService
+@implements IDisposable
+
+<section class="@GetWorkspaceClasses()" data-workspace-id="@WorkspaceId">
+    <WorkspaceHeader Title="@Title"
+                     Subtitle="@Subtitle"
+                     OperationalContext="@GetOperationalContextSummary()"
+                     WorkspaceStatus="@WorkspaceStatus"
+                     PrimaryBadge="@PrimaryBadge"
+                     SecondaryBadge="@SecondaryBadge"
+                     ShowPerspectiveBadge="@ShowPerspectiveBadge"
+                     ShowModeBadge="@ShowModeBadge"
+                     ShowLayoutBadge="@ShowLayoutBadge"
+                     HeaderActions="@HeaderActions"
+                     Badges="@Badges" />
+
+    @if (ToolbarContent is not null)
+    {
+        <WorkspaceToolbar>
+            @ToolbarContent
+        </WorkspaceToolbar>
+    }
+
+    @if (InsightsContent is not null)
+    {
+        <WorkspaceInsightsRegion>
+            @InsightsContent
+        </WorkspaceInsightsRegion>
+    }
+
+    @if (OperationalContent is not null)
+    {
+        <WorkspaceOperationalRegion>
+            @OperationalContent
+        </WorkspaceOperationalRegion>
+    }
+
+    <WorkspaceContent>
+        @ChildContent
+    </WorkspaceContent>
+
+    @if (SideContent is not null)
+    {
+        <aside class="workspace-side-region" aria-label="Workspace side panel region">
+            @SideContent
+        </aside>
+    }
+</section>
+
+@code {
+    [Parameter] public string WorkspaceId { get; set; } = "workspace";
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? OperationalContext { get; set; }
+    [Parameter] public string? WorkspaceStatus { get; set; }
+    [Parameter] public string? PrimaryBadge { get; set; }
+    [Parameter] public string? SecondaryBadge { get; set; }
+    [Parameter] public bool ShowPerspectiveBadge { get; set; } = true;
+    [Parameter] public bool ShowModeBadge { get; set; } = true;
+    [Parameter] public bool ShowLayoutBadge { get; set; } = true;
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+    [Parameter] public RenderFragment? Badges { get; set; }
+    [Parameter] public RenderFragment? ToolbarContent { get; set; }
+    [Parameter] public RenderFragment? InsightsContent { get; set; }
+    [Parameter] public RenderFragment? OperationalContent { get; set; }
+    [Parameter] public RenderFragment? SideContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ContextAwareness.OnContextChanged += HandleShellContextChanged;
+        NavigationStateService.SetCurrentWorkspace(WorkspaceId);
+        ContextAwareness.SetCurrentWorkspace(Title);
+        ContextAwareness.SetCurrentPage(Title);
+    }
+
+    private string GetOperationalContextSummary()
+    {
+        var contextSummary = ContextAwareness.GetCurrentLocation().SummaryText;
+        return string.IsNullOrWhiteSpace(OperationalContext)
+            ? contextSummary
+            : $"{OperationalContext} · {contextSummary}";
+    }
+
+    private string GetWorkspaceClasses()
+    {
+        return string.Join(
+            " ",
+            new[]
+            {
+                "workspace-shell",
+                $"workspace-{WorkspaceId}",
+                GetPerspectiveClass(),
+                GetExperienceClass(),
+                GetLayoutClass(),
+                LayoutVariant.GetPanelVariantClass(),
+                LayoutVariant.GetDensityClass(),
+                ExperienceMode.GetDensityMode() switch
+                {
+                    ExperienceDensityMode.Light => "workspace-density-light",
+                    ExperienceDensityMode.Dense => "workspace-density-dense",
+                    _ => "workspace-density-balanced"
+                }
+            }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
+
+    private string GetPerspectiveClass()
+    {
+        return AdaptivePerspective.GetCurrentPerspective()?.PerspectiveType switch
+        {
+            UserPerspectiveType.Executive => "perspective-statewide",
+            UserPerspectiveType.HHSCoordinator => "perspective-hhs-executive",
+            UserPerspectiveType.BedManager or UserPerspectiveType.FacilityCoordinator or UserPerspectiveType.OperationsCentre => "perspective-facility-operations",
+            UserPerspectiveType.WardClinician or UserPerspectiveType.NUM => "perspective-ward-clinical",
+            UserPerspectiveType.AllocationCoordinator => "perspective-allocation-centre",
+            UserPerspectiveType.DelayedDischargeCoordinator => "perspective-delayed-discharge",
+            _ => "perspective-shared-operations"
+        };
+    }
+
+    private string GetExperienceClass() => ExperienceMode.GetCurrentMode() switch
+    {
+        PrototypeExperienceMode.V1AwarenessInsights => "experience-v1",
+        PrototypeExperienceMode.V2CoordinatedOperations => "experience-v2",
+        PrototypeExperienceMode.V3OperationalWorkflow => "experience-v3",
+        _ => "experience-v2"
+    };
+
+    private string GetLayoutClass() => LayoutVariant.GetCurrentVariant() switch
+    {
+        PrototypeLayoutVariant.VariantAStackedPanels => "layout-stacked",
+        PrototypeLayoutVariant.VariantBSwappablePanels => "layout-swappable",
+        PrototypeLayoutVariant.VariantCCompactOperational => "layout-compact",
+        _ => "layout-stacked"
+    };
+
+    private void HandleShellContextChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ContextAwareness.OnContextChanged -= HandleShellContextChanged;
+    }
+}
