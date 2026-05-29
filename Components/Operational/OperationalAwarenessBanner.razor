@@ -1,0 +1,86 @@
+@using QHPFH_ConceptPrototype.Models
+@using QHPFH_ConceptPrototype.Models.Operational
+
+<article class="@GetBannerClass()" role="@GetAriaRole()" aria-label="@GetAriaLabel()">
+    <div class="operational-awareness-banner__severity">
+        <span class="operational-awareness-banner__severity-label">@GetSeverityLabel()</span>
+        @if (Banner.CapacityStatus is not null)
+        {
+            <span class="operational-awareness-banner__tier">@GetCapacityLabel()</span>
+        }
+    </div>
+
+    <div class="operational-awareness-banner__content">
+        <div class="operational-awareness-banner__title-row">
+            <h3>@Banner.Title</h3>
+            <span>@Banner.SourceType</span>
+        </div>
+        <p>@Banner.Message</p>
+        <div class="operational-awareness-banner__meta">
+            <span>@Banner.Scope</span>
+            <span>@Banner.AffectedArea</span>
+            @if (Banner.RequiresAcknowledgement)
+            {
+                <span>Action/acknowledgement required</span>
+            }
+            @if (Banner.StartsAtUtc is not null)
+            {
+                <span>From @Banner.StartsAtUtc.Value.ToLocalTime().ToString("dd MMM HH:mm")</span>
+            }
+            @if (Banner.EndsAtUtc is not null)
+            {
+                <span>Until @Banner.EndsAtUtc.Value.ToLocalTime().ToString("dd MMM HH:mm")</span>
+            }
+        </div>
+    </div>
+
+    <div class="operational-awareness-banner__actions">
+        @if (Banner.RequiresAcknowledgement)
+        {
+            <span class="operational-awareness-banner__passive-action">Review in workflow</span>
+        }
+        @if (Banner.IsDismissible)
+        {
+            <button type="button" class="operational-awareness-banner__dismiss" @onclick="() => OnDismiss.InvokeAsync(Banner.Id)">Dismiss</button>
+        }
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public OperationalBannerViewModel Banner { get; set; } = default!;
+    [Parameter] public EventCallback<string> OnDismiss { get; set; }
+
+    private string GetBannerClass() =>
+        $"operational-awareness-banner operational-awareness-banner--{Banner.Severity.ToString().ToLowerInvariant()} {GetCapacityClass()}".Trim();
+
+    private string GetCapacityClass() => Banner.CapacityStatus switch
+    {
+        CapacityStatus.Tier1 => "operational-awareness-banner--tier1",
+        CapacityStatus.Tier2 => "operational-awareness-banner--tier2",
+        CapacityStatus.Tier3 => "operational-awareness-banner--tier3",
+        CapacityStatus.IncidentManagement => "operational-awareness-banner--incident",
+        _ => string.Empty
+    };
+
+    private string GetSeverityLabel() => Banner.Severity switch
+    {
+        OperationalEventSeverity.Info => "Info",
+        OperationalEventSeverity.Moderate => "Moderate",
+        OperationalEventSeverity.High => "High",
+        OperationalEventSeverity.Critical => "Critical",
+        _ => Banner.Severity.ToString()
+    };
+
+    private string GetCapacityLabel() => Banner.CapacityStatus switch
+    {
+        CapacityStatus.Tier1 => "Tier 1 · BAU",
+        CapacityStatus.Tier2 => "Tier 2 · Amber",
+        CapacityStatus.Tier3 => "Tier 3 · Critical",
+        CapacityStatus.IncidentManagement => "Incident Management",
+        _ => Banner.CapacityStatus?.ToString() ?? string.Empty
+    };
+
+    private string GetAriaRole() => Banner.IsCritical ? "alert" : "status";
+
+    private string GetAriaLabel() => $"{GetSeverityLabel()} operational awareness banner: {Banner.Title}";
+}
