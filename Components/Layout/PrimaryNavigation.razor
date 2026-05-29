@@ -110,6 +110,8 @@
     {
         var subItem = GetSubItemsForKey(key).FirstOrDefault() ?? string.Empty;
         NavigateForSelection(key, subItem, collapseAfterSelection: true);
+        NavigationStateService.OnNavigationStateChanged += HandleNavigationStateChanged;
+        SyncSelectionFromNavigationState();
     }
 
     private void SelectSubItemFromCollapsed(string subItem)

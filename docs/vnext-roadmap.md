@@ -130,3 +130,9 @@ P2.09 — Shared Workspace Header Pattern
 - Outcome: Shared Workspace Header pattern created for consistent operational workspace title, context, perspective, mode, layout, and status presentation.
 - Proof-of-concept UI: Bed Management passes workspace status and badges through WorkspaceShell into the shared header while preserving existing page content.
 - Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, and future orchestration workspaces can adopt the shared header in later prompts without route or content rewrites.
+- Proof-of-concept UI: Concept navigation supports a compact collapsed pill that temporarily reveals primary/secondary navigation options, routes selections correctly, and collapses back after selection.
+- Deferred UI wiring: Standard shell menu route activation, adaptive navigation visibility, and full shared navigation rendering remain deferred for later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.
