@@ -1,0 +1,39 @@
+@using QHPFH_ConceptPrototype.Models.Panels
+
+<header class="operational-panel-header">
+    <div class="operational-panel-title-block">
+        <p class="operational-panel-eyebrow">@GetPanelTypeLabel()</p>
+        <h3>@Title</h3>
+        @if (!string.IsNullOrWhiteSpace(Subtitle))
+        {
+            <p class="operational-panel-subtitle">@Subtitle</p>
+        }
+    </div>
+    <div class="operational-panel-header-meta">
+        @if (!string.IsNullOrWhiteSpace(StatusBadge))
+        {
+            <span class="operational-panel-status">@StatusBadge</span>
+        }
+        @if (ActionsContent is not null)
+        {
+            <div class="operational-panel-actions">@ActionsContent</div>
+        }
+    </div>
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? StatusBadge { get; set; }
+    [Parameter] public OperationalPanelType PanelType { get; set; } = OperationalPanelType.Custom;
+    [Parameter] public RenderFragment? ActionsContent { get; set; }
+
+    private string GetPanelTypeLabel() => PanelType switch
+    {
+        OperationalPanelType.SituationalSummary => "Situational summary",
+        OperationalPanelType.ActionableInsights => "Actionable insights",
+        OperationalPanelType.OperationalReview => "Operational review",
+        OperationalPanelType.WorkflowQueue => "Workflow queue",
+        _ => PanelType.ToString()
+    };
+}

@@ -1,0 +1,61 @@
+@using QHPFH_ConceptPrototype.Models.Panels
+@using QHPFH_ConceptPrototype.Services.Panels
+@inject OperationalPanelFrameworkService PanelFramework
+
+<section class="@GetPanelClass()" aria-label="@Title">
+    <OperationalPanelHeader Title="@Title"
+                            Subtitle="@Subtitle"
+                            StatusBadge="@StatusBadge"
+                            PanelType="@PanelType"
+                            ActionsContent="@HeaderActions" />
+
+    @if (ToolbarContent is not null)
+    {
+        <div class="operational-panel-toolbar">@ToolbarContent</div>
+    }
+
+    <div class="operational-panel-body">
+        @if (IsLoading)
+        {
+            <div class="operational-panel-state" role="status">@LoadingMessage</div>
+        }
+        else if (IsEmpty)
+        {
+            <div class="operational-panel-state empty" role="status">@EmptyMessage</div>
+        }
+        else
+        {
+            @ChildContent
+        }
+    </div>
+
+    @if (FooterContent is not null)
+    {
+        <footer class="operational-panel-footer">@FooterContent</footer>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? StatusBadge { get; set; }
+    [Parameter] public OperationalPanelType PanelType { get; set; } = OperationalPanelType.Custom;
+    [Parameter] public OperationalPanelPriority Priority { get; set; } = OperationalPanelPriority.Standard;
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public bool IsEmpty { get; set; }
+    [Parameter] public string LoadingMessage { get; set; } = "Loading operational panel";
+    [Parameter] public string EmptyMessage { get; set; } = "No operational content to show";
+    [Parameter] public string? AdditionalClasses { get; set; }
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+    [Parameter] public RenderFragment? ToolbarContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    private string GetPanelClass() => string.Join(
+        " ",
+        new[]
+        {
+            PanelFramework.GetPanelClass(PanelType, Priority),
+            AdditionalClasses
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+}

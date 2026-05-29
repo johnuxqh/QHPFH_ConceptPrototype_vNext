@@ -125,10 +125,17 @@
                          OnTabChanged="OnQchActivityTabChanged"
                          CardAdditionalClasses="bm-kpi-card" />
         </section>
-        <InsightCardGrid Insights="@ActiveInsights"
-                         ActiveInsightId="@ActiveInsightFilter"
-                         OnInsightSelected="ApplyInsightFilter"
-                         CardAdditionalClasses="bm-insight-card" />
+        <OperationalPanel Title="Actionable Insights"
+                          Subtitle="Prioritised ward signals explaining why operational attention is needed"
+                          StatusBadge="@($"{ActiveInsights.Count} active")"
+                          PanelType="OperationalPanelType.ActionableInsights"
+                          Priority="@GetActionableInsightsPanelPriority()"
+                          AdditionalClasses="bm-actionable-insights-panel">
+            <InsightCardGrid Insights="@ActiveInsights"
+                             ActiveInsightId="@ActiveInsightFilter"
+                             OnInsightSelected="ApplyInsightFilter"
+                             CardAdditionalClasses="bm-insight-card" />
+        </OperationalPanel>
     }
 
     @if (!string.IsNullOrWhiteSpace(ActiveInsightTitle))
@@ -376,6 +383,13 @@
     private void ApplyInsightFilter(string filterKey) => ActiveInsightFilter = ActiveInsightFilter == filterKey ? string.Empty : filterKey;
     private void ClearInsightFilter() => ActiveInsightFilter = string.Empty;
     private bool IsInsightActive(string insightKey) => ActiveInsightFilter == insightKey;
+    private OperationalPanelPriority GetActionableInsightsPanelPriority()
+    {
+        if (ActiveInsights.Any(x => x.Severity == InsightSeverity.Critical)) return OperationalPanelPriority.Critical;
+        if (ActiveInsights.Any(x => x.Severity == InsightSeverity.High)) return OperationalPanelPriority.High;
+        if (ActiveInsights.Any(x => x.Severity == InsightSeverity.Elevated)) return OperationalPanelPriority.Attention;
+        return ActiveInsights.Count > 0 ? OperationalPanelPriority.Watch : OperationalPanelPriority.Standard;
+    }
 
     private IReadOnlyList<InsightRecord> ActiveInsights => BuildSituationalInsights(GetBaseScopedRows().ToList());
     private IReadOnlyList<InsightRecord> BuildSituationalInsights(List<BedOverviewRow> rows)
@@ -413,48 +427,6 @@
             affectedCount: matchedRows.Count,
             relatedEntityIds: matchedRows.Select(x => x.Ward).ToHashSet());
     }
-
-    private IReadOnlyList<KpiCardRecord> GetBedManagementKpiCards() =>
-        (IsQchAccess ? QchKpis : Kpis)
-            .Select(ToKpiCardRecord)
-            .ToList();
-
-    private KpiCardRecord ToKpiCardRecord(KpiItem kpi) =>
-        KpiFramework.CreateCard(
-            id: $"bed-management-{kpi.Title.ToLowerInvariant().Replace(" ", "-").Replace("/", "-")}",
-            title: kpi.Title,
-            value: kpi.Value,
-            subtitle: kpi.Subtitle,
-            iconName: kpi.IconName,
-            colorClass: kpi.ColorClass,
-            infoText: kpi.InfoText,
-            trend: ResolveKpiTrend(kpi),
-            trendLabel: ResolveKpiTrendLabel(kpi),
-            context: IsQchAccess ? QchFacility : SelectedFacility,
-            lastUpdated: DateTime.Now,
-            actionLabel: kpi.TileType == "activity" ? "Review activity" : null,
-            showInfoIcon: kpi.ShowInfoIcon,
-            tileType: kpi.TileType,
-            breakdownItems: kpi.BreakdownItems.Select(item => new KpiBreakdownRecord(item.Label, item.Value)).ToList(),
-            tabs: kpi.Tabs);
-
-    private static KpiTrendDirection ResolveKpiTrend(KpiItem kpi) => kpi.Title switch
-    {
-        "Capacity Delta (24h)" => kpi.Value.StartsWith("+", StringComparison.Ordinal) ? KpiTrendDirection.Up : KpiTrendDirection.Down,
-        "Operational Pressure" => KpiTrendDirection.Up,
-        "Beds Returning" or "Beds Pending" => KpiTrendDirection.Down,
-        "Activity" => KpiTrendDirection.Stable,
-        _ => KpiTrendDirection.Unknown
-    };
-
-    private static string ResolveKpiTrendLabel(KpiItem kpi) => kpi.Title switch
-    {
-        "Capacity Delta (24h)" => kpi.Value,
-        "Operational Pressure" => "Pressure watch",
-        "Beds Returning" or "Beds Pending" => "Operational recovery",
-        "Activity" => "Activity view",
-        _ => "Current snapshot"
-    };
 
 
 
