@@ -84,6 +84,9 @@
         </div>
     </UniversalFilterBar>
 
+    <OperationalFilterBreadcrumbs Context="@BedFilterContext" />
+    <OperationalFilterChips Context="@BedFilterContext" />
+
     @if (SelectedVersion == "V2")
     {
         <section class="bm-v2-operational-shell">
@@ -422,6 +425,7 @@
             ? BedFilterSelection with
             {
                 SelectedHhsValues = [QchHhs],
+                SelectedFacilityValues = [QchFacility]
                 SelectedFacilityValues = [QchFacility],
                 SelectedWardValues = Array.Empty<string>()
             }
