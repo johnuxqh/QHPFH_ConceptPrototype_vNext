@@ -720,3 +720,9 @@ Prefer small, safe replacements over broad dataset rewrites unless explicitly re
 
 - `Data/DemoDataSeed` remains the canonical shared seed entry point for prototype data reset.
 - Future demo seed additions should flow through the shared seed structure, and page-local seed stores should be avoided.
+
+## Operational Rules Engine Guidance
+
+- The shared operational rules engine is prototype operational coordination logic only; it is not production clinical decision support.
+- Future pages should use shared operational rules where practical instead of adding duplicated page-local rule logic.
+- Rule outputs should remain explainable, deterministic, and suitable for workshop/demo scenarios without implying clinical diagnosis or production safety automation.

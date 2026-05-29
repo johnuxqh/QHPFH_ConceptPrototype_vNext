@@ -108,3 +108,7 @@ P2.06 — Persistent Context Awareness Layer
 - Outcome: Persistent Context Awareness Layer created to maintain shared operational context, workspace context, and adaptive platform state across the prototype session.
 - Proof-of-concept UI: Prototype Experience Bar and Workspace Shell now expose a subtle session context summary while preserving existing page routes and workflows.
 - Deferred UI wiring: HHS/facility/ward filters, active patient/bed/allocation workflows, and cross-workspace operational memory will progressively consume the context service in later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.
