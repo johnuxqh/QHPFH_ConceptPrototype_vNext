@@ -14,8 +14,8 @@
   --pfh-surface-2: #f4f7fb;
   --pfh-text-on-solid: #ffffff;
   --pfh-header-height: 64px;
-  --pfh-primary-nav-height: 40px;
-  --pfh-secondary-nav-height: 34px;
+  --pfh-primary-nav-height: 25px;
+  --pfh-secondary-nav-height: 25px;
   --pfh-utility-height: 32px;
 }
 * { box-sizing: border-box; }
@@ -1001,4 +1001,76 @@ button, input { font: inherit; }
   .prototype-experience-bar__context-summary {
     white-space: normal;
   }
+}
+
+.home-link:not(.selected):hover,
+.nav-link:not(.selected):hover,
+.sub-nav-link:not(.selected):hover,
+.collapsed-nav-item:not(.selected):hover,
+.collapsed-sub-nav-item:not(.selected):hover {
+  background: var(--pfh-active-shell);
+  color: var(--pfh-primary-blue);
+}
+.theme-dark .home-link:not(.selected):hover,
+.theme-dark .nav-link:not(.selected):hover,
+.theme-dark .sub-nav-link:not(.selected):hover,
+.theme-dark .collapsed-nav-item:not(.selected):hover,
+.theme-dark .collapsed-sub-nav-item:not(.selected):hover {
+  background: rgba(64,122,189,.3);
+  color: #82c9ff;
+}
+.primary-nav { position: relative; }
+.collapsed-nav-menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 15rem;
+  max-width: min(24rem, calc(100vw - 2rem));
+  border: 1px solid var(--pfh-border-default);
+  background: var(--pfh-menu-surface);
+  box-shadow: 0 8px 20px rgba(0,0,0,.18);
+  z-index: 150;
+  padding: 0.25rem;
+}
+.theme-dark .collapsed-nav-menu {
+  background: #101a2e;
+  border-color: #365172;
+}
+.collapsed-nav-item,
+.collapsed-sub-nav-item {
+  width: 100%;
+  border: 0;
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--pfh-text-primary);
+  display: flex;
+  align-items: center;
+  min-height: 1.65rem;
+  padding: 0.18rem 0.5rem;
+  text-align: left;
+  font-size: clamp(0.68rem, 0.7vw, 0.8rem);
+}
+.theme-dark .collapsed-nav-item,
+.theme-dark .collapsed-sub-nav-item {
+  color: #e5ecf7;
+}
+.collapsed-nav-item.selected,
+.collapsed-sub-nav-item.selected {
+  color: var(--pfh-primary-blue);
+  background: var(--pfh-active-shell);
+  font-weight: 700;
+}
+.theme-dark .collapsed-nav-item.selected,
+.theme-dark .collapsed-sub-nav-item.selected {
+  color: #82c9ff;
+  background: rgba(64,122,189,.42);
+}
+.collapsed-sub-nav {
+  border-left: 2px solid var(--pfh-border-default);
+  margin: 0.1rem 0 0.25rem 0.55rem;
+  padding-left: 0.35rem;
+}
+.theme-dark .collapsed-sub-nav { border-left-color: #365172; }
+.app-shell--concept-nav-compact .primary-nav {
+  margin: 0;
 }

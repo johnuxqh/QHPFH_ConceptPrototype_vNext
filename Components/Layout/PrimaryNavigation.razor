@@ -1,10 +1,17 @@
 @using QHPFH_ConceptPrototype.Services.Navigation
 @implements IDisposable
+
 <nav class="primary-nav" aria-label="Primary">
     <div class="primary-nav-track" role="menubar">
         @if (IsCompact)
         {
-            <button type="button" class="nav-link selected compact-active"><span>@GetActivePrimaryLabel()</span></button>
+            <button type="button"
+                    class="nav-link selected compact-active"
+                    aria-expanded="@_isCollapsedMenuOpen"
+                    @onclick="ToggleCollapsedMenu">
+                <span>@GetActivePrimaryLabel()</span>
+                <MudIcon Icon="@(_isCollapsedMenuOpen ? Icons.Material.Outlined.ExpandLess : Icons.Material.Outlined.ExpandMore)" Size="Size.Small" Class="nav-caret" />
+            </button>
         }
         else
         {
@@ -32,6 +39,26 @@
             <MudIcon Icon="@(IsCompact ? Icons.Material.Outlined.LastPage : Icons.Material.Outlined.FirstPage)" Size="Size.Small" />
         </button>
     </div>
+
+    @if (IsCompact && _isCollapsedMenuOpen)
+    {
+        <div class="collapsed-nav-menu" role="menu" aria-label="Collapsed navigation options">
+            <button type="button" class="collapsed-nav-item @GetSelectedClass("home")" @onclick='() => SelectPrimaryFromCollapsed("home")'>Home</button>
+            @foreach (var item in PrimaryItems)
+            {
+                <button type="button" class="collapsed-nav-item @(item.Key == _activePrimaryKey ? "selected" : null)" @onclick="() => SelectPrimaryFromCollapsed(item.Key)">@item.Label</button>
+                @if (item.Key == _activePrimaryKey && item.SubItems.Count > 0)
+                {
+                    <div class="collapsed-sub-nav" role="group" aria-label="@item.Label secondary navigation">
+                        @foreach (var subItem in item.SubItems)
+                        {
+                            <button type="button" class="collapsed-sub-nav-item @(subItem == _activeSubItem ? "selected" : null)" @onclick="() => SelectSubItemFromCollapsed(subItem)">@subItem</button>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    }
 
     @if (!IsCompact && CurrentSubItems.Count > 0)
     {
@@ -62,6 +89,7 @@
 
     private string _activePrimaryKey = "home";
     private string _activeSubItem = string.Empty;
+    private bool _isCollapsedMenuOpen;
 
     private IReadOnlyList<string> CurrentSubItems => GetSubItemsForKey(_activePrimaryKey);
 
@@ -71,12 +99,34 @@
 
     private void SelectPrimary(string key)
     {
-        _activePrimaryKey = key;
-        _activeSubItem = GetSubItemsForKey(_activePrimaryKey).FirstOrDefault() ?? string.Empty;
-        NavigationStateService.SetPrimaryNav(_activePrimaryKey);
-        NavigationStateService.SetSecondaryNav(_activeSubItem);
-        NavigateForSelection(_activePrimaryKey, _activeSubItem);
+        var subItem = GetSubItemsForKey(key).FirstOrDefault() ?? string.Empty;
+        NavigateForSelection(key, subItem, collapseAfterSelection: false);
     }
+
+    private void SelectSubItem(string subItem)
+    {
+        NavigateForSelection(_activePrimaryKey, subItem, collapseAfterSelection: false);
+    }
+
+    private void SelectPrimaryFromCollapsed(string key)
+    {
+        var subItem = GetSubItemsForKey(key).FirstOrDefault() ?? string.Empty;
+        NavigateForSelection(key, subItem, collapseAfterSelection: true);
+    private string GetActivePrimaryLabel() =>
+        PrimaryItems.FirstOrDefault(x => x.Key == _activePrimaryKey)?.Label ?? "Home";
+
+    protected override void OnInitialized()
+    {
+        NavigationStateService.OnNavigationStateChanged += HandleNavigationStateChanged;
+        SyncSelectionFromNavigationState();
+    }
+
+    private void SelectSubItemFromCollapsed(string subItem)
+    {
+        NavigateForSelection(_activePrimaryKey, subItem, collapseAfterSelection: true);
+    }
+
+    private void ToggleCollapsedMenu() => _isCollapsedMenuOpen = !_isCollapsedMenuOpen;
 
     private string GetSelectedClass(string key) => key == _activePrimaryKey ? "selected" : string.Empty;
 
@@ -87,14 +137,6 @@
     {
         NavigationStateService.OnNavigationStateChanged += HandleNavigationStateChanged;
         SyncSelectionFromNavigationState();
-    }
-
-    private void SelectSubItem(string subItem)
-    {
-        _activeSubItem = subItem;
-        NavigationStateService.SetPrimaryNav(_activePrimaryKey);
-        NavigationStateService.SetSecondaryNav(_activeSubItem);
-        NavigateForSelection(_activePrimaryKey, _activeSubItem);
     }
 
     private IReadOnlyList<string> GetSubItemsForKey(string key) =>
@@ -113,9 +155,28 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void NavigateForSelection(string primaryKey, string subItem)
+    private void NavigateForSelection(string primaryKey, string subItem, bool collapseAfterSelection)
     {
         var route = NavigationStateService.ResolveRoute(primaryKey, subItem);
+        if (route is null)
+        {
+            _activePrimaryKey = primaryKey;
+            _activeSubItem = subItem;
+            NavigationStateService.SetPrimaryNav(_activePrimaryKey);
+            NavigationStateService.SetSecondaryNav(_activeSubItem);
+            return;
+        }
+
+        _activePrimaryKey = primaryKey;
+        _activeSubItem = subItem;
+        NavigationStateService.SetCurrentRoute(route);
+        NavigationStateService.SetPrimaryNav(_activePrimaryKey);
+        NavigationStateService.SetSecondaryNav(_activeSubItem);
+
+        if (collapseAfterSelection)
+        {
+            _isCollapsedMenuOpen = false;
+        }
 
         Nav.NavigateTo(route);
     }

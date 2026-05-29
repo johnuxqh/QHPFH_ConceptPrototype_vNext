@@ -105,16 +105,16 @@ public sealed class NavigationStateService : IDisposable
 
     public bool IsWorkspaceActive(string workspaceId) => string.Equals(_currentWorkspace, NormalizeId(workspaceId), StringComparison.OrdinalIgnoreCase);
 
-    public string ResolveRoute(string primaryNavId, string secondaryNavId)
+    public string? ResolveRoute(string primaryNavId, string secondaryNavId)
     {
-        if (primaryNavId == "home")
+        if (primaryNavId is "home" or "myhub")
         {
             return string.Empty;
         }
 
         if (primaryNavId != "bed")
         {
-            return string.Empty;
+            return null;
         }
 
         return secondaryNavId switch
@@ -123,7 +123,7 @@ public sealed class NavigationStateService : IDisposable
             "Bed Management" or "bed-management" => "bed-management",
             "Ward View" or "Ward Operations" or "ward-operations" => "ward-operations",
             "Allocation Centre" or "allocation-centre" => "allocation-centre",
-            _ => string.Empty
+            _ => null
         };
     }
 
