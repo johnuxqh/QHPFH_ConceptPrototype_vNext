@@ -1,0 +1,36 @@
+@using QHPFH_ConceptPrototype.Models.Filters
+
+<div class="@CssClass">
+    <label>@Label</label>
+    @if (Searchable)
+    {
+        <input class="filter-search-input" value="@SearchText" @oninput="OnSearchChanged" placeholder="@($"Search {Label.ToLowerInvariant()}")" />
+    }
+    <select value="@Value" @onchange="OnValueChanged">
+        @foreach (var option in FilteredOptions)
+        {
+            <option value="@option.Value">@option.Label</option>
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public IReadOnlyList<FilterOptionRecord> Options { get; set; } = Array.Empty<FilterOptionRecord>();
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public bool Searchable { get; set; }
+    [Parameter] public string CssClass { get; set; } = "bm-filter";
+
+    private string SearchText { get; set; } = string.Empty;
+
+    private IEnumerable<FilterOptionRecord> FilteredOptions => string.IsNullOrWhiteSpace(SearchText)
+        ? Options
+        : Options.Where(x => x.Label.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+            || x.Value.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+    private Task OnValueChanged(ChangeEventArgs args) =>
+        ValueChanged.InvokeAsync(args.Value?.ToString() ?? string.Empty);
+
+    private void OnSearchChanged(ChangeEventArgs args) => SearchText = args.Value?.ToString() ?? string.Empty;
+}
