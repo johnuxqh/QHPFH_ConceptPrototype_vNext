@@ -1,8 +1,10 @@
+@using QHPFH_ConceptPrototype.Services.Navigation
+@implements IDisposable
 <nav class="primary-nav" aria-label="Primary">
     <div class="primary-nav-track" role="menubar">
         @if (IsCompact)
         {
-            <button type="button" class="nav-link selected compact-active"><span>@PrimaryItems.First(x => x.Key == _activePrimaryKey).Label</span></button>
+            <button type="button" class="nav-link selected compact-active"><span>@GetActivePrimaryLabel()</span></button>
         }
         else
         {
@@ -44,7 +46,7 @@
 </nav>
 
 @code {
-    [Inject] private QHPFH_ConceptPrototype.Components.Shells.NavigationState NavigationState { get; set; } = default!;
+    [Inject] private NavigationStateService NavigationStateService { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
 
     private readonly List<PrimaryNavItem> PrimaryItems =
@@ -71,61 +73,56 @@
     {
         _activePrimaryKey = key;
         _activeSubItem = GetSubItemsForKey(_activePrimaryKey).FirstOrDefault() ?? string.Empty;
-        NavigationState.SetActive(_activePrimaryKey, _activeSubItem);
+        NavigationStateService.SetPrimaryNav(_activePrimaryKey);
+        NavigationStateService.SetSecondaryNav(_activeSubItem);
         NavigateForSelection(_activePrimaryKey, _activeSubItem);
     }
 
     private string GetSelectedClass(string key) => key == _activePrimaryKey ? "selected" : string.Empty;
 
+    private string GetActivePrimaryLabel() =>
+        PrimaryItems.FirstOrDefault(x => x.Key == _activePrimaryKey)?.Label ?? "Home";
+
     protected override void OnInitialized()
     {
-        SyncSelectionFromCurrentRoute();
+        NavigationStateService.OnNavigationStateChanged += HandleNavigationStateChanged;
+        SyncSelectionFromNavigationState();
     }
 
     private void SelectSubItem(string subItem)
     {
         _activeSubItem = subItem;
-        NavigationState.SetActive(_activePrimaryKey, _activeSubItem);
+        NavigationStateService.SetPrimaryNav(_activePrimaryKey);
+        NavigationStateService.SetSecondaryNav(_activeSubItem);
         NavigateForSelection(_activePrimaryKey, _activeSubItem);
     }
 
     private IReadOnlyList<string> GetSubItemsForKey(string key) =>
         PrimaryItems.FirstOrDefault(x => x.Key == key)?.SubItems ?? [];
 
-    private void SyncSelectionFromCurrentRoute()
+    private void SyncSelectionFromNavigationState()
     {
-        var relativePath = Nav.ToBaseRelativePath(Nav.Uri).Trim('/').ToLowerInvariant();
+        var snapshot = NavigationStateService.GetNavigationState();
+        _activePrimaryKey = string.IsNullOrWhiteSpace(snapshot.CurrentPrimaryNavId) ? "home" : snapshot.CurrentPrimaryNavId;
+        _activeSubItem = snapshot.CurrentSecondaryNavId;
+    }
 
-        (_activePrimaryKey, _activeSubItem) = relativePath switch
-        {
-            "" => ("home", string.Empty),
-            "bed-and-ward-hub" => ("bed", "Bed and Ward Hub"),
-            "bed-management" => ("bed", "Bed Management"),
-            "ward-operations" => ("bed", "Ward Operations"),
-            "allocation-centre" => ("bed", "Allocation Centre"),
-            _ => ("home", string.Empty)
-        };
-
-        NavigationState.SetActive(_activePrimaryKey, _activeSubItem);
+    private void HandleNavigationStateChanged()
+    {
+        SyncSelectionFromNavigationState();
+        InvokeAsync(StateHasChanged);
     }
 
     private void NavigateForSelection(string primaryKey, string subItem)
     {
-        var route = primaryKey switch
-        {
-            "home" => string.Empty,
-            "bed" => subItem switch
-            {
-                "Bed and Ward Hub" => "bed-and-ward-hub",
-                "Bed Management" => "bed-management",
-                "Ward View" => "ward-operations",
-                "Allocation Centre" => "allocation-centre",
-                _ => string.Empty
-            },
-            _ => string.Empty
-        };
+        var route = NavigationStateService.ResolveRoute(primaryKey, subItem);
 
         Nav.NavigateTo(route);
+    }
+
+    public void Dispose()
+    {
+        NavigationStateService.OnNavigationStateChanged -= HandleNavigationStateChanged;
     }
 
     private sealed record PrimaryNavItem(string Key, string Label, bool HasSubMenu, List<string> SubItems);

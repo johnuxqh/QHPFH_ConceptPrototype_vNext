@@ -1,0 +1,24 @@
+<section class="workspace-toolbar" aria-label="Workspace toolbar">
+    @if (FilterContent is not null)
+    {
+        <div class="workspace-toolbar__filters">
+            @FilterContent
+        </div>
+    }
+    @if (ActionContent is not null)
+    {
+        <div class="workspace-toolbar__actions">
+            @ActionContent
+        </div>
+    }
+    @if (ChildContent is not null)
+    {
+        @ChildContent
+    }
+</section>
+
+@code {
+    [Parameter] public RenderFragment? FilterContent { get; set; }
+    [Parameter] public RenderFragment? ActionContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
