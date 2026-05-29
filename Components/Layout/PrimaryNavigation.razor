@@ -15,14 +15,13 @@
         }
         else
         {
-            <button type="button" class="home-link @GetSelectedClass("home")" aria-label="Home" @onclick='() => SelectPrimary("home")'>
+            <button type="button" class="@GetHomeLinkClass()" aria-label="Home" @onclick='() => SelectPrimary("home")'>
                 <img src="images/header/home_icon.svg" alt="Home" class="home-icon" />
             </button>
 
             @foreach (var item in PrimaryItems)
             {
-                var isActive = item.Key == _activePrimaryKey;
-                <button type="button" class="nav-link nav-link-@item.Key @(isActive ? "selected" : null)" @onclick="() => SelectPrimary(item.Key)">
+                <button type="button" class="@GetPrimaryNavClass(item.Key)" @onclick="() => SelectPrimary(item.Key)">
                     <span>@item.Label</span>
                     @if (item.HasSubMenu)
                     {
@@ -65,8 +64,7 @@
         <div class="sub-nav-track" role="menubar" aria-label="Secondary">
             @foreach (var subItem in CurrentSubItems)
             {
-                var isSubActive = subItem == _activeSubItem;
-                <button type="button" class="sub-nav-link @(isSubActive ? "selected" : null)" @onclick="() => SelectSubItem(subItem)"><span>@subItem</span></button>
+                <button type="button" class="@GetSecondaryNavClass(subItem)" @onclick="() => SelectSubItem(subItem)"><span>@subItem</span></button>
             }
         </div>
     }
@@ -112,11 +110,6 @@
     {
         var subItem = GetSubItemsForKey(key).FirstOrDefault() ?? string.Empty;
         NavigateForSelection(key, subItem, collapseAfterSelection: true);
-    private string GetActivePrimaryLabel() =>
-        PrimaryItems.FirstOrDefault(x => x.Key == _activePrimaryKey)?.Label ?? "Home";
-
-    protected override void OnInitialized()
-    {
         NavigationStateService.OnNavigationStateChanged += HandleNavigationStateChanged;
         SyncSelectionFromNavigationState();
     }
@@ -129,6 +122,22 @@
     private void ToggleCollapsedMenu() => _isCollapsedMenuOpen = !_isCollapsedMenuOpen;
 
     private string GetSelectedClass(string key) => key == _activePrimaryKey ? "selected" : string.Empty;
+
+    private string GetHomeLinkClass() => $"home-link {GetSelectedClass("home")}".Trim();
+
+    private string GetPrimaryNavClass(string key) =>
+        $"nav-link nav-link-{key} {(key == _activePrimaryKey ? "selected" : string.Empty)}".Trim();
+
+    private string GetSecondaryNavClass(string subItem) =>
+        $"sub-nav-link {(subItem == _activeSubItem ? "selected" : string.Empty)}".Trim();
+
+    private string GetCollapsedHomeClass() => $"collapsed-nav-item {GetSelectedClass("home")}".Trim();
+
+    private string GetCollapsedPrimaryClass(string key) =>
+        $"collapsed-nav-item {(key == _activePrimaryKey ? "selected" : string.Empty)}".Trim();
+
+    private string GetCollapsedSecondaryClass(string subItem) =>
+        $"collapsed-sub-nav-item {(subItem == _activeSubItem ? "selected" : string.Empty)}".Trim();
 
     private string GetActivePrimaryLabel() =>
         PrimaryItems.FirstOrDefault(x => x.Key == _activePrimaryKey)?.Label ?? "Home";

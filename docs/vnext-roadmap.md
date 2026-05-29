@@ -120,6 +120,9 @@ P2.07 — Unified Navigation State Engine
 P2.08 — Collapsible Navigation + Routing Repair
 - Status: Complete
 - Outcome: Collapsible navigation behaviour added and P2.07 menu routing regression repaired.
+- Build repair: PrimaryNavigation markup/code-behind was normalized to remove the malformed duplicate method block that caused CI Razor compilation failures while preserving route navigation plus navigation-state updates.
+- Proof-of-concept UI: Concept navigation supports a compact collapsed pill that temporarily reveals primary/secondary navigation options, routes selections correctly, and collapses back after selection.
+- Deferred UI wiring: Standard shell menu route activation, adaptive navigation visibility, and full shared navigation rendering remain deferred for later prompts.
 - Proof-of-concept UI: Concept navigation supports a compact collapsed pill that temporarily reveals primary/secondary navigation options, routes selections correctly, and collapses back after selection.
 - Deferred UI wiring: Standard shell menu route activation, adaptive navigation visibility, and full shared navigation rendering remain deferred for later prompts.
 P1.15 — Operational rules engine foundation
