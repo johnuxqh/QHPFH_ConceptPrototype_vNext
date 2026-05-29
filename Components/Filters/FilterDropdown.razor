@@ -41,7 +41,7 @@
     private string SummaryLabel => Values.Count switch
     {
         0 => AllLabel,
-        1 => Values[0],
+        1 => Options.FirstOrDefault(x => string.Equals(x.Value, Values[0], StringComparison.OrdinalIgnoreCase))?.Label ?? Values[0],
         _ => $"{Values.Count} selected"
     };
 

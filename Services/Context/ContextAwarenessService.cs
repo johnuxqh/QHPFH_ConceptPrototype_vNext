@@ -88,6 +88,15 @@ public sealed class ContextAwarenessService : IDisposable
         NotifyContextChanged();
     }
 
+    public void SetCurrentLocationContext(string? hhsId, string? facilityId, string? wardId, string? summary)
+    {
+        _currentHhsId = NormalizeValue(hhsId);
+        _currentFacilityId = NormalizeValue(facilityId);
+        _currentWardId = NormalizeValue(wardId);
+        _locationSummaryOverride = NormalizeValue(summary);
+        NotifyContextChanged();
+    }
+
     public void SetCurrentWorkspace(string? workspace)
     {
         _currentWorkspace = NormalizeValue(workspace);
