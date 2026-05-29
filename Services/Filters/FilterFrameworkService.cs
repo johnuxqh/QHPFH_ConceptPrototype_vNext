@@ -134,7 +134,7 @@ public sealed class FilterFrameworkService
             _navigationState.SetCurrentWorkspace(navigationState.CurrentWorkspace);
         }
 
-        ApplyLocationContext(normalizedSelection);
+        ApplyLocationContext(normalizedSelection, workspaceWards);
     }
 
     public IReadOnlyList<T> ApplyToRows<T>(IEnumerable<T> rows, FilterSelectionState selection, Func<T, string> hhsSelector, Func<T, string> facilitySelector, Func<T, string> wardSelector)
@@ -159,74 +159,167 @@ public sealed class FilterFrameworkService
         return scoped.ToList();
     }
 
-    public string GetContextSummary(FilterSelectionState selection) => string.Join(
-        " > ",
-        new[]
-        {
-            GetSummarySegment(selection.SelectedHhsValues, AllHhsLabel, "HHSs"),
-            GetSummarySegment(selection.SelectedFacilityValues, AllFacilitiesLabel, "Facilities"),
-            GetSummarySegment(selection.SelectedWardValues, AllWardsLabel, "Wards"),
-            GetSummarySegment(selection.SelectedServiceStreamValues, AllServiceStreamsLabel, "Service Streams")
-        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    public string GetContextSummary(FilterSelectionState selection) =>
+        GetEffectiveContextSummary(selection, workspaceWards: null);
 
-    private void ApplyLocationContext(FilterSelectionState selection)
+    private string GetEffectiveContextSummary(FilterSelectionState selection, IEnumerable<FilterWorkspaceWardRecord>? workspaceWards)
     {
-        var summary = GetContextSummary(selection);
-        string? hhsId = null;
-        string? facilityId = null;
-        string? wardId = null;
+        var wardParents = ResolveWardParents(selection.SelectedWardValues, selection.SelectedFacilityValues, selection.SelectedHhsValues, workspaceWards);
+        var effectiveFacilityValues = GetEffectiveFacilityValues(selection, wardParents);
+        var effectiveHhsValues = GetEffectiveHhsValues(selection, effectiveFacilityValues, wardParents);
 
-        if (selection.SelectedHhsValues.Count == 1)
-        {
-            hhsId = selection.SelectedHhsValues[0];
-        }
+        return string.Join(
+            " > ",
+            new[]
+            {
+                GetSummarySegment(effectiveHhsValues, AllHhsLabel, "HHSs"),
+                GetSummarySegment(effectiveFacilityValues, AllFacilitiesLabel, "Facilities"),
+                GetSummarySegment(selection.SelectedWardValues, AllWardsLabel, "Wards"),
+                GetSummarySegment(selection.SelectedServiceStreamValues, AllServiceStreamsLabel, "Service Streams")
+            }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
 
-        if (selection.SelectedFacilityValues.Count == 1)
-        {
-            facilityId = selection.SelectedFacilityValues[0];
-        }
+    private void ApplyLocationContext(FilterSelectionState selection, IEnumerable<FilterWorkspaceWardRecord>? workspaceWards)
+    {
+        var wardParents = ResolveWardParents(selection.SelectedWardValues, selection.SelectedFacilityValues, selection.SelectedHhsValues, workspaceWards);
+        var effectiveFacilityValues = GetEffectiveFacilityValues(selection, wardParents);
+        var effectiveHhsValues = GetEffectiveHhsValues(selection, effectiveFacilityValues, wardParents);
+        var summary = GetEffectiveContextSummary(selection, workspaceWards);
 
-        if (selection.SelectedWardValues.Count == 1)
-        {
-            var ward = ResolveWard(selection.SelectedWardValues[0], selection.SelectedFacilityValues, selection.SelectedHhsValues);
-            wardId = ward?.Id;
-            facilityId ??= ward?.FacilityId;
-            hhsId ??= ward?.Hhs;
-        }
+        var hhsId = effectiveHhsValues.Count == 1 ? effectiveHhsValues[0] : null;
+        var facilityId = effectiveFacilityValues.Count == 1 ? effectiveFacilityValues[0] : null;
+        var wardId = wardParents.Count == 1 ? wardParents[0].WardId : null;
 
         _contextAwareness.SetCurrentLocationContext(hhsId, facilityId, wardId, summary);
     }
 
-    private WardRecord? ResolveWard(string wardValue, IReadOnlyCollection<string> facilityValues, IReadOnlyCollection<string> hhsValues)
+    private IReadOnlyList<string> GetEffectiveHhsValues(
+        FilterSelectionState selection,
+        IReadOnlyList<string> effectiveFacilityValues,
+        IReadOnlyList<ResolvedWardParent> wardParents)
+    {
+        var values = selection.SelectedHhsValues
+            .Concat(ResolveParentHhsValues(effectiveFacilityValues))
+            .Concat(wardParents.Select(x => x.Hhs))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return values;
+    }
+
+    private IReadOnlyList<string> GetEffectiveFacilityValues(FilterSelectionState selection, IReadOnlyList<ResolvedWardParent> wardParents)
+    {
+        var values = selection.SelectedFacilityValues
+            .Concat(ResolveParentFacilityValues(wardParents))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return values;
+    }
+
+    private IReadOnlyList<string> ResolveParentHhsValues(IEnumerable<string> facilityValues)
+    {
+        var facilitySet = facilityValues.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (facilitySet.Count == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        return DemoReferenceData.FacilitiesByHhs
+            .Where(x => x.Value.Any(facility => facilitySet.Contains(facility)))
+            .Select(x => x.Key)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static IReadOnlyList<string> ResolveParentFacilityValues(IEnumerable<ResolvedWardParent> wardParents) =>
+        wardParents
+            .Select(x => x.Facility)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private IReadOnlyList<ResolvedWardParent> ResolveWardParents(
+        IReadOnlyCollection<string> wardValues,
+        IReadOnlyCollection<string> facilityValues,
+        IReadOnlyCollection<string> hhsValues,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards)
+    {
+        if (wardValues.Count == 0)
+        {
+            return Array.Empty<ResolvedWardParent>();
+        }
+
+        return wardValues
+            .Select(wardValue => ResolveWardParent(wardValue, facilityValues, hhsValues, workspaceWards))
+            .Where(x => x is not null)
+            .Cast<ResolvedWardParent>()
+            .DistinctBy(x => x.WardId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private ResolvedWardParent? ResolveWardParent(
+        string wardValue,
+        IReadOnlyCollection<string> facilityValues,
+        IReadOnlyCollection<string> hhsValues,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards)
     {
         var parsed = ParseWardValue(wardValue);
-        var wards = _dataStore.GetWards().AsEnumerable();
+        var candidates = BuildWardParentCandidates(parsed.Ward, workspaceWards);
 
         if (!string.IsNullOrWhiteSpace(parsed.Hhs))
         {
-            wards = wards.Where(x => Matches(x.Hhs, parsed.Hhs));
+            candidates = candidates.Where(x => Matches(x.Hhs, parsed.Hhs)).ToList();
         }
         else if (hhsValues.Count > 0)
         {
-            wards = wards.Where(x => ContainsSelection(hhsValues, x.Hhs));
+            candidates = candidates.Where(x => ContainsSelection(hhsValues, x.Hhs)).ToList();
         }
 
         if (!string.IsNullOrWhiteSpace(parsed.Facility))
         {
-            wards = wards.Where(x => Matches(x.Facility, parsed.Facility) || Matches(x.FacilityId, parsed.Facility));
+            candidates = candidates.Where(x => Matches(x.Facility, parsed.Facility)).ToList();
         }
         else if (facilityValues.Count > 0)
         {
-            wards = wards.Where(x => ContainsSelection(facilityValues, x.Facility) || ContainsSelection(facilityValues, x.FacilityId));
+            candidates = candidates.Where(x => ContainsSelection(facilityValues, x.Facility)).ToList();
         }
 
-        var matches = wards
-            .Where(x => Matches(x.WardCode, parsed.Ward) || Matches(x.Name, parsed.Ward) || Matches(x.Id, parsed.Ward))
+        candidates = candidates
+            .Where(x => Matches(x.Ward, parsed.Ward) || Matches(x.WardId, parsed.Ward))
+            .DistinctBy(x => x.WardId, StringComparer.OrdinalIgnoreCase)
             .Take(2)
             .ToList();
 
-        return matches.Count == 1 ? matches[0] : null;
+        return candidates.Count == 1 ? candidates[0] : null;
     }
+
+    private IReadOnlyList<ResolvedWardParent> BuildWardParentCandidates(string wardValue, IEnumerable<FilterWorkspaceWardRecord>? workspaceWards)
+    {
+        var workspaceCandidates = (workspaceWards ?? Array.Empty<FilterWorkspaceWardRecord>())
+            .Where(x => Matches(x.Ward, wardValue))
+            .Select(x => new ResolvedWardParent(
+                ResolveWardId(x.Hhs, x.Facility, x.Ward) ?? BuildWardValue(x.Hhs, x.Facility, x.Ward),
+                x.Hhs,
+                x.Facility,
+                x.Ward))
+            .ToList();
+
+        if (workspaceCandidates.Count > 0)
+        {
+            return workspaceCandidates;
+        }
+
+        return _dataStore.GetWards()
+            .Where(x => Matches(x.WardCode, wardValue) || Matches(x.Name, wardValue) || Matches(x.Id, wardValue))
+            .Select(x => new ResolvedWardParent(x.Id, x.Hhs, x.Facility, x.WardCode))
+            .ToList();
+    }
+
+    private string? ResolveWardId(string hhs, string facility, string ward) => _dataStore.GetWards()
+        .FirstOrDefault(x => Matches(x.Hhs, hhs)
+            && Matches(x.Facility, facility)
+            && (Matches(x.WardCode, ward) || Matches(x.Name, ward) || Matches(x.Id, ward)))
+        ?.Id;
 
     private IReadOnlyList<FilterOptionRecord> BuildHhsOptions(IReadOnlyCollection<string>? allowedHhs)
     {
@@ -382,4 +475,6 @@ public sealed class FilterFrameworkService
 
     private static string NormalizeComparable(string? value) =>
         (value ?? string.Empty).Trim().Replace('’', '\'');
+
+    private sealed record ResolvedWardParent(string WardId, string Hhs, string Facility, string Ward);
 }
