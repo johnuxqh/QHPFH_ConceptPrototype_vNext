@@ -2,15 +2,17 @@
 @using QHPFH_ConceptPrototype.Services.Adaptive
 @using QHPFH_ConceptPrototype.Services.Experience
 @using QHPFH_ConceptPrototype.Services.Layout
+@using QHPFH_ConceptPrototype.Services.Context
 @inject AdaptivePerspectiveEngine AdaptivePerspective
 @inject ExperienceModeEngine ExperienceMode
 @inject LayoutVariantEngine LayoutVariant
+@inject ContextAwarenessService ContextAwareness
 @implements IDisposable
 
 <section class="@GetWorkspaceClasses()" data-workspace-id="@WorkspaceId">
     <WorkspaceHeader Title="@Title"
                      Subtitle="@Subtitle"
-                     OperationalContext="@OperationalContext"
+                     OperationalContext="@GetOperationalContextSummary()"
                      HeaderActions="@HeaderActions"
                      Badges="@Badges" />
 
@@ -62,6 +64,17 @@
 
     protected override void OnInitialized()
     {
+        ContextAwareness.OnContextChanged += HandleShellContextChanged;
+        ContextAwareness.SetCurrentWorkspace(Title);
+        ContextAwareness.SetCurrentPage(Title);
+    }
+
+    private string GetOperationalContextSummary()
+    {
+        var contextSummary = ContextAwareness.GetCurrentLocation().SummaryText;
+        return string.IsNullOrWhiteSpace(OperationalContext)
+            ? contextSummary
+            : $"{OperationalContext} · {contextSummary}";
         LayoutVariant.OnChange += HandleShellContextChanged;
     }
 
@@ -121,6 +134,7 @@
 
     public void Dispose()
     {
+        ContextAwareness.OnContextChanged -= HandleShellContextChanged;
         LayoutVariant.OnChange -= HandleShellContextChanged;
     }
 }
