@@ -4,11 +4,13 @@
 @using QHPFH_ConceptPrototype.Services.Layout
 @using QHPFH_ConceptPrototype.Services.Context
 @using QHPFH_ConceptPrototype.Services.Navigation
+@using QHPFH_ConceptPrototype.Services.Workspace
 @inject AdaptivePerspectiveEngine AdaptivePerspective
 @inject ExperienceModeEngine ExperienceMode
 @inject LayoutVariantEngine LayoutVariant
 @inject ContextAwarenessService ContextAwareness
 @inject NavigationStateService NavigationStateService
+@inject WorkspaceDensityEngine WorkspaceDensity
 @implements IDisposable
 
 <section class="@GetWorkspaceClasses()" data-workspace-id="@WorkspaceId">
@@ -79,6 +81,7 @@
     protected override void OnInitialized()
     {
         ContextAwareness.OnContextChanged += HandleShellContextChanged;
+        WorkspaceDensity.OnChange += HandleShellContextChanged;
         NavigationStateService.SetCurrentWorkspace(WorkspaceId);
         ContextAwareness.SetCurrentWorkspace(Title);
         ContextAwareness.SetCurrentPage(Title);
@@ -106,6 +109,10 @@
                 GetLayoutClass(),
                 LayoutVariant.GetPanelVariantClass(),
                 LayoutVariant.GetDensityClass(),
+                WorkspaceDensity.GetWorkspaceDensityClass(),
+                WorkspaceDensity.GetCardDensityClass(),
+                WorkspaceDensity.GetTableDensityClass(),
+                WorkspaceDensity.GetPanelDensityClass(),
                 ExperienceMode.GetDensityMode() switch
                 {
                     ExperienceDensityMode.Light => "workspace-density-light",
@@ -150,6 +157,7 @@
     public void Dispose()
     {
         ContextAwareness.OnContextChanged -= HandleShellContextChanged;
+        WorkspaceDensity.OnChange -= HandleShellContextChanged;
         LayoutVariant.OnChange -= HandleShellContextChanged;
     }
 }
