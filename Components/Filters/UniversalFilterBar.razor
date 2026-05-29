@@ -6,33 +6,49 @@
         {
             <FilterDropdown Label="HHS"
                             Value="@Context.Selection.SelectedHhs"
+                            Values="@Context.Selection.SelectedHhsValues"
                             Options="@Context.HhsOptions"
                             ValueChanged="OnHhsChanged"
-                            Searchable="@Searchable" />
+                            ValuesChanged="OnHhsValuesChanged"
+                            Searchable="@Searchable"
+                            MultiSelect="@MultiSelect"
+                            AllLabel="@Context.AllHhsLabel" />
         }
         @if (Context.CanSelectFacility)
         {
             <FilterDropdown Label="Facility"
                             Value="@Context.Selection.SelectedFacility"
+                            Values="@Context.Selection.SelectedFacilityValues"
                             Options="@Context.FacilityOptions"
                             ValueChanged="OnFacilityChanged"
-                            Searchable="@Searchable" />
+                            ValuesChanged="OnFacilityValuesChanged"
+                            Searchable="@Searchable"
+                            MultiSelect="@MultiSelect"
+                            AllLabel="@Context.AllFacilitiesLabel" />
         }
         @if (Context.CanSelectWard)
         {
             <FilterDropdown Label="Ward"
                             Value="@Context.Selection.SelectedWard"
+                            Values="@Context.Selection.SelectedWardValues"
                             Options="@Context.WardOptions"
                             ValueChanged="OnWardChanged"
-                            Searchable="@Searchable" />
+                            ValuesChanged="OnWardValuesChanged"
+                            Searchable="@Searchable"
+                            MultiSelect="@MultiSelect"
+                            AllLabel="@Context.AllWardsLabel" />
         }
         @if (Context.CanSelectServiceStream)
         {
             <FilterDropdown Label="Service Stream"
                             Value="@Context.Selection.SelectedServiceStream"
+                            Values="@Context.Selection.SelectedServiceStreamValues"
                             Options="@Context.ServiceStreamOptions"
                             ValueChanged="OnServiceStreamChanged"
-                            Searchable="@Searchable" />
+                            ValuesChanged="OnServiceStreamValuesChanged"
+                            Searchable="@Searchable"
+                            MultiSelect="@MultiSelect"
+                            AllLabel="@Context.AllServiceStreamsLabel" />
         }
     </div>
 
@@ -43,24 +59,32 @@
     [Parameter, EditorRequired] public FilterContextRecord Context { get; set; } = default!;
     [Parameter] public EventCallback<FilterSelectionState> SelectionChanged { get; set; }
     [Parameter] public bool Searchable { get; set; }
+    [Parameter] public bool MultiSelect { get; set; }
     [Parameter] public string AdditionalClasses { get; set; } = "bm-filter-row";
     [Parameter] public string GroupClass { get; set; } = "bm-filter-group";
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private Task OnHhsChanged(string value) => SelectionChanged.InvokeAsync(Context.Selection with
+    private Task OnHhsChanged(string value) => OnHhsValuesChanged(IsAll(value, Context.AllHhsLabel) ? [] : [value]);
+
+    private Task OnHhsValuesChanged(IReadOnlyList<string> values) => SelectionChanged.InvokeAsync(Context.Selection with
     {
-        SelectedHhs = value,
-        SelectedFacility = Context.AllFacilitiesLabel,
-        SelectedWard = Context.AllWardsLabel
+        SelectedHhsValues = values
     });
 
-    private Task OnFacilityChanged(string value) => SelectionChanged.InvokeAsync(Context.Selection with
+    private Task OnFacilityChanged(string value) => OnFacilityValuesChanged(IsAll(value, Context.AllFacilitiesLabel) ? [] : [value]);
+
+    private Task OnFacilityValuesChanged(IReadOnlyList<string> values) => SelectionChanged.InvokeAsync(Context.Selection with
     {
-        SelectedFacility = value,
-        SelectedWard = Context.AllWardsLabel
+        SelectedFacilityValues = values
     });
 
-    private Task OnWardChanged(string value) => SelectionChanged.InvokeAsync(Context.Selection with { SelectedWard = value });
+    private Task OnWardChanged(string value) => OnWardValuesChanged(IsAll(value, Context.AllWardsLabel) ? [] : [value]);
 
-    private Task OnServiceStreamChanged(string value) => SelectionChanged.InvokeAsync(Context.Selection with { SelectedServiceStream = value });
+    private Task OnWardValuesChanged(IReadOnlyList<string> values) => SelectionChanged.InvokeAsync(Context.Selection with { SelectedWardValues = values });
+
+    private Task OnServiceStreamChanged(string value) => OnServiceStreamValuesChanged(IsAll(value, Context.AllServiceStreamsLabel) ? [] : [value]);
+
+    private Task OnServiceStreamValuesChanged(IReadOnlyList<string> values) => SelectionChanged.InvokeAsync(Context.Selection with { SelectedServiceStreamValues = values });
+
+    private static bool IsAll(string value, string allLabel) => string.Equals(value, allLabel, StringComparison.OrdinalIgnoreCase);
 }

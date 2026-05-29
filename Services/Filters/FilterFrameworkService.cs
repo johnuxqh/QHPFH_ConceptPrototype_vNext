@@ -1,6 +1,9 @@
 using QHPFH_ConceptPrototype.Data;
 using QHPFH_ConceptPrototype.Models;
 using QHPFH_ConceptPrototype.Models.Filters;
+using QHPFH_ConceptPrototype.Services.Adaptive;
+using QHPFH_ConceptPrototype.Services.Context;
+using QHPFH_ConceptPrototype.Services.Navigation;
 using QHPFH_ConceptPrototype.Services.Context;
 using QHPFH_ConceptPrototype.Services.Navigation;
 using QHPFH_ConceptPrototype.Services.Adaptive;
@@ -81,42 +84,40 @@ public sealed class FilterFrameworkService
         IReadOnlyCollection<string>? allowedWards = null,
         IReadOnlyCollection<string>? serviceStreams = null)
     {
-        var selectedHhs = NormalizeOption(selection.SelectedHhs, AllHhsLabel);
-        var hhsValues = BuildHhsOptions(allowedHhs).Select(x => x.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (!hhsValues.Contains(selectedHhs))
-        {
-            selectedHhs = AllHhsLabel;
-        }
+        var selectedHhsValues = NormalizeValues(selection.SelectedHhsValues, BuildHhsOptions(allowedHhs).Select(x => x.Value), AllHhsLabel);
+        var hhsSelection = selection with { SelectedHhsValues = selectedHhsValues };
 
-        var selectedFacility = NormalizeOption(selection.SelectedFacility, AllFacilitiesLabel);
-        var facilityValues = BuildFacilityOptions(selection with { SelectedHhs = selectedHhs }, allowedFacilities).Select(x => x.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (!facilityValues.Contains(selectedFacility))
-        {
-            selectedFacility = AllFacilitiesLabel;
-        }
+        var selectedFacilityValues = NormalizeValues(selection.SelectedFacilityValues, BuildFacilityOptions(hhsSelection, allowedFacilities).Select(x => x.Value), AllFacilitiesLabel);
+        var facilitySelection = hhsSelection with { SelectedFacilityValues = selectedFacilityValues };
 
-        var selectedWard = NormalizeOption(selection.SelectedWard, AllWardsLabel);
-        var wardValues = BuildWardOptions(selection with { SelectedHhs = selectedHhs, SelectedFacility = selectedFacility }, workspaceWards, allowedWards).Select(x => x.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (!wardValues.Contains(selectedWard))
-        {
-            selectedWard = AllWardsLabel;
-        }
+        var selectedWardValues = NormalizeValues(selection.SelectedWardValues, BuildWardOptions(facilitySelection, workspaceWards, allowedWards).Select(x => x.Value), AllWardsLabel);
+        var selectedServiceStreamValues = NormalizeValues(selection.SelectedServiceStreamValues, BuildServiceStreamOptions(serviceStreams).Select(x => x.Value), AllServiceStreamsLabel);
 
-        var selectedServiceStream = NormalizeOption(selection.SelectedServiceStream, AllServiceStreamsLabel);
-        var streamValues = BuildServiceStreamOptions(serviceStreams).Select(x => x.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (!streamValues.Contains(selectedServiceStream))
+        return facilitySelection with
         {
-            selectedServiceStream = AllServiceStreamsLabel;
-        }
-
-        return selection with
-        {
-            SelectedHhs = selectedHhs,
-            SelectedFacility = selectedFacility,
-            SelectedWard = selectedWard,
-            SelectedServiceStream = selectedServiceStream
+            SelectedWardValues = selectedWardValues,
+            SelectedServiceStreamValues = selectedServiceStreamValues,
+            AllHhsLabel = AllHhsLabel,
+            AllFacilitiesLabel = AllFacilitiesLabel,
+            AllWardsLabel = AllWardsLabel,
+            AllServiceStreamsLabel = AllServiceStreamsLabel
         };
     }
+
+
+    public FilterSelectionState ClearAll(FilterSelectionState selection) => selection with
+    {
+        SelectedHhsValues = Array.Empty<string>(),
+        SelectedFacilityValues = Array.Empty<string>(),
+        SelectedWardValues = Array.Empty<string>(),
+        SelectedServiceStreamValues = Array.Empty<string>()
+    };
+
+    public FilterSelectionState SelectAllHhs(FilterSelectionState selection) => selection with { SelectedHhsValues = Array.Empty<string>() };
+
+    public FilterSelectionState SelectAllFacilities(FilterSelectionState selection) => selection with { SelectedFacilityValues = Array.Empty<string>() };
+
+    public FilterSelectionState SelectAllWards(FilterSelectionState selection) => selection with { SelectedWardValues = Array.Empty<string>() };
 
     public void ApplySelection(string workspaceId, FilterSelectionState selection, IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null)
     {
@@ -137,29 +138,41 @@ public sealed class FilterFrameworkService
     {
         var scoped = rows;
 
-        if (selection.SelectedHhs != AllHhsLabel)
+        if (!selection.IsAllHhsSelected)
         {
-            scoped = scoped.Where(row => Matches(hhsSelector(row), selection.SelectedHhs));
+            scoped = scoped.Where(row => ContainsSelection(selection.SelectedHhsValues, hhsSelector(row)));
         }
 
-        if (selection.SelectedFacility != AllFacilitiesLabel)
+        if (!selection.IsAllFacilitiesSelected)
         {
-            scoped = scoped.Where(row => Matches(facilitySelector(row), selection.SelectedFacility));
+            scoped = scoped.Where(row => ContainsSelection(selection.SelectedFacilityValues, facilitySelector(row)));
         }
 
-        if (selection.SelectedWard != AllWardsLabel)
+        if (!selection.IsAllWardsSelected)
         {
-            scoped = scoped.Where(row => Matches(wardSelector(row), selection.SelectedWard));
+            scoped = scoped.Where(row => ContainsSelection(selection.SelectedWardValues, wardSelector(row)));
         }
 
         return scoped.ToList();
     }
 
+    public string GetContextSummary(FilterSelectionState selection) => string.Join(
+        " > ",
+        new[]
+        {
+            GetSummarySegment(selection.SelectedHhsValues, AllHhsLabel, "HHSs"),
+            GetSummarySegment(selection.SelectedFacilityValues, AllFacilitiesLabel, "Facilities"),
+            GetSummarySegment(selection.SelectedWardValues, AllWardsLabel, "Wards"),
+            GetSummarySegment(selection.SelectedServiceStreamValues, AllServiceStreamsLabel, "Service Streams")
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
     private void ApplyLocationContext(FilterSelectionState selection)
     {
-        if (selection.SelectedWard != AllWardsLabel)
+        _contextAwareness.SetCurrentLocationSummary(GetContextSummary(selection));
+
+        if (selection.SelectedWardValues.Count == 1)
         {
-            var ward = ResolveWard(selection.SelectedWard, selection.SelectedFacility, selection.SelectedHhs);
+            var ward = ResolveWard(selection.SelectedWardValues[0], selection.SelectedFacilityValues, selection.SelectedHhsValues);
             if (ward is not null)
             {
                 _contextAwareness.SetCurrentWard(ward.Id);
@@ -167,33 +180,33 @@ public sealed class FilterFrameworkService
             }
         }
 
-        if (selection.SelectedFacility != AllFacilitiesLabel)
+        if (selection.SelectedFacilityValues.Count == 1)
         {
-            _contextAwareness.SetCurrentFacility(selection.SelectedFacility);
+            _contextAwareness.SetCurrentFacility(selection.SelectedFacilityValues[0]);
             return;
         }
 
-        if (selection.SelectedHhs != AllHhsLabel)
+        if (selection.SelectedHhsValues.Count == 1)
         {
-            _contextAwareness.SetCurrentHhs(selection.SelectedHhs);
+            _contextAwareness.SetCurrentHhs(selection.SelectedHhsValues[0]);
             return;
         }
 
-        _contextAwareness.ClearLocationContext();
+        _contextAwareness.ClearLocationContext(preserveSummary: !string.IsNullOrWhiteSpace(GetContextSummary(selection)));
     }
 
-    private WardRecord? ResolveWard(string wardValue, string facilityValue, string hhsValue)
+    private WardRecord? ResolveWard(string wardValue, IReadOnlyCollection<string> facilityValues, IReadOnlyCollection<string> hhsValues)
     {
         var wards = _dataStore.GetWards().AsEnumerable();
 
-        if (facilityValue != AllFacilitiesLabel)
+        if (facilityValues.Count > 0)
         {
-            wards = wards.Where(x => Matches(x.Facility, facilityValue) || Matches(x.FacilityId, facilityValue));
+            wards = wards.Where(x => ContainsSelection(facilityValues, x.Facility) || ContainsSelection(facilityValues, x.FacilityId));
         }
 
-        if (hhsValue != AllHhsLabel)
+        if (hhsValues.Count > 0)
         {
-            wards = wards.Where(x => Matches(x.Hhs, hhsValue));
+            wards = wards.Where(x => ContainsSelection(hhsValues, x.Hhs));
         }
 
         return wards.FirstOrDefault(x => Matches(x.WardCode, wardValue) || Matches(x.Name, wardValue) || Matches(x.Id, wardValue));
@@ -214,7 +227,7 @@ public sealed class FilterFrameworkService
     private IReadOnlyList<FilterOptionRecord> BuildFacilityOptions(FilterSelectionState selection, IReadOnlyCollection<string>? allowedFacilities)
     {
         var facilities = DemoReferenceData.FacilitiesByHhs
-            .Where(x => selection.SelectedHhs == AllHhsLabel || Matches(x.Key, selection.SelectedHhs))
+            .Where(x => selection.IsAllHhsSelected || ContainsSelection(selection.SelectedHhsValues, x.Key))
             .SelectMany(x => x.Value.Select(facility => new FilterOptionRecord(facility, facility, x.Key, facility)))
             .Where(x => IsAllowed(x.Value, allowedFacilities))
             .DistinctBy(x => x.Value, StringComparer.OrdinalIgnoreCase)
@@ -234,8 +247,8 @@ public sealed class FilterFrameworkService
             .ToList();
 
         var wards = wardSource
-            .Where(x => selection.SelectedHhs == AllHhsLabel || Matches(x.Hhs, selection.SelectedHhs))
-            .Where(x => selection.SelectedFacility == AllFacilitiesLabel || Matches(x.Facility, selection.SelectedFacility))
+            .Where(x => selection.IsAllHhsSelected || ContainsSelection(selection.SelectedHhsValues, x.Hhs))
+            .Where(x => selection.IsAllFacilitiesSelected || ContainsSelection(selection.SelectedFacilityValues, x.Facility))
             .Where(x => IsAllowed(x.Ward, allowedWards))
             .Select(x => new FilterOptionRecord(x.Ward, x.Ward, x.Hhs, x.Facility, x.ServiceStream))
             .DistinctBy(x => x.Value, StringComparer.OrdinalIgnoreCase)
@@ -257,15 +270,35 @@ public sealed class FilterFrameworkService
         return [new(AllServiceStreamsLabel, AllServiceStreamsLabel), .. streams];
     }
 
+    private static IReadOnlyList<string> NormalizeValues(IEnumerable<string> selectedValues, IEnumerable<string> validValues, string allLabel)
+    {
+        var valid = validValues.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var normalized = selectedValues
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .Where(x => !Matches(x, allLabel) && valid.Contains(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return normalized;
+    }
+
+    private static string? GetSummarySegment(IReadOnlyList<string> values, string allLabel, string pluralLabel) => values.Count switch
+    {
+        0 => null,
+        <= 2 => string.Join(", ", values),
+        _ => $"{values.Count} {pluralLabel}"
+    };
+
     private static bool IsAllowed(string value, IReadOnlyCollection<string>? allowedValues) =>
         allowedValues is null || allowedValues.Count == 0 || allowedValues.Any(x => Matches(x, value));
+
+    private static bool ContainsSelection(IEnumerable<string> selection, string? value) =>
+        selection.Any(x => Matches(x, value));
 
     private static bool Matches(string? left, string? right) =>
         string.Equals(NormalizeComparable(left), NormalizeComparable(right), StringComparison.OrdinalIgnoreCase);
 
     private static string NormalizeComparable(string? value) =>
         (value ?? string.Empty).Trim().Replace('’', '\'');
-
-    private static string NormalizeOption(string? value, string allLabel) =>
-        string.IsNullOrWhiteSpace(value) ? allLabel : value.Trim();
 }

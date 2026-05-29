@@ -1895,6 +1895,24 @@ button, input { font: inherit; }
   border-color: #365172;
   color: #dbe7f6;
 }
+.filter-dropdown-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.filter-dropdown-actions span {
+  color: #5f7388;
+  font-size: .68rem;
+  font-weight: 700;
+}
+.bm-filter select[multiple] {
+  min-height: 3.8rem;
+}
+.theme-dark .filter-dropdown-actions span {
+  color: #9cadc4;
+}
 
 .operational-panel-grid {
   display: grid;

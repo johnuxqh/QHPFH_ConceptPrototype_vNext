@@ -72,6 +72,7 @@
 
     <UniversalFilterBar Context="@BedFilterContext"
                         SelectionChanged="OnFilterSelectionChanged"
+                        MultiSelect="true"
                         AdditionalClasses="bm-filter-row bm-filter-row-compact">
         <div class="bm-access-selector">
             <label>Access view</label>
@@ -406,8 +407,18 @@
     private void ApplyAccessScope(bool persistContext)
     {
         BedFilterSelection = IsQchAccess
-            ? BedFilterSelection with { SelectedHhs = QchHhs, SelectedFacility = QchFacility, SelectedWard = AllWards }
-            : BedFilterSelection with { SelectedHhs = DemoReferenceData.All, SelectedFacility = DemoReferenceData.All, SelectedWard = AllWards };
+            ? BedFilterSelection with
+            {
+                SelectedHhsValues = [QchHhs],
+                SelectedFacilityValues = [QchFacility],
+                SelectedWardValues = Array.Empty<string>()
+            }
+            : BedFilterSelection with
+            {
+                SelectedHhsValues = Array.Empty<string>(),
+                SelectedFacilityValues = Array.Empty<string>(),
+                SelectedWardValues = Array.Empty<string>()
+            };
 
         BedFilterSelection = FilterFramework.NormalizeSelection(BedFilterSelection, GetBedManagementWardScope());
 
@@ -421,19 +432,8 @@
         .Select(row => new FilterWorkspaceWardRecord(row.Hhs, row.Facility, row.Ward, row.WardType))
         .ToList();
 
-    private IEnumerable<BedOverviewRow> GetBaseScopedRows()
-    {
-        var scoped = IsQchAccess
-            ? Rows.Where(r => r.Hhs == QchHhs && r.Facility == QchFacility)
-            : FilterFramework.ApplyToRows(Rows, BedFilterSelection, row => row.Hhs, row => row.Facility, row => row.Ward);
-
-        if (IsQchAccess && SelectedWard != AllWards)
-        {
-            scoped = scoped.Where(r => r.Ward == SelectedWard);
-        }
-
-        return scoped;
-    }
+    private IEnumerable<BedOverviewRow> GetBaseScopedRows() =>
+        FilterFramework.ApplyToRows(Rows, BedFilterSelection, row => row.Hhs, row => row.Facility, row => row.Ward);
     private List<BedOverviewRow> GetScopedBedManagementRows() { var scoped = GetBaseScopedRows(); if (!string.IsNullOrWhiteSpace(ActiveInsightFilter)) { var ids = ActiveInsightWardIds; scoped = scoped.Where(r => ids.Contains(r.Ward)); } return scoped.ToList(); }
     private void ApplyInsightFilter(string filterKey) => ActiveInsightFilter = ActiveInsightFilter == filterKey ? string.Empty : filterKey;
     private void ClearInsightFilter() => ActiveInsightFilter = string.Empty;
