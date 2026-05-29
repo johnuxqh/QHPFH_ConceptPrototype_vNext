@@ -91,6 +91,7 @@ P3.03 — HHS → Facility → Ward Cascade Logic
 - Cascade hardening: Facility options and selections are constrained by selected HHS values, Ward options and selections are constrained by selected Facility values, and invalid downstream selections normalize back to the All state without storing literal All values.
 - Ward safety: Ward values remain facility-aware where duplicate ward labels exist, and active ward context is set only when a selected ward resolves unambiguously.
 - Proof-of-concept UI: Bed Management continues to consume the shared filter framework without page-local cascade logic or layout/routing changes.
+- Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, future service-stream filters, and P3.03 access-scope enforcement can consume the same multi-select filter state without creating another framework.
 
 
 P2.01 — Prototype Experience Bar
