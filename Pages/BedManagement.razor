@@ -2,8 +2,17 @@
 @using QHPFH_ConceptPrototype.Data
 @using MudBlazor
 @using QHPFH_ConceptPrototype.Components.Shared
+@using QHPFH_ConceptPrototype.Services.Kpi
+@inject KpiFrameworkService KpiFramework
 
-<section class="page-shell-card bed-mgmt-page bm-overview-page" @onclick="CloseKpiInfo" @onkeydown="HandleKeydown" tabindex="0">
+<WorkspaceShell WorkspaceId="bed-management"
+                Title="Bed Management"
+                Subtitle="Operational bed state, readiness, allocation pressure, and future availability"
+                OperationalContext="Facility and ward bed flow workspace"
+                WorkspaceStatus="Live prototype context"
+                PrimaryBadge="Bed flow"
+                SecondaryBadge="Workspace header pattern">
+    <section class="page-shell-card bed-mgmt-page bm-overview-page" @onclick="CloseKpiInfo" @onkeydown="HandleKeydown" tabindex="0">
     @if (IsQchAccess)
     {
         <section class="bm-notification-banner">
@@ -79,25 +88,12 @@
     {
         <section class="bm-v2-operational-shell">
             <section class="bm-overview-cards bm-v2-status-row bm-v2-pane @(ShowInsightsPanel ? "is-hidden" : "is-active")">
-                @foreach (var kpi in (IsQchAccess ? QchKpis : Kpis))
-                {
-                    <SituationalKpiTile
-                        Title="@kpi.Title"
-                        Value="@kpi.Value"
-                        Subtitle="@kpi.Subtitle"
-                        IconName="@kpi.IconName"
-                        ColorClass="@kpi.ColorClass"
-                        InfoText="@kpi.InfoText"
-                        TileType="@kpi.TileType"
-                        ShowInfoIcon="@kpi.ShowInfoIcon"
-                        IsInfoOpen="@(OpenKpiInfoTitle == kpi.Title)"
-                        OnInfoClick="() => ToggleKpiInfo(kpi.Title)"
-                        BreakdownItems="@kpi.BreakdownItems"
-                        Tabs="@kpi.Tabs"
-                        ActiveTab="@QchActivityView"
-                        OnTabChanged="OnQchActivityTabChanged"
-                        AdditionalClasses="bm-kpi-card" />
-                }
+                <KpiCardGrid Cards="@GetBedManagementKpiCards()"
+                             OpenInfoTitle="@OpenKpiInfoTitle"
+                             OnInfoClick="ToggleKpiInfo"
+                             ActiveTab="@QchActivityView"
+                             OnTabChanged="OnQchActivityTabChanged"
+                             CardAdditionalClasses="bm-kpi-card" />
                 <button type="button" class="bm-system-insights-trigger" @onclick="() => ShowInsightsPanel = true">
                     <span class="bm-system-insights-count">@ActiveInsights.Count</span>
                     <span>System Insights</span>
@@ -134,25 +130,12 @@
     else
     {
         <section class="bm-overview-cards">
-            @foreach (var kpi in (IsQchAccess ? QchKpis : Kpis))
-            {
-                <SituationalKpiTile
-                    Title="@kpi.Title"
-                    Value="@kpi.Value"
-                    Subtitle="@kpi.Subtitle"
-                    IconName="@kpi.IconName"
-                    ColorClass="@kpi.ColorClass"
-                    InfoText="@kpi.InfoText"
-                    TileType="@kpi.TileType"
-                    ShowInfoIcon="@kpi.ShowInfoIcon"
-                    IsInfoOpen="@(OpenKpiInfoTitle == kpi.Title)"
-                    OnInfoClick="() => ToggleKpiInfo(kpi.Title)"
-                    BreakdownItems="@kpi.BreakdownItems"
-                    Tabs="@kpi.Tabs"
-                    ActiveTab="@QchActivityView"
-                    OnTabChanged="OnQchActivityTabChanged"
-                    AdditionalClasses="bm-kpi-card" />
-            }
+            <KpiCardGrid Cards="@GetBedManagementKpiCards()"
+                         OpenInfoTitle="@OpenKpiInfoTitle"
+                         OnInfoClick="ToggleKpiInfo"
+                         ActiveTab="@QchActivityView"
+                         OnTabChanged="OnQchActivityTabChanged"
+                         CardAdditionalClasses="bm-kpi-card" />
         </section>
         <section class="bm-insight-grid actionable">
         @foreach (var insight in ActiveInsights)
@@ -300,7 +283,8 @@
             </div>
         }
     </section>
-</section>
+    </section>
+</WorkspaceShell>
 
 @code {
     private const string AccessStatewide = "statewide";
@@ -440,6 +424,48 @@
         var matchedRows = rows.DistinctBy(x => x.Ward).ToList();
         return new SituationalInsight(key, title, description, severityClass, matchedRows.Select(x => x.Ward).ToHashSet(), filterType, matchedRows.Count, icon, actionLabel);
     }
+
+    private IReadOnlyList<KpiCardRecord> GetBedManagementKpiCards() =>
+        (IsQchAccess ? QchKpis : Kpis)
+            .Select(ToKpiCardRecord)
+            .ToList();
+
+    private KpiCardRecord ToKpiCardRecord(KpiItem kpi) =>
+        KpiFramework.CreateCard(
+            id: $"bed-management-{kpi.Title.ToLowerInvariant().Replace(" ", "-").Replace("/", "-")}",
+            title: kpi.Title,
+            value: kpi.Value,
+            subtitle: kpi.Subtitle,
+            iconName: kpi.IconName,
+            colorClass: kpi.ColorClass,
+            infoText: kpi.InfoText,
+            trend: ResolveKpiTrend(kpi),
+            trendLabel: ResolveKpiTrendLabel(kpi),
+            context: IsQchAccess ? QchFacility : SelectedFacility,
+            lastUpdated: DateTime.Now,
+            actionLabel: kpi.TileType == "activity" ? "Review activity" : null,
+            showInfoIcon: kpi.ShowInfoIcon,
+            tileType: kpi.TileType,
+            breakdownItems: kpi.BreakdownItems.Select(item => new KpiBreakdownRecord(item.Label, item.Value)).ToList(),
+            tabs: kpi.Tabs);
+
+    private static KpiTrendDirection ResolveKpiTrend(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value.StartsWith("+", StringComparison.Ordinal) ? KpiTrendDirection.Up : KpiTrendDirection.Down,
+        "Operational Pressure" => KpiTrendDirection.Up,
+        "Beds Returning" or "Beds Pending" => KpiTrendDirection.Down,
+        "Activity" => KpiTrendDirection.Stable,
+        _ => KpiTrendDirection.Unknown
+    };
+
+    private static string ResolveKpiTrendLabel(KpiItem kpi) => kpi.Title switch
+    {
+        "Capacity Delta (24h)" => kpi.Value,
+        "Operational Pressure" => "Pressure watch",
+        "Beds Returning" or "Beds Pending" => "Operational recovery",
+        "Activity" => "Activity view",
+        _ => "Current snapshot"
+    };
 
 
     private PredictedBedState GetPredictedAvailability(string ward) =>

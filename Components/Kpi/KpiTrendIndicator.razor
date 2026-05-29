@@ -1,0 +1,23 @@
+@using QHPFH_ConceptPrototype.Models.Kpi
+
+<span class="@GetTrendClass()" aria-label="@GetAriaLabel()">
+    <span aria-hidden="true">@GetTrendGlyph()</span>
+    <span>@Label</span>
+</span>
+
+@code {
+    [Parameter] public KpiTrendDirection Direction { get; set; } = KpiTrendDirection.Unknown;
+    [Parameter] public string Label { get; set; } = "Trend pending";
+
+    private string GetTrendClass() => $"kpi-trend kpi-trend--{Direction.ToString().ToLowerInvariant()}";
+
+    private string GetTrendGlyph() => Direction switch
+    {
+        KpiTrendDirection.Up => "↗",
+        KpiTrendDirection.Down => "↘",
+        KpiTrendDirection.Stable => "→",
+        _ => "·"
+    };
+
+    private string GetAriaLabel() => $"Trend {Direction}: {Label}";
+}
