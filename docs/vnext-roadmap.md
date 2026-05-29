@@ -107,6 +107,7 @@ P3.05 — Role-Aware Filter Visibility
 - Visibility architecture: Shared FilterAccessScope, FilterVisibilityProfile, and FilterVisibilityService now define Statewide, HHS, Facility, Ward, and Custom filter visibility profiles with hidden/locked filter support and allowed-value hooks.
 - Framework integration: FilterFrameworkService consumes visibility profiles so hidden filters continue constraining options, calculations, context summaries, and row scoping without requiring visible controls.
 - Proof-of-concept UI: Bed Management uses a Statewide visibility profile for statewide mode and a QCH custom profile that hides HHS/Facility while preserving CHQ/QCH scope for calculations and context.
+- Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, future service-stream filters, and P3.03 access-scope enforcement can consume the same multi-select filter state without creating another framework.
 
 
 P2.01 — Prototype Experience Bar
