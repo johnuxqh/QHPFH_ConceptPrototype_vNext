@@ -12,6 +12,7 @@ using QHPFH_ConceptPrototype.Services.Navigation;
 using QHPFH_ConceptPrototype.Services.Workspace;
 using QHPFH_ConceptPrototype.Services.Actions;
 using QHPFH_ConceptPrototype.Services.Operational;
+using QHPFH_ConceptPrototype.Services.Rules;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -33,5 +34,6 @@ builder.Services.AddScoped<NavigationStateService>();
 builder.Services.AddScoped<WorkspaceDensityEngine>();
 builder.Services.AddScoped<GlobalActionService>();
 builder.Services.AddScoped<OperationalAwarenessService>();
+builder.Services.AddScoped<OperationalRulesService>();
 
 await builder.Build().RunAsync();

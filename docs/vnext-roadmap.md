@@ -158,3 +158,9 @@ P2.13 — Shared KPI Card Framework
 - Outcome: Shared KPI Card Framework created to standardize operational KPI presentation, severity, trends, density adaptation, and perspective-aware awareness patterns across all workspace contexts.
 - Proof-of-concept UI: Bed Management KPI presentation now uses KpiCardGrid/KpiCard with existing KPI values preserved and translated through KpiFrameworkService.
 - Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, statewide dashboards, facility dashboards, and orchestration KPI panels can progressively migrate to the shared KPI framework.
+- Proof-of-concept UI: Concept navigation supports a compact collapsed pill that temporarily reveals primary/secondary navigation options, routes selections correctly, and collapses back after selection.
+- Deferred UI wiring: Standard shell menu route activation, adaptive navigation visibility, and full shared navigation rendering remain deferred for later prompts.
+P1.15 — Operational rules engine foundation
+- Status: Complete
+- Outcome: Shared `OperationalRulesService` added for reusable capacity, bed availability, allocation, patient flow, discharge, operational event, perspective capability, and scenario rules.
+- Deferred UI wiring: Existing pages keep their current behaviour until later prompts connect rule results to KPI cards, insights, warnings, and workflow panels.
