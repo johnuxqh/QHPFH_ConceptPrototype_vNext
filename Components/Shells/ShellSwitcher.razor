@@ -1,6 +1,9 @@
 @using QHPFH_ConceptPrototype.Services.Layout
+@using QHPFH_ConceptPrototype.Services.Navigation
+@using QHPFH_ConceptPrototype.Models.Navigation
 @inject IJSRuntime JS
 @inject LayoutVariantEngine LayoutVariant
+@inject NavigationStateService NavigationStateService
 @implements IDisposable
 
 <div class="@GetShellClasses()">
@@ -37,6 +40,7 @@
     protected override void OnInitialized()
     {
         LayoutVariant.OnChange += HandleLayoutVariantChanged;
+        NavigationStateService.SetShellMode(_shellMode == ShellMode.Std ? NavigationShellMode.Standard : NavigationShellMode.Concept);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -48,9 +52,11 @@
 
         var shellModeRaw = await JS.InvokeAsync<string?>("localStorage.getItem", ShellState.ShellModeStorageKey);
         _shellMode = ShellState.FromStorage(shellModeRaw);
+        NavigationStateService.SetShellMode(_shellMode == ShellMode.Std ? NavigationShellMode.Standard : NavigationShellMode.Concept);
 
         var compactRaw = await JS.InvokeAsync<string?>("localStorage.getItem", ShellState.ConceptNavCompactStorageKey);
         _isConceptNavCompact = string.Equals(compactRaw, "true", StringComparison.OrdinalIgnoreCase);
+        NavigationStateService.SetPrimaryNavCollapsed(_isConceptNavCompact);
 
         StateHasChanged();
     }
@@ -68,6 +74,7 @@
         }
 
         _shellMode = mode;
+        NavigationStateService.SetShellMode(_shellMode == ShellMode.Std ? NavigationShellMode.Standard : NavigationShellMode.Concept);
 
         await JS.InvokeVoidAsync(
             "localStorage.setItem",
@@ -79,6 +86,7 @@
     private async Task ToggleConceptNavCompact()
     {
         _isConceptNavCompact = !_isConceptNavCompact;
+        NavigationStateService.SetPrimaryNavCollapsed(_isConceptNavCompact);
 
         await JS.InvokeVoidAsync(
             "localStorage.setItem",

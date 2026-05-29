@@ -3,10 +3,12 @@
 @using QHPFH_ConceptPrototype.Services.Experience
 @using QHPFH_ConceptPrototype.Services.Layout
 @using QHPFH_ConceptPrototype.Services.Context
+@using QHPFH_ConceptPrototype.Services.Navigation
 @inject AdaptivePerspectiveEngine AdaptivePerspective
 @inject ExperienceModeEngine ExperienceMode
 @inject LayoutVariantEngine LayoutVariant
 @inject ContextAwarenessService ContextAwareness
+@inject NavigationStateService NavigationStateService
 @implements IDisposable
 
 <section class="@GetWorkspaceClasses()" data-workspace-id="@WorkspaceId">
@@ -65,6 +67,7 @@
     protected override void OnInitialized()
     {
         ContextAwareness.OnContextChanged += HandleShellContextChanged;
+        NavigationStateService.SetCurrentWorkspace(WorkspaceId);
         ContextAwareness.SetCurrentWorkspace(Title);
         ContextAwareness.SetCurrentPage(Title);
     }
