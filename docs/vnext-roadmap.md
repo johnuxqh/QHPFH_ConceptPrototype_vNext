@@ -114,6 +114,7 @@ P3.06 — Filter Persistence Across Pages
 - Persistence architecture: FilterFrameworkService now restores from a shared operational context by default, validates restored selections against the current workspace scope and visibility profile, and keeps a future-ready workspace override persistence mode.
 - Context restoration: Bed Management asks the shared framework to restore and normalize filter state on load so KPI, insight, awareness, and header context reflect the current operational scope immediately.
 - Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, and future statewide workspaces can adopt the same restore/apply APIs without creating page-local persistence systems.
+- Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, future service-stream filters, and P3.03 access-scope enforcement can consume the same multi-select filter state without creating another framework.
 
 
 P2.01 — Prototype Experience Bar
