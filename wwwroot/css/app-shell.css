@@ -1880,6 +1880,40 @@ button, input { font: inherit; }
   }
 }
 
+/* Shared universal filter framework */
+.filter-search-input {
+  border: 1px solid #cbd7e6;
+  border-radius: 6px;
+  font-size: .72rem;
+  margin-bottom: 4px;
+  min-width: 0;
+  padding: 4px 6px;
+  width: 100%;
+}
+.theme-dark .filter-search-input {
+  background: #101a2e;
+  border-color: #365172;
+  color: #dbe7f6;
+}
+.filter-dropdown-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.filter-dropdown-actions span {
+  color: #5f7388;
+  font-size: .68rem;
+  font-weight: 700;
+}
+.bm-filter select[multiple] {
+  min-height: 3.8rem;
+}
+.theme-dark .filter-dropdown-actions span {
+  color: #9cadc4;
+}
+
 .operational-panel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
