@@ -1244,3 +1244,156 @@ button, input { font: inherit; }
     padding: 0.5rem;
   }
 }
+
+.operational-banner-stack {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.operational-awareness-banner {
+  display: grid;
+  grid-template-columns: minmax(7.2rem, auto) minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: start;
+  border: 1px solid var(--workspace-border, rgba(91, 111, 135, 0.22));
+  border-left-width: 0.28rem;
+  border-radius: 0.42rem;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.5rem 0.65rem;
+  min-width: 0;
+}
+.operational-awareness-banner__severity,
+.operational-awareness-banner__actions,
+.operational-awareness-banner__meta,
+.operational-awareness-banner__title-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.operational-awareness-banner__severity {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.operational-awareness-banner__severity-label,
+.operational-awareness-banner__tier,
+.operational-awareness-banner__meta span,
+.operational-awareness-banner__passive-action {
+  border: 1px solid rgba(91, 111, 135, 0.2);
+  border-radius: 999px;
+  background: rgba(244, 247, 251, 0.78);
+  color: #48576b;
+  font-size: clamp(0.6rem, 0.62vw, 0.7rem);
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 0.12rem 0.42rem;
+  white-space: nowrap;
+}
+.operational-awareness-banner__content {
+  min-width: 0;
+}
+.operational-awareness-banner__title-row {
+  justify-content: space-between;
+}
+.operational-awareness-banner h3 {
+  margin: 0;
+  color: var(--pfh-primary-blue);
+  font-size: clamp(0.78rem, 0.84vw, 0.95rem);
+  line-height: 1.2;
+}
+.operational-awareness-banner__title-row > span {
+  color: #566475;
+  font-size: clamp(0.58rem, 0.6vw, 0.68rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.operational-awareness-banner p {
+  margin: 0.18rem 0 0.28rem;
+  color: #344256;
+  font-size: clamp(0.68rem, 0.72vw, 0.8rem);
+  line-height: 1.35;
+}
+.operational-awareness-banner__actions {
+  justify-content: flex-end;
+}
+.operational-awareness-banner__dismiss {
+  border: 1px solid rgba(0, 112, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(237, 246, 255, 0.86);
+  color: var(--pfh-primary-blue);
+  font-size: clamp(0.62rem, 0.64vw, 0.72rem);
+  font-weight: 800;
+  padding: 0.16rem 0.55rem;
+}
+.operational-awareness-banner--info,
+.operational-awareness-banner--tier1 {
+  border-left-color: #2e8540;
+}
+.operational-awareness-banner--moderate,
+.operational-awareness-banner--tier2 {
+  border-left-color: #d9822b;
+}
+.operational-awareness-banner--high,
+.operational-awareness-banner--tier3 {
+  border-left-color: #d14343;
+}
+.operational-awareness-banner--critical,
+.operational-awareness-banner--incident {
+  border-left-color: #111827;
+}
+.operational-awareness-banner--critical .operational-awareness-banner__severity-label,
+.operational-awareness-banner--incident .operational-awareness-banner__severity-label {
+  background: #111827;
+  color: #ffffff;
+}
+.operational-awareness-banner--high .operational-awareness-banner__severity-label,
+.operational-awareness-banner--tier3 .operational-awareness-banner__tier {
+  background: rgba(209, 67, 67, 0.12);
+  color: #9b1c1c;
+}
+.operational-awareness-banner--moderate .operational-awareness-banner__severity-label,
+.operational-awareness-banner--tier2 .operational-awareness-banner__tier {
+  background: rgba(217, 130, 43, 0.14);
+  color: #8a4b12;
+}
+.theme-dark .operational-awareness-banner {
+  background: rgba(16, 26, 46, 0.78);
+  border-color: #2e3a52;
+}
+.theme-dark .operational-awareness-banner h3 {
+  color: #82c9ff;
+}
+.theme-dark .operational-awareness-banner p,
+.theme-dark .operational-awareness-banner__title-row > span {
+  color: #d7e2f3;
+}
+.theme-dark .operational-awareness-banner__severity-label,
+.theme-dark .operational-awareness-banner__tier,
+.theme-dark .operational-awareness-banner__meta span,
+.theme-dark .operational-awareness-banner__passive-action {
+  background: rgba(16, 26, 46, 0.9);
+  border-color: #365172;
+  color: #c8d6e8;
+}
+.theme-dark .operational-awareness-banner__dismiss {
+  border-color: #365172;
+  background: rgba(18, 45, 76, 0.78);
+  color: #82c9ff;
+}
+
+@media (max-width: 900px) {
+  .operational-awareness-banner {
+    grid-template-columns: 1fr;
+  }
+  .operational-awareness-banner__actions {
+    justify-content: flex-start;
+  }
+  .operational-awareness-banner__severity-label,
+  .operational-awareness-banner__tier,
+  .operational-awareness-banner__meta span,
+  .operational-awareness-banner__passive-action {
+    white-space: normal;
+  }
+}
