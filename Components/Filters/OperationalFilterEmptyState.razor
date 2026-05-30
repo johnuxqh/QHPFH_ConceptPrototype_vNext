@@ -1,0 +1,26 @@
+@using QHPFH_ConceptPrototype.Models.Filters
+
+@if (EmptyState is not null)
+{
+    <section class="operational-filter-empty-state" aria-live="polite" aria-label="Operational filter empty state">
+        <div>
+            <p class="operational-filter-empty-state__eyebrow">Current scope: @EmptyState.ScopeSummary</p>
+            <h3>@EmptyState.Title</h3>
+            <p>@EmptyState.Message</p>
+        </div>
+        @if (EmptyState.RecoveryActions.Count > 0)
+        {
+            <div class="operational-filter-empty-state__actions" aria-label="Filter recovery actions">
+                @foreach (var action in EmptyState.RecoveryActions)
+                {
+                    <button type="button" class="bm-ghost bm-mini-btn" @onclick="() => ActionSelected.InvokeAsync(action)">@action.Label</button>
+                }
+            </div>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public FilterEmptyStateRecord? EmptyState { get; set; }
+    [Parameter] public EventCallback<FilterEmptyStateActionRecord> ActionSelected { get; set; }
+}

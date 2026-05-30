@@ -15,6 +15,7 @@ using QHPFH_ConceptPrototype.Services.Operational;
 using QHPFH_ConceptPrototype.Services.Insights;
 using QHPFH_ConceptPrototype.Services.Panels;
 using QHPFH_ConceptPrototype.Services.Rules;
+using QHPFH_ConceptPrototype.Services.Filters;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -29,6 +30,9 @@ builder.Services.AddScoped<KpiCalculationService>();
 builder.Services.AddScoped<KpiFrameworkService>();
 builder.Services.AddScoped<InsightFrameworkService>();
 builder.Services.AddScoped<OperationalPanelFrameworkService>();
+builder.Services.AddScoped<FilterVisibilityService>();
+builder.Services.AddScoped<FilterFrameworkService>();
+builder.Services.AddScoped<FilterEmptyStateService>();
 builder.Services.AddScoped<PrototypeExperienceStateService>();
 builder.Services.AddScoped<AdaptivePerspectiveEngine>();
 builder.Services.AddScoped<ExperienceModeEngine>();
