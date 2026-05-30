@@ -14,6 +14,10 @@ public sealed class FilterFrameworkService
     public const string AllServiceStreamsLabel = "All service streams";
 
     private const string WardValueSeparator = "||";
+    private const string StatewideAccessView = "statewide";
+    private const string QchAccessView = "qch-bed-manager";
+    private const string QchHhs = "Children’s Health Queensland";
+    private const string QchFacility = "Queensland Children's Hospital";
 
     private readonly PrototypeDataStore _dataStore;
     private readonly ContextAwarenessService _contextAwareness;
@@ -130,6 +134,158 @@ public sealed class FilterFrameworkService
     public FilterSelectionState SelectAllFacilities(FilterSelectionState selection) => selection with { SelectedFacilityValues = Array.Empty<string>() };
 
     public FilterSelectionState SelectAllWards(FilterSelectionState selection) => selection with { SelectedWardValues = Array.Empty<string>() };
+
+    public IReadOnlyList<FilterPresetRecord> GetAvailablePresets(FilterContextRecord context)
+    {
+        var presets = new List<FilterPresetRecord>
+        {
+            new(FilterPresetType.StatewideOverview, "Statewide overview", "Return to all permitted HHS, facilities and wards."),
+            new(FilterPresetType.AccessScope, "Reset to my scope", "Restore the operational scope implied by the current access view."),
+            new(FilterPresetType.HighPressureWards, "High pressure wards", "Prepare for future pressure-focused filtering using the current access scope."),
+            new(FilterPresetType.DelayedFlowFocus, "Delayed flow focus", "Prepare for future delayed-flow filtering using the current access scope."),
+            new(FilterPresetType.EdPressureFocus, "ED pressure focus", "Prepare for future ED-pressure filtering using the current access scope."),
+            new(FilterPresetType.DischargeOpportunityFocus, "Discharge opportunity focus", "Prepare for future discharge-opportunity filtering using the current access scope.")
+        };
+
+        if (context.VisibilityProfile.AllowedFacilityValues.Count == 1)
+        {
+            presets.Insert(2, new(FilterPresetType.MyFacility, "My facility", "Restore the facility context available to the current access view."));
+        }
+
+        if (CanApplyQchPreset(context))
+        {
+            presets.Insert(2, new(FilterPresetType.QchBedManager, "QCH Bed Manager", "Restore Children’s Health Queensland and Queensland Children's Hospital scope."));
+        }
+
+        return presets.Where(preset => CanApplyPreset(context, preset.Type)).ToList();
+    }
+
+    public bool CanApplyPreset(FilterContextRecord context, FilterPresetType presetType) => presetType switch
+    {
+        FilterPresetType.StatewideOverview => HasUnrestrictedAccessScope(context.VisibilityProfile),
+        FilterPresetType.QchBedManager => CanApplyQchPreset(context),
+        FilterPresetType.MyFacility => context.VisibilityProfile.AllowedFacilityValues.Count == 1,
+        _ => true
+    };
+
+    public FilterSelectionState ResetSelection(
+        string workspaceId,
+        FilterContextRecord context,
+        FilterResetMode resetMode,
+        FilterSelectionState? workspaceDefault = null,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext)
+    {
+        var resetSelection = resetMode switch
+        {
+            FilterResetMode.ClearAll => BuildAccessScopeSelection(context.Selection, context.VisibilityProfile),
+            FilterResetMode.AccessScope => BuildAccessScopeSelection(context.Selection, context.VisibilityProfile),
+            FilterResetMode.WorkspaceDefault => workspaceDefault is null
+                ? BuildAccessScopeSelection(context.Selection, context.VisibilityProfile)
+                : ApplyAccessScopeToSelection(workspaceDefault, context.VisibilityProfile),
+            _ => BuildAccessScopeSelection(context.Selection, context.VisibilityProfile)
+        };
+
+        return ApplySelection(
+            workspaceId,
+            resetSelection,
+            workspaceWards,
+            visibilityProfile: context.VisibilityProfile,
+            persistenceMode: persistenceMode);
+    }
+
+    public FilterSelectionState ResetToAccessScope(
+        string workspaceId,
+        FilterContextRecord context,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext) =>
+        ResetSelection(workspaceId, context, FilterResetMode.AccessScope, workspaceWards: workspaceWards, persistenceMode: persistenceMode);
+
+    public FilterSelectionState ResetToWorkspaceDefault(
+        string workspaceId,
+        FilterContextRecord context,
+        FilterSelectionState? workspaceDefault = null,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext) =>
+        ResetSelection(workspaceId, context, FilterResetMode.WorkspaceDefault, workspaceDefault, workspaceWards, persistenceMode);
+
+    public FilterSelectionState ApplyPreset(
+        string workspaceId,
+        FilterContextRecord context,
+        FilterPresetType presetType,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext)
+    {
+        if (!CanApplyPreset(context, presetType))
+        {
+            return ApplySelection(workspaceId, context.Selection, workspaceWards, visibilityProfile: context.VisibilityProfile, persistenceMode: persistenceMode);
+        }
+
+        var presetSelection = presetType switch
+        {
+            FilterPresetType.StatewideOverview => BuildAccessScopeSelection(context.Selection, context.VisibilityProfile) with { SelectedAccessView = StatewideAccessView },
+            FilterPresetType.QchBedManager => ApplyQchScope(context.Selection),
+            FilterPresetType.MyFacility => BuildAccessScopeSelection(context.Selection, context.VisibilityProfile),
+            _ => BuildAccessScopeSelection(context.Selection, context.VisibilityProfile)
+        };
+
+        return ApplySelection(
+            workspaceId,
+            presetSelection,
+            workspaceWards,
+            visibilityProfile: context.VisibilityProfile,
+            persistenceMode: persistenceMode);
+    }
+
+    private static FilterSelectionState BuildAccessScopeSelection(FilterSelectionState selection, FilterVisibilityProfile visibilityProfile) =>
+        ApplyAccessScopeToSelection(selection, visibilityProfile) with
+        {
+            SelectedWardValues = Array.Empty<string>(),
+            SelectedServiceStreamValues = Array.Empty<string>()
+        };
+
+    private static FilterSelectionState ApplyAccessScopeToSelection(FilterSelectionState selection, FilterVisibilityProfile visibilityProfile) => selection with
+    {
+        SelectedHhsValues = GetAccessScopeValues(selection.SelectedHhsValues, visibilityProfile.AllowedHhsValues, visibilityProfile.ShowHhsFilter, visibilityProfile.LockHhsFilter),
+        SelectedFacilityValues = GetAccessScopeValues(selection.SelectedFacilityValues, visibilityProfile.AllowedFacilityValues, visibilityProfile.ShowFacilityFilter, visibilityProfile.LockFacilityFilter),
+        SelectedWardValues = GetAccessScopeValues(selection.SelectedWardValues, visibilityProfile.AllowedWardValues, visibilityProfile.ShowWardFilter, visibilityProfile.LockWardFilter),
+        SelectedServiceStreamValues = GetAccessScopeValues(selection.SelectedServiceStreamValues, visibilityProfile.AllowedServiceStreamValues, visibilityProfile.ShowServiceStreamFilter, visibilityProfile.LockServiceStreamFilter)
+    };
+
+    private static IReadOnlyList<string> GetAccessScopeValues(
+        IReadOnlyList<string> currentValues,
+        IReadOnlyCollection<string> allowedValues,
+        bool isVisible,
+        bool isLocked)
+    {
+        if ((isLocked || !isVisible) && allowedValues.Count == 1)
+        {
+            return allowedValues.ToList();
+        }
+
+        return isLocked ? currentValues : Array.Empty<string>();
+    }
+
+    private static bool HasUnrestrictedAccessScope(FilterVisibilityProfile visibilityProfile) =>
+        visibilityProfile.AllowedHhsValues.Count == 0
+        && visibilityProfile.AllowedFacilityValues.Count == 0
+        && visibilityProfile.AllowedWardValues.Count == 0
+        && visibilityProfile.AllowedServiceStreamValues.Count == 0;
+
+    private static bool CanApplyQchPreset(FilterContextRecord context) =>
+        (context.VisibilityProfile.AllowedHhsValues.Count == 0
+            || context.VisibilityProfile.AllowedHhsValues.Any(value => Matches(value, QchHhs)))
+        && (context.VisibilityProfile.AllowedFacilityValues.Count == 0
+            || context.VisibilityProfile.AllowedFacilityValues.Any(value => Matches(value, QchFacility)));
+
+    private static FilterSelectionState ApplyQchScope(FilterSelectionState selection) => selection with
+    {
+        SelectedHhsValues = [QchHhs],
+        SelectedFacilityValues = [QchFacility],
+        SelectedWardValues = Array.Empty<string>(),
+        SelectedServiceStreamValues = Array.Empty<string>(),
+        SelectedAccessView = QchAccessView
+    };
 
     public FilterSelectionState RestoreSelection(
         string workspaceId,

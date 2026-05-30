@@ -75,6 +75,21 @@
                         SelectionChanged="OnFilterSelectionChanged"
                         MultiSelect="true"
                         AdditionalClasses="bm-filter-row bm-filter-row-compact">
+        <div class="bm-filter-actions" aria-label="Filter reset and preset actions">
+            <button type="button" class="bm-ghost bm-mini-btn" @onclick="() => ResetFilters(FilterResetMode.ClearAll)">Clear all</button>
+            <button type="button" class="bm-ghost bm-mini-btn" @onclick="() => ResetFilters(FilterResetMode.AccessScope)">Reset scope</button>
+            <button type="button" class="bm-ghost bm-mini-btn" @onclick="() => ResetFilters(FilterResetMode.WorkspaceDefault)">Workspace default</button>
+            <label>
+                <span>Presets</span>
+                <select @bind="SelectedPresetValue" @bind:after="OnPresetChanged" aria-label="Apply filter preset">
+                    <option value="">Choose preset</option>
+                    @foreach (var preset in FilterFramework.GetAvailablePresets(BedFilterContext))
+                    {
+                        <option value="@preset.Type.ToString()">@preset.Label</option>
+                    }
+                </select>
+            </label>
+        </div>
         <div class="bm-access-selector">
             <label>Access view</label>
             <select @bind="SelectedAccessView" @bind:after="OnAccessViewChanged">
@@ -282,6 +297,7 @@
         new FacilityNotification(2, "Hospital Capacity Status: Red", "High demand across ED and inpatient flow. Prioritise confirmed discharges before 11:00.", "red")
     };
     private string QchActivityView = "Today";
+    private string SelectedPresetValue = string.Empty;
 
     private const string BedManagementWorkspaceId = "bed-management";
     private FilterSelectionState BedFilterSelection = FilterSelectionState.CreateDefault(
@@ -400,6 +416,46 @@
             ApplyAccessScope(persistContext: true);
         }
     }
+
+    private void ResetFilters(FilterResetMode resetMode)
+    {
+        BedFilterSelection = FilterFramework.ResetSelection(
+            BedManagementWorkspaceId,
+            BedFilterContext,
+            resetMode,
+            workspaceDefault: CreateWorkspaceDefaultSelection(),
+            workspaceWards: GetBedManagementWardScope());
+        ClearInsightFilter();
+        CurrentPage = 1;
+    }
+
+    private void OnPresetChanged()
+    {
+        if (!Enum.TryParse<FilterPresetType>(SelectedPresetValue, out var presetType))
+        {
+            return;
+        }
+
+        BedFilterSelection = FilterFramework.ApplyPreset(
+            BedManagementWorkspaceId,
+            BedFilterContext,
+            presetType,
+            GetBedManagementWardScope());
+        SelectedPresetValue = string.Empty;
+    private void OnAccessViewChanged()
+    {
+        ApplyAccessScope(persistContext: true);
+        ClearInsightFilter();
+        CurrentPage = 1;
+    }
+
+    private FilterSelectionState CreateWorkspaceDefaultSelection() => BedFilterSelection with
+    {
+        SelectedHhsValues = IsQchAccess ? [QchHhs] : Array.Empty<string>(),
+        SelectedFacilityValues = IsQchAccess ? [QchFacility] : Array.Empty<string>(),
+        SelectedWardValues = Array.Empty<string>(),
+        SelectedServiceStreamValues = Array.Empty<string>()
+    };
 
     private void OnAccessViewChanged()
     {
