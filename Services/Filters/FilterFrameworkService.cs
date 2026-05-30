@@ -38,6 +38,10 @@ public sealed class FilterFrameworkService
         _filterVisibility = filterVisibility;
     }
 
+    public event Action<FilterSyncEvent>? OnFilterContextChanged;
+    public event Action<FilterSyncEvent>? OnSharedFilterSelectionChanged;
+    public event Action<FilterSyncEvent>? OnWorkspaceFilterSelectionChanged;
+
     public FilterSelectionState CreateDefaultSelection(string accessView = "statewide") =>
         FilterSelectionState.CreateDefault(AllHhsLabel, AllFacilitiesLabel, AllWardsLabel, AllServiceStreamsLabel, accessView);
 
@@ -174,7 +178,8 @@ public sealed class FilterFrameworkService
         FilterResetMode resetMode,
         FilterSelectionState? workspaceDefault = null,
         IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
-        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext)
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext,
+        FilterSyncMode syncMode = FilterSyncMode.SharedOperationalContext)
     {
         var resetSelection = resetMode switch
         {
@@ -191,34 +196,38 @@ public sealed class FilterFrameworkService
             resetSelection,
             workspaceWards,
             visibilityProfile: context.VisibilityProfile,
-            persistenceMode: persistenceMode);
+            persistenceMode: persistenceMode,
+            syncMode: syncMode);
     }
 
     public FilterSelectionState ResetToAccessScope(
         string workspaceId,
         FilterContextRecord context,
         IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
-        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext) =>
-        ResetSelection(workspaceId, context, FilterResetMode.AccessScope, workspaceWards: workspaceWards, persistenceMode: persistenceMode);
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext,
+        FilterSyncMode syncMode = FilterSyncMode.SharedOperationalContext) =>
+        ResetSelection(workspaceId, context, FilterResetMode.AccessScope, workspaceWards: workspaceWards, persistenceMode: persistenceMode, syncMode: syncMode);
 
     public FilterSelectionState ResetToWorkspaceDefault(
         string workspaceId,
         FilterContextRecord context,
         FilterSelectionState? workspaceDefault = null,
         IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
-        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext) =>
-        ResetSelection(workspaceId, context, FilterResetMode.WorkspaceDefault, workspaceDefault, workspaceWards, persistenceMode);
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext,
+        FilterSyncMode syncMode = FilterSyncMode.SharedOperationalContext) =>
+        ResetSelection(workspaceId, context, FilterResetMode.WorkspaceDefault, workspaceDefault, workspaceWards, persistenceMode, syncMode);
 
     public FilterSelectionState ApplyPreset(
         string workspaceId,
         FilterContextRecord context,
         FilterPresetType presetType,
         IEnumerable<FilterWorkspaceWardRecord>? workspaceWards = null,
-        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext)
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext,
+        FilterSyncMode syncMode = FilterSyncMode.SharedOperationalContext)
     {
         if (!CanApplyPreset(context, presetType))
         {
-            return ApplySelection(workspaceId, context.Selection, workspaceWards, visibilityProfile: context.VisibilityProfile, persistenceMode: persistenceMode);
+            return ApplySelection(workspaceId, context.Selection, workspaceWards, visibilityProfile: context.VisibilityProfile, persistenceMode: persistenceMode, syncMode: syncMode);
         }
 
         var presetSelection = presetType switch
@@ -234,7 +243,8 @@ public sealed class FilterFrameworkService
             presetSelection,
             workspaceWards,
             visibilityProfile: context.VisibilityProfile,
-            persistenceMode: persistenceMode);
+            persistenceMode: persistenceMode,
+            syncMode: syncMode);
     }
 
     private static FilterSelectionState BuildAccessScopeSelection(FilterSelectionState selection, FilterVisibilityProfile visibilityProfile) =>
@@ -296,7 +306,8 @@ public sealed class FilterFrameworkService
         IReadOnlyCollection<string>? allowedWards = null,
         IReadOnlyCollection<string>? serviceStreams = null,
         FilterVisibilityProfile? visibilityProfile = null,
-        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext)
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext,
+        FilterSyncMode syncMode = FilterSyncMode.SharedOperationalContext)
     {
         var restoredSelection = GetSelection(workspaceId, fallback, persistenceMode);
         return ApplySelection(
@@ -308,7 +319,9 @@ public sealed class FilterFrameworkService
             allowedWards,
             serviceStreams,
             visibilityProfile,
-            persistenceMode);
+            persistenceMode,
+            syncMode,
+            suppressSyncEvent: true);
     }
 
     public FilterSelectionState ApplySelection(
@@ -320,12 +333,16 @@ public sealed class FilterFrameworkService
         IReadOnlyCollection<string>? allowedWards = null,
         IReadOnlyCollection<string>? serviceStreams = null,
         FilterVisibilityProfile? visibilityProfile = null,
-        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext)
+        FilterPersistenceMode persistenceMode = FilterPersistenceMode.SharedContext,
+        FilterSyncMode syncMode = FilterSyncMode.SharedOperationalContext,
+        FilterSyncScope syncScope = FilterSyncScope.FullContext,
+        bool suppressSyncEvent = false)
     {
         var effectiveProfile = _filterVisibility.GetCurrentProfile(visibilityProfile);
         var effectiveAllowedHhs = MergeAllowedValues(allowedHhs, effectiveProfile.AllowedHhsValues);
         var effectiveAllowedFacilities = MergeAllowedValues(allowedFacilities, effectiveProfile.AllowedFacilityValues);
         var effectiveAllowedWards = MergeAllowedValues(allowedWards, effectiveProfile.AllowedWardValues);
+        var previousSelection = GetComparableSelection(workspaceId, persistenceMode);
         var normalizedSelection = NormalizeSelection(selection, workspaceWards, effectiveAllowedHhs, effectiveAllowedFacilities, effectiveAllowedWards, serviceStreams);
         PersistSelection(workspaceId, normalizedSelection, persistenceMode);
 
@@ -336,8 +353,19 @@ public sealed class FilterFrameworkService
         }
 
         ApplyLocationContext(normalizedSelection, workspaceWards);
+
+        if (!suppressSyncEvent && !AreSelectionsEquivalent(previousSelection, normalizedSelection))
+        {
+            NotifyFilterContextChanged(workspaceId, normalizedSelection, persistenceMode, syncMode, syncScope, workspaceWards);
+        }
+
         return normalizedSelection;
     }
+
+    private FilterSelectionState? GetComparableSelection(string workspaceId, FilterPersistenceMode persistenceMode) =>
+        persistenceMode == FilterPersistenceMode.SharedContext
+            ? _sharedSelection ?? GetWorkspaceSelection(workspaceId)
+            : GetWorkspaceSelection(workspaceId);
 
     private FilterSelectionState? GetWorkspaceSelection(string workspaceId) =>
         _workspaceSelections.TryGetValue(workspaceId, out var workspaceSelection)
@@ -353,6 +381,44 @@ public sealed class FilterFrameworkService
             _sharedSelection = selection;
         }
     }
+
+    private void NotifyFilterContextChanged(
+        string workspaceId,
+        FilterSelectionState selection,
+        FilterPersistenceMode persistenceMode,
+        FilterSyncMode syncMode,
+        FilterSyncScope syncScope,
+        IEnumerable<FilterWorkspaceWardRecord>? workspaceWards)
+    {
+        var syncEvent = new FilterSyncEvent(
+            workspaceId,
+            selection,
+            persistenceMode,
+            syncMode,
+            syncScope,
+            GetEffectiveContextSummary(selection, workspaceWards));
+
+        OnFilterContextChanged?.Invoke(syncEvent);
+        OnWorkspaceFilterSelectionChanged?.Invoke(syncEvent);
+
+        if (persistenceMode == FilterPersistenceMode.SharedContext && syncMode != FilterSyncMode.WorkspaceOverride)
+        {
+            OnSharedFilterSelectionChanged?.Invoke(syncEvent);
+        }
+    }
+
+    private static bool AreSelectionsEquivalent(FilterSelectionState? left, FilterSelectionState right) =>
+        left is not null
+        && ValuesEqual(left.SelectedHhsValues, right.SelectedHhsValues)
+        && ValuesEqual(left.SelectedFacilityValues, right.SelectedFacilityValues)
+        && ValuesEqual(left.SelectedWardValues, right.SelectedWardValues)
+        && ValuesEqual(left.SelectedServiceStreamValues, right.SelectedServiceStreamValues)
+        && Matches(left.SelectedAccessView, right.SelectedAccessView);
+
+    private static bool ValuesEqual(IReadOnlyList<string> left, IReadOnlyList<string> right) =>
+        left.Count == right.Count
+        && left.OrderBy(x => NormalizeComparable(x), StringComparer.OrdinalIgnoreCase)
+            .SequenceEqual(right.OrderBy(x => NormalizeComparable(x), StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
 
     public IReadOnlyList<T> ApplyToRows<T>(IEnumerable<T> rows, FilterSelectionState selection, Func<T, string> hhsSelector, Func<T, string> facilitySelector, Func<T, string> wardSelector)
     {

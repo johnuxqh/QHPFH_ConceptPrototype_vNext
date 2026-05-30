@@ -1,4 +1,5 @@
 @page "/bed-management"
+@implements IDisposable
 @using QHPFH_ConceptPrototype.Data
 @using MudBlazor
 @using QHPFH_ConceptPrototype.Components.Shared
@@ -403,79 +404,99 @@
     private HashSet<string> ActiveInsightWardIds =>
         ActiveInsights.FirstOrDefault(x => x.Id == ActiveInsightFilter)?.RelatedEntityIds.ToHashSet()
         ?? new HashSet<string>();
-protected override void OnInitialized()
-{
-    BedFilterSelection = FilterFramework.RestoreSelection(
-        BedManagementWorkspaceId,
-        BedFilterSelection,
-        GetBedManagementWardScope(),
-        visibilityProfile: BedFilterVisibility);
+    protected override void OnInitialized()
+    {
+        FilterFramework.OnSharedFilterSelectionChanged += HandleSharedFilterSelectionChanged;
 
-    if (IsQchAccess)
+        BedFilterSelection = FilterFramework.RestoreSelection(
+            BedManagementWorkspaceId,
+            BedFilterSelection,
+            GetBedManagementWardScope(),
+            visibilityProfile: BedFilterVisibility);
+
+        if (IsQchAccess)
+        {
+            ApplyAccessScope(persistContext: true);
+        }
+    }
+
+    private void HandleSharedFilterSelectionChanged(FilterSyncEvent syncEvent)
+    {
+        if (string.Equals(syncEvent.WorkspaceId, BedManagementWorkspaceId, StringComparison.OrdinalIgnoreCase)
+            || syncEvent.SyncMode == FilterSyncMode.WorkspaceOverride)
+        {
+            return;
+        }
+
+        BedFilterSelection = FilterFramework.ApplySelection(
+            BedManagementWorkspaceId,
+            syncEvent.Selection,
+            GetBedManagementWardScope(),
+            visibilityProfile: BedFilterVisibility,
+            persistenceMode: syncEvent.PersistenceMode,
+            syncMode: syncEvent.SyncMode,
+            suppressSyncEvent: true);
+        ClearInsightFilter();
+        CurrentPage = 1;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ResetFilters(FilterResetMode resetMode)
+    {
+        BedFilterSelection = FilterFramework.ResetSelection(
+            BedManagementWorkspaceId,
+            BedFilterContext,
+            resetMode,
+            workspaceDefault: CreateWorkspaceDefaultSelection(),
+            workspaceWards: GetBedManagementWardScope());
+        ClearInsightFilter();
+        CurrentPage = 1;
+    }
+
+    private void OnPresetChanged()
+    {
+        if (!Enum.TryParse<FilterPresetType>(SelectedPresetValue, out var presetType))
+        {
+            return;
+        }
+
+        BedFilterSelection = FilterFramework.ApplyPreset(
+            BedManagementWorkspaceId,
+            BedFilterContext,
+            presetType,
+            GetBedManagementWardScope());
+        SelectedPresetValue = string.Empty;
+        ClearInsightFilter();
+        CurrentPage = 1;
+    }
+
+    private FilterSelectionState CreateWorkspaceDefaultSelection() => BedFilterSelection with
+    {
+        SelectedHhsValues = IsQchAccess ? [QchHhs] : Array.Empty<string>(),
+        SelectedFacilityValues = IsQchAccess ? [QchFacility] : Array.Empty<string>(),
+        SelectedWardValues = Array.Empty<string>(),
+        SelectedServiceStreamValues = Array.Empty<string>()
+    };
+
+    private void OnAccessViewChanged()
     {
         ApplyAccessScope(persistContext: true);
+        ClearInsightFilter();
+        CurrentPage = 1;
     }
-}
 
-private void ResetFilters(FilterResetMode resetMode)
-{
-    BedFilterSelection = FilterFramework.ResetSelection(
-        BedManagementWorkspaceId,
-        BedFilterContext,
-        resetMode,
-        workspaceDefault: CreateWorkspaceDefaultSelection(),
-        workspaceWards: GetBedManagementWardScope());
-
-    ClearInsightFilter();
-    CurrentPage = 1;
-}
-
-private void OnPresetChanged()
-{
-    if (!Enum.TryParse<FilterPresetType>(SelectedPresetValue, out var presetType))
+    private void OnFilterSelectionChanged(FilterSelectionState selection)
     {
-        return;
+        BedFilterSelection = FilterFramework.ApplySelection(
+            BedManagementWorkspaceId,
+            selection,
+            GetBedManagementWardScope(),
+            visibilityProfile: BedFilterVisibility);
+        ClearInsightFilter();
+        CurrentPage = 1;
     }
 
-    BedFilterSelection = FilterFramework.ApplyPreset(
-        BedManagementWorkspaceId,
-        BedFilterContext,
-        presetType,
-        GetBedManagementWardScope());
-
-    SelectedPresetValue = string.Empty;
-    ClearInsightFilter();
-    CurrentPage = 1;
-}
-
-private FilterSelectionState CreateWorkspaceDefaultSelection() => BedFilterSelection with
-{
-    SelectedHhsValues = IsQchAccess ? [QchHhs] : Array.Empty<string>(),
-    SelectedFacilityValues = IsQchAccess ? [QchFacility] : Array.Empty<string>(),
-    SelectedWardValues = Array.Empty<string>(),
-    SelectedServiceStreamValues = Array.Empty<string>()
-};
-
-private void OnAccessViewChanged()
-{
-    ApplyAccessScope(persistContext: true);
-    ClearInsightFilter();
-    CurrentPage = 1;
-}
-
-private void OnFilterSelectionChanged(FilterSelectionState selection)
-{
-    BedFilterSelection = FilterFramework.ApplySelection(
-        BedManagementWorkspaceId,
-        selection,
-        GetBedManagementWardScope(),
-        visibilityProfile: BedFilterVisibility);
-
-    ClearInsightFilter();
-    CurrentPage = 1;
-}
-
-private void ApplyAccessScope(bool persistContext)
+    private void ApplyAccessScope(bool persistContext)
 {
     BedFilterSelection = IsQchAccess
         ? BedFilterSelection with
@@ -504,6 +525,11 @@ private void ApplyAccessScope(bool persistContext)
             visibilityProfile: BedFilterVisibility);
     }
 }
+
+    public void Dispose()
+    {
+        FilterFramework.OnSharedFilterSelectionChanged -= HandleSharedFilterSelectionChanged;
+    }
 
     private IReadOnlyList<FilterWorkspaceWardRecord> GetBedManagementWardScope() => Rows
         .Select(row => new FilterWorkspaceWardRecord(row.Hhs, row.Facility, row.Ward, row.WardType))
