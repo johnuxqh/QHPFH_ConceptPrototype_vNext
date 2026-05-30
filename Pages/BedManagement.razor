@@ -10,6 +10,7 @@
 @inject InsightFrameworkService InsightFramework
 @inject FilterFrameworkService FilterFramework
 @inject FilterVisibilityService FilterVisibility
+@inject FilterEmptyStateService FilterEmptyStates
 
 <WorkspaceShell WorkspaceId="bed-management"
                 Title="Bed Management"
@@ -223,7 +224,12 @@
             </div>
         </div>
 
-        @if (SelectedView == "Grid")
+        @if (ActiveFilterEmptyState is not null)
+        {
+            <OperationalFilterEmptyState EmptyState="@ActiveFilterEmptyState"
+                                         ActionSelected="OnEmptyStateActionSelected" />
+        }
+        else if (SelectedView == "Grid")
         {
             <div class="bm-overview-gridcards @(SelectedVersion=="V2"?"v2":null)">
                 @foreach (var row in PagedRows)
@@ -345,6 +351,7 @@
         GetBedManagementWardScope(),
         visibilityProfile: BedFilterVisibility);
     private List<BedOverviewRow> FilteredRows => GetScopedBedManagementRows();
+    private FilterEmptyStateRecord? ActiveFilterEmptyState => FilterEmptyStates.GetEmptyState(BedFilterContext, FilteredRows.Count, Rows.Count, "Bed Management", "beds");
     private List<BedOverviewRow> SortedRows => SortAsc ? FilteredRows.OrderBy(GetSortValue).ToList() : FilteredRows.OrderByDescending(GetSortValue).ToList();
     private List<BedOverviewRow> PagedRows => SortedRows.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
 
@@ -439,6 +446,26 @@
         ClearInsightFilter();
         CurrentPage = 1;
         _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnEmptyStateActionSelected(FilterEmptyStateActionRecord action)
+    {
+        if (action.ResetMode is not null)
+        {
+            ResetFilters(action.ResetMode.Value);
+            return;
+        }
+
+        if (action.PresetType is not null)
+        {
+            BedFilterSelection = FilterFramework.ApplyPreset(
+                BedManagementWorkspaceId,
+                BedFilterContext,
+                action.PresetType.Value,
+                GetBedManagementWardScope());
+            ClearInsightFilter();
+            CurrentPage = 1;
+        }
     }
 
     private void ResetFilters(FilterResetMode resetMode)

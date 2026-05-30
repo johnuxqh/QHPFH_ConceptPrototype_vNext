@@ -2201,3 +2201,52 @@ button, input { font: inherit; }
     border-color: #3e5c82;
     color: #e5ecf7;
 }
+
+/* Shared smart filter empty states */
+.operational-filter-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    border: 1px dashed var(--pfh-border-default);
+    border-radius: 0.75rem;
+    background: var(--pfh-surface-1);
+    padding: 1rem;
+    color: var(--pfh-text-primary);
+}
+
+.operational-filter-empty-state h3 {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+}
+
+.operational-filter-empty-state p {
+    margin: 0;
+    color: var(--pfh-text-muted, #64748b);
+    font-size: 0.78rem;
+}
+
+.operational-filter-empty-state__eyebrow {
+    margin-bottom: 0.25rem !important;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.operational-filter-empty-state__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.theme-dark .operational-filter-empty-state {
+    border-color: #3e5c82;
+    background: #152742;
+    color: #e5ecf7;
+}
+
+.theme-dark .operational-filter-empty-state p {
+    color: #9db4cf;
+}

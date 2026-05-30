@@ -32,6 +32,7 @@ builder.Services.AddScoped<InsightFrameworkService>();
 builder.Services.AddScoped<OperationalPanelFrameworkService>();
 builder.Services.AddScoped<FilterVisibilityService>();
 builder.Services.AddScoped<FilterFrameworkService>();
+builder.Services.AddScoped<FilterEmptyStateService>();
 builder.Services.AddScoped<PrototypeExperienceStateService>();
 builder.Services.AddScoped<AdaptivePerspectiveEngine>();
 builder.Services.AddScoped<ExperienceModeEngine>();
