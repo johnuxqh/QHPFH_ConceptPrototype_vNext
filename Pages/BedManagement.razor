@@ -497,31 +497,34 @@
     }
 
     private void ApplyAccessScope(bool persistContext)
-    {
-        BedFilterSelection = IsQchAccess
-            ? BedFilterSelection with
-            {
-                SelectedHhsValues = [QchHhs],
-                SelectedFacilityValues = [QchFacility]
-            }
-            : BedFilterSelection with
-            {
-                SelectedHhsValues = Array.Empty<string>(),
-                SelectedFacilityValues = Array.Empty<string>(),
-                SelectedWardValues = Array.Empty<string>()
-            };
-
-        BedFilterSelection = FilterFramework.NormalizeSelection(BedFilterSelection, GetBedManagementWardScope());
-
-        if (persistContext)
+{
+    BedFilterSelection = IsQchAccess
+        ? BedFilterSelection with
         {
-            BedFilterSelection = FilterFramework.ApplySelection(
-                BedManagementWorkspaceId,
-                BedFilterSelection,
-                GetBedManagementWardScope(),
-                visibilityProfile: BedFilterVisibility);
+            SelectedHhsValues = [QchHhs],
+            SelectedFacilityValues = [QchFacility],
+            SelectedWardValues = Array.Empty<string>()
         }
+        : BedFilterSelection with
+        {
+            SelectedHhsValues = Array.Empty<string>(),
+            SelectedFacilityValues = Array.Empty<string>(),
+            SelectedWardValues = Array.Empty<string>()
+        };
+
+    BedFilterSelection = FilterFramework.NormalizeSelection(
+        BedFilterSelection,
+        GetBedManagementWardScope());
+
+    if (persistContext)
+    {
+        BedFilterSelection = FilterFramework.ApplySelection(
+            BedManagementWorkspaceId,
+            BedFilterSelection,
+            GetBedManagementWardScope(),
+            visibilityProfile: BedFilterVisibility);
     }
+}
 
     public void Dispose()
     {

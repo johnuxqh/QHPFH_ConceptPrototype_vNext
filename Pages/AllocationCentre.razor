@@ -39,15 +39,19 @@
         </section>
 
         <aside class="ac-destination-panel">
-            <article>
-                <h4>Destination Panel</h4>
+            <OperationalPanel Title="Destination Panel"
+                              Subtitle="Shared allocation destination options."
+                              StatusBadge="@($"{Destinations.Length} destinations")"
+                              PanelType="OperationalPanelType.Allocation"
+                              Priority="OperationalPanelPriority.Attention"
+                              AdditionalClasses="ac-destination-operational-panel">
                 <div class="bm-targets">
                     @foreach (var destination in Destinations)
                     {
                         <div class="bm-move-target">@destination</div>
                     }
                 </div>
-            </article>
+            </OperationalPanel>
 
             <article class="ac-note">
                 <p>Future workspace for cross-ward and cross-facility allocation workflows.</p>

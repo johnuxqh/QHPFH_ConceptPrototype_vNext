@@ -135,6 +135,7 @@ P3.09 — Cross-Workspace Filter Synchronisation
 - Sync architecture: Shared FilterSyncMode, FilterSyncScope, and FilterSyncEvent models plus FilterFrameworkService events now expose normalized workspace id, selection, persistence mode, sync mode, scope, and context summary.
 - Loop protection: FilterFrameworkService suppresses restore events and emits change events only when normalized selections actually change; Bed Management ignores its own emitted events and consumes shared events with suppressed re-emission.
 - Deferred wiring: Ward Operations, Allocation Centre, Delayed Discharge, and future statewide workspaces can subscribe to the same shared sync event without creating page-local filter stores.
+- Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, future service-stream filters, and P3.03 access-scope enforcement can consume the same multi-select filter state without creating another framework.
 
 
 P2.01 — Prototype Experience Bar
