@@ -142,6 +142,7 @@ P3.10 — Smart Empty-State Filter Handling
 - Empty-state architecture: Shared FilterEmptyStateType, FilterEmptyStateRecord, FilterEmptyStateActionRecord, and FilterEmptyStateService classify filter conflicts, valid empty operational states, access-scope empty states, and prototype data gaps.
 - Recovery actions: Shared empty states expose reset/preset-compatible actions that reuse the P3.08 reset/preset flow instead of page-local recovery logic.
 - Proof-of-concept UI: Bed Management renders a compact shared OperationalFilterEmptyState when filtered bed rows are empty while preserving KPI cards, insights, chips/breadcrumbs, banners, layout, and routing.
+- Deferred UI wiring: Ward Operations, Allocation Centre, Delayed Discharge, future service-stream filters, and P3.03 access-scope enforcement can consume the same multi-select filter state without creating another framework.
 
 
 P2.01 — Prototype Experience Bar
