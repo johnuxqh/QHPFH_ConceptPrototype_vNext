@@ -181,6 +181,41 @@
   --pfh-space-density-balanced-gap: var(--pfh-space-5);
   --pfh-space-density-comfortable-gap: var(--pfh-space-7);
 
+  /* Card framework */
+  --pfh-card-bg: var(--pfh-card-background);
+  --pfh-card-border: var(--pfh-border-panel);
+  --pfh-card-border-strong: var(--pfh-border-strong);
+  --pfh-card-radius: 14px;
+  --pfh-card-radius-compact: 12px;
+  --pfh-card-padding: 10px 12px;
+  --pfh-card-padding-compact: 8px 10px;
+  --pfh-card-padding-comfortable: 12px 14px;
+  --pfh-card-gap: var(--pfh-space-filter-compact-gap);
+  --pfh-card-gap-compact: 6px;
+  --pfh-card-gap-comfortable: var(--pfh-space-filter-button-padding-x);
+  --pfh-card-header-gap: var(--pfh-space-workspace-action-gap);
+  --pfh-card-body-gap: var(--pfh-space-filter-field-gap);
+  --pfh-card-footer-gap: var(--pfh-space-workspace-chip-gap);
+  --pfh-card-title-color: #1f4f9c;
+  --pfh-card-subtitle-color: var(--pfh-text-secondary);
+  --pfh-card-helper-color: var(--pfh-text-muted);
+  --pfh-card-shadow: var(--pfh-elevation-2);
+  --pfh-card-hover-bg: var(--pfh-card-bg);
+  --pfh-card-hover-border: #7fb4ef;
+  --pfh-card-hover-shadow: 0 4px 14px rgba(42, 95, 186, 0.14);
+  --pfh-card-selected-bg: var(--pfh-card-bg);
+  --pfh-card-selected-border: var(--pfh-card-hover-border);
+  --pfh-card-selected-shadow: var(--pfh-card-hover-shadow);
+  --pfh-card-disabled-opacity: 0.58;
+  --pfh-card-focus-ring: 2px solid var(--pfh-card-hover-border);
+  --pfh-card-focus-offset: 2px;
+  --pfh-card-accent-width: 0.26rem;
+  --pfh-card-accent-standard: #7aa6d8;
+  --pfh-card-accent-success: var(--pfh-status-success);
+  --pfh-card-accent-info: var(--pfh-status-info);
+  --pfh-card-accent-warning: var(--pfh-status-warning);
+  --pfh-card-accent-critical: var(--pfh-status-critical);
+
   /* Radii and borders */
   --pfh-radius-xs: 0.2rem;
   --pfh-radius-sm: 0.35rem;
@@ -315,6 +350,18 @@
   --pfh-surface-muted: #101a2e;
   --pfh-surface-inset: #0f1c34;
   --pfh-active-shell: rgba(64, 122, 189, 0.42);
+  --pfh-card-bg: var(--pfh-card-background);
+  --pfh-card-border: var(--pfh-border-panel);
+  --pfh-card-border-strong: var(--pfh-border-strong);
+  --pfh-card-title-color: #b9d7ff;
+  --pfh-card-subtitle-color: #d8e4f3;
+  --pfh-card-helper-color: #9cadc4;
+  --pfh-card-hover-bg: var(--pfh-card-bg);
+  --pfh-card-hover-border: #5d91d2;
+  --pfh-card-hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.34);
+  --pfh-card-selected-bg: var(--pfh-card-bg);
+  --pfh-card-selected-border: var(--pfh-card-hover-border);
+  --pfh-card-selected-shadow: var(--pfh-card-hover-shadow);
 
   --pfh-text-primary: #e5ecf7;
   --pfh-text-secondary: #c8d6e8;
