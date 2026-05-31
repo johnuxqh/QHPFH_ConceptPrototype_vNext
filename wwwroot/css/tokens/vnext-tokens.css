@@ -1,0 +1,221 @@
+/*
+ * QH Patient Flow Hub vNext unified design tokens.
+ * P4 visual governance: tokenise existing operational UI values without redesigning workflows.
+ */
+:root {
+  /* Typography */
+  --pfh-font-family-sans: "Noto Sans", "Segoe UI", Arial, sans-serif;
+  --pfh-font: var(--pfh-font-family-sans);
+  --pfh-font-size-root: clamp(14px, 0.85vw, 16px);
+  --pfh-font-size-caption: clamp(0.58rem, 0.6vw, 0.68rem);
+  --pfh-font-size-helper: clamp(0.62rem, 0.64vw, 0.72rem);
+  --pfh-font-size-table-cell: 0.74rem;
+  --pfh-font-size-table-header: 0.74rem;
+  --pfh-font-size-body-sm: clamp(0.68rem, 0.7vw, 0.82rem);
+  --pfh-font-size-panel-title: 0.88rem;
+  --pfh-font-size-section-title: 0.95rem;
+  --pfh-font-size-page-title: clamp(1rem, 1.06vw, 1.25rem);
+  --pfh-font-size-display: clamp(1rem, 1.1vw, 1.25rem);
+  --pfh-font-size-kpi-label: 0.75rem;
+  --pfh-font-size-kpi-value: 1.7rem;
+  --pfh-font-weight-regular: 400;
+  --pfh-font-weight-semibold: 600;
+  --pfh-font-weight-bold: 700;
+  --pfh-font-weight-extrabold: 800;
+  --pfh-line-height-tight: 1.15;
+  --pfh-line-height-default: 1.35;
+
+  /* Spacing scale */
+  --pfh-space-0: 0;
+  --pfh-space-1: 0.15rem;
+  --pfh-space-2: 0.25rem;
+  --pfh-space-3: 0.35rem;
+  --pfh-space-4: 0.45rem;
+  --pfh-space-5: 0.55rem;
+  --pfh-space-6: 0.65rem;
+  --pfh-space-7: 0.75rem;
+  --pfh-space-8: 0.9rem;
+  --pfh-space-9: 1rem;
+  --pfh-space-10: 1.25rem;
+  --pfh-space-11: 1.5rem;
+  --pfh-space-12: 2rem;
+
+  /* Radii and borders */
+  --pfh-radius-xs: 0.2rem;
+  --pfh-radius-sm: 0.35rem;
+  --pfh-radius-md: 0.45rem;
+  --pfh-radius-lg: 0.75rem;
+  --pfh-radius-xl: 0.9rem;
+  --pfh-radius-pill: 999px;
+  --pfh-border-width-default: 1px;
+
+  /* Brand and core surfaces - light mode */
+  --pfh-primary-blue: #005EB8;
+  --pfh-strong-blue: #015EB8;
+  --pfh-action-blue: #307EDB;
+  --pfh-app-bg: #F5F9FC;
+  --pfh-background: #F5F9FC;
+  --pfh-workspace-background: #F5F9FC;
+  --pfh-panel-background: #ffffff;
+  --pfh-card-background: #ffffff;
+  --pfh-elevated-surface: #ffffff;
+  --pfh-workspace-header-background: rgba(255, 255, 255, 0.58);
+  --pfh-workspace-chip-background: rgba(244, 247, 251, 0.78);
+  --pfh-workspace-chip-primary-background: rgba(237, 246, 255, 0.86);
+  --pfh-workspace-chip-primary-border: rgba(0, 112, 184, 0.24);
+  --pfh-menu-surface: #F9F8F9;
+  --pfh-surface-1: #ffffff;
+  --pfh-surface-2: #f4f7fb;
+  --pfh-surface-subtle: #f9fbfd;
+  --pfh-surface-muted: #f4f6fa;
+  --pfh-surface-inset: #fcfdff;
+  --pfh-active-shell: #EDF6FF;
+
+  /* Text */
+  --pfh-text-primary: #353535;
+  --pfh-text-secondary: #48576b;
+  --pfh-text-tertiary: #566475;
+  --pfh-text-muted: #64748b;
+  --pfh-text-disabled: #8a97a8;
+  --pfh-text-on-solid: #ffffff;
+  --pfh-link: #1d5fbf;
+
+  /* Borders */
+  --pfh-border-default: #DADADA;
+  --pfh-border-strong: #adc2d7;
+  --pfh-border-subtle: #e5ebf2;
+  --pfh-border-panel: #d8e0ea;
+  --pfh-border-control: #cfd9e6;
+  --pfh-border-workspace: rgba(91, 111, 135, 0.22);
+
+  /* Interaction states */
+  --pfh-interaction-hover: #EDF6FF;
+  --pfh-interaction-selected: #eef5fc;
+  --pfh-interaction-active: #e4eefb;
+  --pfh-interaction-focus: #307EDB;
+  --pfh-interaction-focus-ring: 0 0 0 3px rgba(48, 126, 219, 0.28);
+  --pfh-interaction-locked-bg: rgba(0, 94, 184, 0.1);
+  --pfh-interaction-locked-text: #005eb8;
+
+  /* Navigation */
+  --pfh-nav-primary-surface: #F9F8F9;
+  --pfh-nav-secondary-surface: #F9F8F9;
+  --pfh-nav-selected-surface: #EDF6FF;
+  --pfh-nav-hover-surface: #EDF6FF;
+  --pfh-nav-selected-text: #005EB8;
+  --pfh-nav-hover-text: #005EB8;
+
+  /* Status semantics */
+  --pfh-status-success: #1f9c4e;
+  --pfh-status-success-surface: #ecf6ee;
+  --pfh-status-success-border: #b9d3bf;
+  --pfh-status-warning: #dc7d16;
+  --pfh-status-warning-surface: #fff4df;
+  --pfh-status-warning-border: #e2cda0;
+  --pfh-status-critical: #c63146;
+  --pfh-status-critical-surface: #fff4f4;
+  --pfh-status-critical-border: #f1c7c7;
+  --pfh-status-info: #1377c9;
+  --pfh-status-info-surface: #e8f1ff;
+  --pfh-status-info-border: #bad0ea;
+  --pfh-status-neutral: #64748b;
+  --pfh-status-neutral-surface: #f4f7fb;
+  --pfh-status-neutral-border: #d8e0ea;
+
+  /* Operational status semantics */
+  --pfh-status-available: #1f9c4e;
+  --pfh-status-occupied: #1f4f7f;
+  --pfh-status-pending: #dc7d16;
+  --pfh-status-cleaning: #8a6520;
+  --pfh-status-maintenance: #70597f;
+  --pfh-status-blocked: #7f3b3b;
+  --pfh-status-delayed: #b56b00;
+  --pfh-status-discharge: #1f8d47;
+  --pfh-status-escalation: #c63146;
+
+  /* Elevation */
+  --pfh-elevation-0: none;
+  --pfh-elevation-1: 0 1px 3px rgba(20, 36, 60, 0.05);
+  --pfh-elevation-2: 0 1px 4px rgba(16, 39, 68, 0.06);
+  --pfh-elevation-3: 0 2px 8px rgba(30, 63, 98, 0.1);
+  --pfh-elevation-menu: 0 8px 20px rgba(0, 0, 0, 0.18);
+
+  /* Layout sizing */
+  --pfh-header-height: 64px;
+  --pfh-primary-nav-height: 25px;
+  --pfh-secondary-nav-height: 25px;
+  --pfh-utility-height: 32px;
+  --pfh-filter-control-height: 30px;
+  --pfh-filter-row-gap: 14px;
+  --pfh-shell-padding: 0.65rem;
+  --pfh-shell-gap: 0.55rem;
+  --pfh-content-max-width: 100%;
+  --pfh-panel-width: 320px;
+  --pfh-slideout-width: min(460px, 40vw);
+  --pfh-slideout-wide-width: min(520px, 48vw);
+  --pfh-drawer-width: 340px;
+}
+
+.theme-dark {
+  --pfh-app-bg: #121e34;
+  --pfh-background: #121e34;
+  --pfh-workspace-background: #121e34;
+  --pfh-panel-background: rgba(16, 26, 46, 0.96);
+  --pfh-card-background: #101a2e;
+  --pfh-elevated-surface: #152742;
+  --pfh-workspace-header-background: rgba(16, 26, 46, 0.72);
+  --pfh-workspace-chip-background: rgba(16, 26, 46, 0.82);
+  --pfh-workspace-chip-primary-background: rgba(18, 45, 76, 0.78);
+  --pfh-workspace-chip-primary-border: #365172;
+  --pfh-menu-surface: #101a2e;
+  --pfh-surface-1: #152742;
+  --pfh-surface-2: #101a2e;
+  --pfh-surface-subtle: #152742;
+  --pfh-surface-muted: #101a2e;
+  --pfh-surface-inset: #0f1c34;
+  --pfh-active-shell: rgba(64, 122, 189, 0.42);
+
+  --pfh-text-primary: #e5ecf7;
+  --pfh-text-secondary: #c8d6e8;
+  --pfh-text-tertiary: #aebbd0;
+  --pfh-text-muted: #9db4cf;
+  --pfh-text-disabled: #6d7d92;
+  --pfh-link: #82c9ff;
+
+  --pfh-border-default: #365172;
+  --pfh-border-strong: #3e5c82;
+  --pfh-border-subtle: #2e3a52;
+  --pfh-border-panel: #2d4360;
+  --pfh-border-control: #3e5c82;
+  --pfh-border-workspace: #2e3a52;
+
+  --pfh-interaction-hover: rgba(64, 122, 189, 0.3);
+  --pfh-interaction-selected: rgba(64, 122, 189, 0.42);
+  --pfh-interaction-active: rgba(18, 45, 76, 0.78);
+  --pfh-interaction-focus: #82c9ff;
+  --pfh-interaction-focus-ring: 0 0 0 3px rgba(130, 201, 255, 0.26);
+  --pfh-interaction-locked-bg: rgba(111, 178, 255, 0.16);
+  --pfh-interaction-locked-text: #9fd0ff;
+
+  --pfh-nav-primary-surface: #101a2e;
+  --pfh-nav-secondary-surface: #101a2e;
+  --pfh-nav-selected-surface: rgba(64, 122, 189, 0.42);
+  --pfh-nav-hover-surface: rgba(64, 122, 189, 0.3);
+  --pfh-nav-selected-text: #82c9ff;
+  --pfh-nav-hover-text: #82c9ff;
+
+  --pfh-status-success-surface: rgba(31, 156, 78, 0.14);
+  --pfh-status-success-border: rgba(77, 184, 115, 0.45);
+  --pfh-status-warning-surface: rgba(220, 125, 22, 0.14);
+  --pfh-status-warning-border: rgba(220, 125, 22, 0.45);
+  --pfh-status-critical-surface: rgba(198, 49, 70, 0.16);
+  --pfh-status-critical-border: rgba(198, 49, 70, 0.48);
+  --pfh-status-info-surface: rgba(19, 119, 201, 0.18);
+  --pfh-status-info-border: rgba(130, 201, 255, 0.35);
+  --pfh-status-neutral-surface: rgba(16, 26, 46, 0.72);
+  --pfh-status-neutral-border: #365172;
+
+  --pfh-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.24);
+  --pfh-elevation-2: 0 1px 5px rgba(0, 0, 0, 0.28);
+  --pfh-elevation-3: 0 2px 8px rgba(0, 0, 0, 0.32);
+}
