@@ -15,7 +15,7 @@
         }
         else
         {
-            <button type="button" class="@GetHomeLinkClass()" aria-label="Home" @onclick='() => SelectPrimary("home")'>
+            <button type="button" class="@GetHomeLinkClass()" aria-label="My Hub" @onclick='() => SelectPrimary("home")'>
                 <img src="images/header/home_icon.svg" alt="Home" class="home-icon" />
             </button>
 
@@ -42,7 +42,7 @@
     @if (IsCompact && _isCollapsedMenuOpen)
     {
         <div class="collapsed-nav-menu" role="menu" aria-label="Collapsed navigation options">
-            <button type="button" class="@GetCollapsedHomeClass()" @onclick='() => SelectPrimaryFromCollapsed("home")'>Home</button>
+            <button type="button" class="@GetCollapsedHomeClass()" @onclick='() => SelectPrimaryFromCollapsed("home")'>My Hub</button>
             @foreach (var item in PrimaryItems)
             {
                 <button type="button" class="@GetCollapsedPrimaryClass(item.Key)" @onclick="() => SelectPrimaryFromCollapsed(item.Key)">@item.Label</button>
@@ -76,7 +76,7 @@
 
     private readonly List<PrimaryNavItem> PrimaryItems =
     [
-        new("myhub", "MyHub", false, []),
+        new("myhub", "My Hub", false, []),
         new("hospital", "Hospital Overview", false, []),
         new("dd", "Delayed Discharge", true, ["DD Hub", "Patient Management", "Census Management", "DDP Census"]),
         new("bed", "Bed & Ward", true, ["Bed and Ward Hub", "Bed Management", "Ward View", "Allocation Centre"]),
@@ -110,8 +110,6 @@
     {
         var subItem = GetSubItemsForKey(key).FirstOrDefault() ?? string.Empty;
         NavigateForSelection(key, subItem, collapseAfterSelection: true);
-        NavigationStateService.OnNavigationStateChanged += HandleNavigationStateChanged;
-        SyncSelectionFromNavigationState();
     }
 
     private void SelectSubItemFromCollapsed(string subItem)

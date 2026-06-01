@@ -1,104 +1,179 @@
-<section class="concept-home-launchpad">
-    <div class="pfh-launchpad-welcome @(welcomeDismissed ? "collapsed" : string.Empty)">
-        <div class="pfh-launchpad-welcome-label">✦ PFH Assistant</div>
-        <h2>Hi Dr Iam Goot, welcome to the Patient Flow Hub. Where are you working today?</h2>
-        <div class="pfh-launchpad-welcome-actions">
-            <button type="button" @onclick='() => SelectView("statewide")'>I’m here for statewide work</button>
-            <button type="button" @onclick='() => SelectView("gcuh")'>Today I’m at Gold Coast University Hospital</button>
-        </div>
-    </div>
+@using QHPFH_ConceptPrototype.Models
+@using QHPFH_ConceptPrototype.Services
+@using QHPFH_ConceptPrototype.Services.Adaptive
+@using QHPFH_ConceptPrototype.Services.Context
+@inject PrototypeExperienceStateService ExperienceState
+@inject AdaptivePerspectiveEngine AdaptivePerspective
+@inject ContextAwarenessService ContextAwareness
+@inject NavigationManager Navigation
+@implements IDisposable
 
-    <div class="pfh-launchpad-frame @(isGcuh ? "local-view" : "statewide-view")">
-        <header class="pfh-launchpad-header">
-            <div>
-                <h1>QH Patient Flow Hub</h1>
-                <p>@(isGcuh ? "Gold Coast University Hospital Situation Launch Pad" : "Statewide Situation Launch Pad")</p>
-                @if (isGcuh)
+<section class="concept-home-launchpad my-hub-landing">
+    <header class="my-hub-hero">
+        <div>
+            <p class="my-hub-eyebrow">My Hub</p>
+            <h1>@CurrentPlan.Title</h1>
+            <p>@CurrentPlan.Description</p>
+        </div>
+        <div class="my-hub-context-card" aria-label="Current operational context">
+            <span>Current role</span>
+            <strong>@ExperienceState.Current.RoleLabel</strong>
+            <span>Scope</span>
+            <strong>@ExperienceState.Current.ScopeLabel</strong>
+            <span>Context</span>
+            <strong>@ContextAwareness.GetCurrentLocation().SummaryText</strong>
+        </div>
+    </header>
+
+    <section class="my-hub-start-card" aria-label="Recommended starting workspace">
+        <div>
+            <span class="my-hub-recommendation-label">Recommended start</span>
+            <h2>@CurrentPlan.StartWorkspace</h2>
+            <p>@CurrentPlan.StartReason</p>
+        </div>
+        <button type="button" class="bm-primary" @onclick="() => NavigateTo(CurrentPlan.StartRoute)">Open @CurrentPlan.StartWorkspace</button>
+    </section>
+
+    <section class="my-hub-grid" aria-label="Role based workspace links">
+        <article class="my-hub-panel">
+            <div class="my-hub-panel-heading">
+                <p>Relevant workspaces</p>
+                <h3>Where to work next</h3>
+            </div>
+            <div class="my-hub-quick-links">
+                @foreach (var link in CurrentPlan.QuickLinks)
                 {
-                    <div class="pfh-launchpad-local-note">Local view selected: Gold Coast University Hospital</div>
+                    <button type="button" class="@(link.Route == CurrentPlan.StartRoute ? "recommended" : string.Empty)" disabled="@string.IsNullOrWhiteSpace(link.Route)" @onclick="() => NavigateTo(link.Route)">
+                        <span>@link.Label</span>
+                        <small>@link.Description</small>
+                    </button>
                 }
             </div>
-            <div class="pfh-launchpad-header-actions">
-                <span>Last updated: 09:42</span>
-                <button type="button">Filters</button>
-                <button type="button">View: System ▾</button>
+        </article>
+
+        <article class="my-hub-panel">
+            <div class="my-hub-panel-heading">
+                <p>Role focus</p>
+                <h3>Today’s priorities</h3>
             </div>
-        </header>
-
-        <div class="pfh-launchpad-swimlanes">
-            <article class="pfh-launchpad-lane"><h3>DEMAND</h3><h4>Pre-Hospital & Arrivals</h4>
-                @if (isGcuh)
+            <ul class="my-hub-priority-list">
+                @foreach (var priority in CurrentPlan.Priorities)
                 {
-                    <ul><li>QAS arrivals last 60 mins: <b>12</b></li><li>High acuity arrivals: <b>4</b></li><li>Ambulance POST average: <b class="status-red">31 mins ↑</b></li><li>Incoming arrivals expected next 90 mins: <b>8</b></li></ul>
-                    <div class="pfh-launchpad-chart">GCUH local catchment map placeholder</div>
+                    <li>@priority</li>
                 }
-                else
-                {
-                    <p class="label">QAS Demand by HHS</p><div class="pfh-launchpad-chart">Queensland map placeholder with HHS regions</div>
-                    <p class="label">Top QAS Delays:</p><ul><li>RBWH 82 mins ↑</li><li>Logan 64 mins ↑</li><li>PAH 52 mins ↑</li></ul>
-                    <p class="label">Avg Ambulance POST (SEQ HHS):</p><ul><li>Metro South 27 mins</li><li>Metro North 24 mins</li><li>Gold Coast 23 mins</li><li>Sunshine Coast 22 mins</li><li>West Moreton 26 mins</li><li>Darling Downs 31 mins</li><li>Mater 22 mins</li></ul>
-                }
-            </article>
-            <article class="pfh-launchpad-lane"><h3>EMERGENCY</h3><h4>ED Capacity & Insights</h4>
-                @if (isGcuh)
-                {
-                    <ul><li>ED Presentations Yesterday: 276 ↑ 6%</li><li>Patients in ED: 74 ↑</li><li>Waiting Room: 31 ↑</li><li>AWAs: 11 ↑</li><li>ED Beds Available: 10</li><li>Capacity Score: Elevated / High</li></ul>
-                }
-                else
-                {
-                    <ul><li>ED Presentations Yesterday: 2,842 ↑ 8%</li><li>Patients in ED 49 ↑</li><li>Waiting Room 22 ↑</li><li>AWAs 15 ↓</li><li>ED Beds Available 10</li></ul>
-                }
-                <div class="pfh-launchpad-bed-row"><span class="red"></span><span class="red"></span><span class="amber"></span><span class="amber"></span><span class="amber"></span><span class="green"></span><span class="green"></span></div>
-            </article>
-            <article class="pfh-launchpad-lane"><h3>INPATIENT FLOW</h3><h4>Bed Capacity & Insights</h4>
-                @if (isGcuh)
-                {
-                    <ul><li>Total Inpatients: 658</li><li>Bed Occupancy: <b class="status-red">94% High</b></li><li>Beds Available in Hospital: 25</li><li>Surgical Beds Available: 7</li><li>Medical Beds Available: 9</li><li>ICU Beds Available: 2</li><li>Interhospital Transfers Today: 6</li></ul>
-                }
-                else
-                {
-                    <ul><li>Total Inpatients in Hospital: 5,334 ↑ 2%</li><li>Bed Occupancy gauge: <b class="status-amber">90% High</b></li><li>Elective Admissions Today: 146</li><li>Day Cases Today: 132</li><li>OPD Appointments Today: 1,248</li><li>Interhospital Transfers Today: 56</li></ul>
-                }
-                <div class="pfh-launchpad-gauge"><div class="needle"></div><span>0%</span><strong>@(isGcuh ? "94%" : "90%")</strong><span>100%</span></div>
-            </article>
-            <article class="pfh-launchpad-lane"><h3>DISCHARGE & EXIT</h3><h4>Delayed Discharge & Community</h4>
-                <div class="pfh-launchpad-chart">Predicted Discharge line chart placeholder</div>
-                @if (isGcuh)
-                {
-                    <ul><li>Predicted Discharges Today: 44</li><li>Discharges before 10am: 9</li><li>Patients on Hospital in the Home: 18</li><li>Aged Care Placement 5</li><li>NDIS / Community Support 4</li><li>Transport 3</li><li>Pharmacy / Meds Access 2</li><li>Imaging / Review Pending 2</li></ul>
-                }
-                else
-                {
-                    <ul><li>Patients on Hospital in the Home: 124 ↓ 5%</li><li>Aged Care Placement 12</li><li>NDIS / Community Support 9</li><li>Transport 7</li><li>Guardianship / Consent 5</li><li>Pharmacy / Meds Access 4</li></ul>
-                }
-            </article>
-        </div>
-
-        <div class="pfh-launchpad-flow-strip @(isGcuh ? "prominent" : string.Empty)">
-            @if (isGcuh)
-            {
-                <div>Ambulances arriving → 12 incoming / POST 31 mins</div><div>ED intake pressure → 10 ED beds available</div><div>Ward placement pressure → 25 hospital beds available / occupancy 94%</div><div>Exit opportunity → 44 predicted discharges / 18 HITH</div>
-            }
-            else
-            {
-                <div>High Arrivals — Rising</div><div>ED Congestion — Increasing</div><div>No Ward Capacity — High</div><div>Discharge Delays — Increasing</div>
-            }
-        </div>
-
-        <div class="pfh-launchpad-footer">
-            <section><h5>Operational notes</h5><ul><li>Metro South demand increasing</li><li>Surgical admissions trending high</li><li>Discharge flow slowing after 2pm</li><li>High pressure expected this evening</li></ul><button type="button">Add Note</button></section>
-            <section><h5>Shortcuts / Key</h5><div class="shortcut-grid"><a href="#">Patient Journey</a><a href="#">Bed & Ward Management</a><a href="#">Delayed Discharge Hub</a><a href="#">Scenario Mapping</a><a href="#">Connected Apps</a></div></section>
-        </div>
-    </div>
+            </ul>
+        </article>
+    </section>
 </section>
 
 @code {
-    private bool welcomeDismissed;
-    private bool isGcuh;
+    private UserPerspectiveType CurrentPerspectiveType => AdaptivePerspective.GetCurrentPerspective()?.PerspectiveType ?? UserPerspectiveType.Executive;
+    private RoleLandingPlan CurrentPlan => GetPlan(CurrentPerspectiveType);
 
-    private void SelectView(string selection)
+    protected override void OnInitialized()
     {
-        isGcuh = selection == "gcuh";
-        welcomeDismissed = true;
+        ExperienceState.OnChange += HandleContextChanged;
+        ContextAwareness.OnContextChanged += HandleContextChanged;
+        AdaptivePerspective.OnChange += HandleContextChanged;
     }
+
+    private void NavigateTo(string route)
+    {
+        if (!string.IsNullOrWhiteSpace(route))
+        {
+            Navigation.NavigateTo(route);
+        }
+    }
+
+    private void HandleContextChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ExperienceState.OnChange -= HandleContextChanged;
+        ContextAwareness.OnContextChanged -= HandleContextChanged;
+        AdaptivePerspective.OnChange -= HandleContextChanged;
+    }
+
+    private static RoleLandingPlan GetPlan(UserPerspectiveType perspectiveType) => perspectiveType switch
+    {
+        UserPerspectiveType.HHSCoordinator => new(
+            "HHS coordination start point",
+            "Review HHS capacity, facility comparison, escalation and demand coordination.",
+            "Bed Management",
+            "Start with HHS-level capacity and facility pressure before coordinating demand actions.",
+            "bed-management",
+            [
+                new("Bed Management", "bed-management", "HHS capacity and facility pressure"),
+                new("Allocation Centre", "allocation-centre", "Placement demand and movement pressure"),
+                new("Delayed Discharge", "", "Exit barriers and delayed flow"),
+                new("Scenario Mapping", "", "Demand and capacity planning")
+            ],
+            [
+                "Review HHS-level bed capacity and facility pressure.",
+                "Check escalation signals and demand/capacity mismatch.",
+                "Coordinate placement and delayed-flow actions across facilities."
+            ]),
+        UserPerspectiveType.BedManager or UserPerspectiveType.FacilityCoordinator or UserPerspectiveType.OperationsCentre => new(
+            "Facility flow start point",
+            "Focus on facility capacity, ward pressure, allocation demand and escalation coordination.",
+            "Bed Management",
+            "Start with facility capacity and ward pressure, then move to placement decisions.",
+            "bed-management",
+            [
+                new("Bed Management", "bed-management", "Facility capacity and ward pressure"),
+                new("Allocation Centre", "allocation-centre", "Patient placement and queued demand"),
+                new("Ward View", "ward-operations", "Ward-level bed status and handover"),
+                new("Delayed Discharge", "", "Discharge blockers and exit opportunities")
+            ],
+            [
+                "Review open, occupied and pending beds by ward.",
+                "Open Allocation Centre for ED, elective, IHT and transfer demand.",
+                "Escalate wards under pressure and confirm flow actions."
+            ]),
+        UserPerspectiveType.WardClinician or UserPerspectiveType.NUM => new(
+            "Ward operations start point",
+            "Focus on bed status, incoming admissions, handover readiness and support actions.",
+            "Ward View",
+            "Start with ward bed status, current patients, expected arrivals and handover needs.",
+            "ward-operations",
+            [
+                new("Ward View", "ward-operations", "Bed status, admissions and handover"),
+                new("Allocation Centre", "allocation-centre", "Incoming demand and planned allocations"),
+                new("Bed Management", "bed-management", "Facility and ward pressure context"),
+                new("Patient Journey", "", "Clinical movement and care pathway context")
+            ],
+            [
+                "Review bed status, cleaning, closure and maintenance states.",
+                "Check incoming admissions and source-location pending patients.",
+                "Generate handover, contact bed manager and prepare support actions."
+            ]),
+        _ => new(
+            "State flow coordination start point",
+            "Review statewide capacity, HHS/facility pressure, escalation and bed management overview.",
+            "Bed Management",
+            "Start with statewide capacity and pressure before drilling into HHS and facility views.",
+            "bed-management",
+            [
+                new("Bed Management", "bed-management", "Statewide capacity and pressure overview"),
+                new("Allocation Centre", "allocation-centre", "Placement pressure and queued demand"),
+                new("Scenario Mapping", "", "Statewide demand and capacity planning"),
+                new("Delayed Discharge", "", "System exit barriers")
+            ],
+            [
+                "Review statewide bed capacity and HHS/facility pressure.",
+                "Identify escalation points and demand hot spots.",
+                "Coordinate flow actions across bed management and placement workspaces."
+            ])
+    };
+
+    private sealed record RoleLandingPlan(
+        string Title,
+        string Description,
+        string StartWorkspace,
+        string StartReason,
+        string StartRoute,
+        IReadOnlyList<HubQuickLink> QuickLinks,
+        IReadOnlyList<string> Priorities);
+
+    private sealed record HubQuickLink(string Label, string Route, string Description);
 }

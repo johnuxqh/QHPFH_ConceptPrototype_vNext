@@ -21,7 +21,7 @@ public sealed class NavigationStateService : IDisposable
     private static readonly IReadOnlyDictionary<string, RouteNavigationDefinition> RouteDefinitions =
         new Dictionary<string, RouteNavigationDefinition>(StringComparer.OrdinalIgnoreCase)
         {
-            [string.Empty] = new("home", "home", string.Empty, "Home", "Home", string.Empty),
+            [string.Empty] = new("home", "home", string.Empty, "My Hub", "My Hub", string.Empty),
             ["bed-and-ward-hub"] = new("bed", "bed-ward", "Bed and Ward Hub", "Bed & Ward", "Bed and Ward Hub", "Bed and Ward Hub"),
             ["bed-management"] = new("bed", "bed-management", "Bed Management", "Bed Management", "Bed Management", "Bed Management"),
             ["ward-operations"] = new("bed", "ward-operations", "Ward View", "Ward Operations", "Ward Operations", "Ward View"),
@@ -146,7 +146,7 @@ public sealed class NavigationStateService : IDisposable
     private RouteNavigationDefinition ResolveDefinition() =>
         RouteDefinitions.TryGetValue(_currentRoute, out var definition)
             ? definition
-            : new("home", "home", string.Empty, "Home", "Home", string.Empty);
+            : new("home", "home", string.Empty, "My Hub", "My Hub", string.Empty);
 
     private string GetRelativeRoute(string uri) => NormalizeRoute(_navigationManager.ToBaseRelativePath(uri));
 
