@@ -1,9 +1,9 @@
 @using QHPFH_ConceptPrototype.Models
 @using QHPFH_ConceptPrototype.Services
 @using QHPFH_ConceptPrototype.Services.Adaptive
+@using QHPFH_ConceptPrototype.Services.Context
 @using QHPFH_ConceptPrototype.Services.Experience
 @using QHPFH_ConceptPrototype.Services.Layout
-@using QHPFH_ConceptPrototype.Services.Context
 @using QHPFH_ConceptPrototype.Services.Workspace
 @inject PrototypeExperienceStateService ExperienceState
 @inject AdaptivePerspectiveEngine AdaptivePerspective
@@ -13,65 +13,65 @@
 @inject WorkspaceDensityEngine WorkspaceDensity
 @implements IDisposable
 
-<section class="prototype-experience-bar" aria-label="Prototype experience controls">
+<section class="prototype-experience-bar" aria-label="Operational context and prototype settings">
     <div class="prototype-experience-bar__inner">
-        <div class="prototype-experience-bar__control">
-            <label for="prototype-access-view">Access View</label>
-            <select id="prototype-access-view" value="@Current.UserPerspectiveId" @onchange="OnAccessViewChanged">
-                @foreach (var option in ExperienceState.AccessViewOptions)
-                {
-                    <option value="@option.UserPerspectiveId">@option.Label</option>
-                }
-            </select>
-        </div>
-
-        <div class="prototype-experience-bar__control">
-            <label for="prototype-experience-mode">Experience Mode</label>
-            <select id="prototype-experience-mode" value="@Current.ExperienceMode" @onchange="OnExperienceModeChanged">
-                @foreach (var mode in ExperienceState.ExperienceModeOptions)
-                {
-                    <option value="@mode">@mode.ToDisplayName()</option>
-                }
-            </select>
-        </div>
-
-        <div class="prototype-experience-bar__control">
-            <label for="prototype-layout-variant">Layout Variant</label>
-            <select id="prototype-layout-variant" value="@Current.LayoutVariant" @onchange="OnLayoutVariantChanged">
-                @foreach (var variant in ExperienceState.LayoutVariantOptions)
-                {
-                    <option value="@variant">@variant.ToDisplayName()</option>
-                }
-            </select>
-        </div>
-
-        <div class="prototype-experience-bar__adaptive" aria-live="polite">
-            <span class="prototype-experience-bar__mode-badge" title="@ExperienceMode.GetModeSummary()">@ExperienceMode.GetModeBadgeLabel()</span>
-            <span class="prototype-experience-bar__badge">@AdaptivePerspective.GetWorkflowEmphasis().ToDisplayName()</span>
-            <span class="prototype-experience-bar__mode-summary">@ExperienceMode.GetOperationalDensity()</span>
-            <span class="prototype-experience-bar__layout-badge" title="@LayoutVariant.GetVariantSummary()">@LayoutVariant.GetVariantLabel()</span>
-            <span class="prototype-experience-bar__density-badge" title="@WorkspaceDensity.GetDensityProfile().Summary">@WorkspaceDensity.GetDensityProfile().Label</span>
-            <span class="prototype-experience-bar__scope" title="Adaptive filter visibility">
-                @if (AdaptivePerspective.ShouldShowHhsFilter())
-                {
-                    <span>HHS</span>
-                }
-                @if (AdaptivePerspective.ShouldShowFacilityFilter())
-                {
-                    <span>Facility</span>
-                }
-                @if (AdaptivePerspective.ShouldShowWardFilter())
-                {
-                    <span>Ward</span>
-                }
+        <div class="prototype-experience-bar__context" aria-live="polite">
+            <span class="prototype-experience-bar__context-item">
+                <span class="prototype-experience-bar__summary-label">Role</span>
+                <strong>@Current.RoleLabel</strong>
+            </span>
+            <span class="prototype-experience-bar__context-item">
+                <span class="prototype-experience-bar__summary-label">Scope</span>
+                <strong>@Current.ScopeLabel</strong>
+            </span>
+            <span class="prototype-experience-bar__context-item prototype-experience-bar__context-item--wide">
+                <span class="prototype-experience-bar__summary-label">Context</span>
+                <strong>@ContextAwareness.GetCurrentLocation().SummaryText</strong>
             </span>
         </div>
 
-        <div class="prototype-experience-bar__summary" aria-live="polite">
-            <span class="prototype-experience-bar__summary-label">Context</span>
-            <span class="prototype-experience-bar__summary-value">@Current.SummaryText</span>
-            <span class="prototype-experience-bar__context-summary">@ContextAwareness.GetContextSummary()</span>
-        </div>
+        <details class="prototype-experience-bar__settings">
+            <summary>Prototype Settings</summary>
+            <div class="prototype-experience-bar__settings-panel">
+                <div class="prototype-experience-bar__control">
+                    <label for="prototype-access-view">Role view</label>
+                    <select id="prototype-access-view" value="@Current.UserPerspectiveId" @onchange="OnAccessViewChanged">
+                        @foreach (var option in ExperienceState.AccessViewOptions)
+                        {
+                            <option value="@option.UserPerspectiveId">@option.Label</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="prototype-experience-bar__control">
+                    <label for="prototype-experience-mode">Experience mode</label>
+                    <select id="prototype-experience-mode" value="@Current.ExperienceMode" @onchange="OnExperienceModeChanged">
+                        @foreach (var mode in ExperienceState.ExperienceModeOptions)
+                        {
+                            <option value="@mode">@mode.ToDisplayName()</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="prototype-experience-bar__control">
+                    <label for="prototype-layout-variant">Layout variant</label>
+                    <select id="prototype-layout-variant" value="@Current.LayoutVariant" @onchange="OnLayoutVariantChanged">
+                        @foreach (var variant in ExperienceState.LayoutVariantOptions)
+                        {
+                            <option value="@variant">@variant.ToDisplayName()</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="prototype-experience-bar__adaptive" aria-label="Current prototype profile">
+                    <span class="prototype-experience-bar__mode-badge" title="@ExperienceMode.GetModeSummary()">@ExperienceMode.GetModeBadgeLabel()</span>
+                    <span class="prototype-experience-bar__badge">@AdaptivePerspective.GetWorkflowEmphasis().ToDisplayName()</span>
+                    <span class="prototype-experience-bar__mode-summary">@ExperienceMode.GetOperationalDensity()</span>
+                    <span class="prototype-experience-bar__layout-badge" title="@LayoutVariant.GetVariantSummary()">@LayoutVariant.GetVariantLabel()</span>
+                    <span class="prototype-experience-bar__density-badge" title="@WorkspaceDensity.GetDensityProfile().Summary">@WorkspaceDensity.GetDensityProfile().Label</span>
+                </div>
+            </div>
+        </details>
     </div>
 </section>
 
@@ -80,9 +80,12 @@
 
     protected override void OnInitialized()
     {
+        ExperienceState.OnChange += HandleExperienceStateChanged;
         ContextAwareness.OnContextChanged += HandleExperienceStateChanged;
         WorkspaceDensity.OnChange += HandleExperienceStateChanged;
         LayoutVariant.OnChange += HandleExperienceStateChanged;
+        ExperienceMode.OnChange += HandleExperienceStateChanged;
+        AdaptivePerspective.OnChange += HandleExperienceStateChanged;
     }
 
     private void OnAccessViewChanged(ChangeEventArgs args)
@@ -113,6 +116,7 @@
 
     public void Dispose()
     {
+        ExperienceState.OnChange -= HandleExperienceStateChanged;
         ContextAwareness.OnContextChanged -= HandleExperienceStateChanged;
         WorkspaceDensity.OnChange -= HandleExperienceStateChanged;
         LayoutVariant.OnChange -= HandleExperienceStateChanged;

@@ -83,7 +83,7 @@ public sealed record FilterVisibilityProfile
         FilterAccessScope.Ward,
         showHhsFilter: false,
         showFacilityFilter: false,
-        showWardFilter: true,
+        showWardFilter: false,
         showServiceStreamFilter: false,
         lockHhsFilter: true,
         lockFacilityFilter: true,
