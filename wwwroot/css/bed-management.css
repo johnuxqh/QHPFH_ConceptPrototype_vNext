@@ -334,6 +334,47 @@
   background:var(--pfh-table-row-hover-bg);
 }
 
+
+/* P4.06 proof-of-concept: Bed/Ward status indicators consume unified status and severity tokens while preserving labels and icons. */
+.bm-status,
+.bm-status-pill{
+  border-color:var(--pfh-status-neutral-border);
+  background:var(--pfh-status-neutral-bg);
+  color:var(--pfh-status-neutral-text);
+}
+.bm-status.occupied{
+  border-color:var(--pfh-status-info-border);
+  background:var(--pfh-status-info-bg);
+  color:var(--pfh-status-info-text);
+}
+.bm-status.ready{
+  border-color:var(--pfh-status-ready-border);
+  background:var(--pfh-status-ready-bg);
+  color:var(--pfh-status-ready-text);
+}
+.bm-status.cleaning{
+  border-color:var(--pfh-status-pending-border);
+  background:var(--pfh-status-pending-bg);
+  color:var(--pfh-status-pending-text);
+}
+.bm-status.blocked,
+.bm-status.maintenance{
+  border-color:var(--pfh-status-blocked-border);
+  background:var(--pfh-status-blocked-bg);
+  color:var(--pfh-status-blocked-text);
+}
+.bm-ward-table tr.state-open--ready::before{background:var(--pfh-status-ready-text)}
+.bm-ward-table tr.state-occupied::before{background:var(--pfh-status-info-text)}
+.bm-ward-table tr.state-cleaning::before{background:var(--pfh-status-pending-text)}
+.bm-ward-table tr.state-blocked::before{background:var(--pfh-status-blocked-text)}
+.bm-ward-table tr.state-maintenance::before{background:var(--pfh-status-critical-text)}
+.bm-ward-table tr.state-isolation--specialist::before{background:var(--pfh-status-medium-text)}
+.tone-ready,.tone-low{color:var(--pfh-status-ready-text)}
+.tone-occupied{color:var(--pfh-status-info-text)}
+.tone-cleaning{color:var(--pfh-status-pending-text)}
+.tone-blocked{color:var(--pfh-status-blocked-text)}
+.tone-maintenance{color:var(--pfh-status-medium-text)}
+
 /* list view column efficiency */
 .bm-overview-table:not(.compact) th:nth-child(1),.bm-overview-table:not(.compact) td:nth-child(1){min-width:170px}
 .bm-overview-table:not(.compact) th:nth-child(2),.bm-overview-table:not(.compact) td:nth-child(2){min-width:120px}

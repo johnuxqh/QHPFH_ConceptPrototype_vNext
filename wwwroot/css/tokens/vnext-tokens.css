@@ -341,6 +341,50 @@
   --pfh-status-discharge: #1f8d47;
   --pfh-status-escalation: #c63146;
 
+
+  /* Unified status/severity framework */
+  --pfh-status-critical-bg: var(--pfh-status-critical-surface);
+  --pfh-status-critical-text: #9b1c1c;
+  --pfh-status-critical-border: #f1c7c7;
+  --pfh-status-high-bg: #fff1e7;
+  --pfh-status-high-text: #9a4b14;
+  --pfh-status-high-border: #efc29f;
+  --pfh-status-warning-bg: var(--pfh-status-warning-surface);
+  --pfh-status-warning-text: #8a4b12;
+  --pfh-status-warning-border: #e2cda0;
+  --pfh-status-medium-bg: var(--pfh-status-info-surface);
+  --pfh-status-medium-text: #245aa7;
+  --pfh-status-medium-border: #bad0ea;
+  --pfh-status-info-bg: var(--pfh-status-info-surface);
+  --pfh-status-info-text: #245aa7;
+  --pfh-status-info-border: #bad0ea;
+  --pfh-status-low-bg: var(--pfh-status-neutral-surface);
+  --pfh-status-low-text: var(--pfh-status-neutral);
+  --pfh-status-low-border: var(--pfh-status-neutral-border);
+  --pfh-status-success-bg: var(--pfh-status-success-surface);
+  --pfh-status-success-text: #1f7a4d;
+  --pfh-status-success-border: #b9d3bf;
+  --pfh-status-ready-bg: var(--pfh-status-success-surface);
+  --pfh-status-ready-text: #356a46;
+  --pfh-status-ready-border: #bdd8c4;
+  --pfh-status-pending-bg: var(--pfh-status-warning-surface);
+  --pfh-status-pending-text: #836622;
+  --pfh-status-pending-border: #e2cda0;
+  --pfh-status-blocked-bg: #fff1f2;
+  --pfh-status-blocked-text: #7f3d3d;
+  --pfh-status-blocked-border: #dcbcbc;
+  --pfh-status-closed-bg: var(--pfh-status-neutral-surface);
+  --pfh-status-closed-text: var(--pfh-text-muted);
+  --pfh-status-closed-border: #d8e0ea;
+  --pfh-status-neutral-bg: var(--pfh-status-neutral-surface);
+  --pfh-status-neutral-text: var(--pfh-text-secondary);
+  --pfh-status-neutral-border: #d8e0ea;
+  --pfh-status-unknown-bg: var(--pfh-status-neutral-surface);
+  --pfh-status-unknown-text: var(--pfh-text-muted);
+  --pfh-status-unknown-border: #d8e0ea;
+  --pfh-status-indicator-size: 0.5rem;
+  --pfh-status-indicator-border: var(--pfh-border-width-default) solid rgba(255, 255, 255, 0.75);
+
   /* Elevation */
   --pfh-elevation-0: none;
   --pfh-elevation-1: 0 1px 3px rgba(20, 36, 60, 0.05);
@@ -447,6 +491,47 @@
   --pfh-status-info-border: rgba(130, 201, 255, 0.35);
   --pfh-status-neutral-surface: rgba(16, 26, 46, 0.72);
   --pfh-status-neutral-border: #365172;
+
+  --pfh-status-critical-bg: var(--pfh-status-critical-surface);
+  --pfh-status-critical-text: #ffb4bd;
+  --pfh-status-critical-border: rgba(198, 49, 70, 0.48);
+  --pfh-status-high-bg: rgba(220, 125, 22, 0.16);
+  --pfh-status-high-text: #ffd0a8;
+  --pfh-status-high-border: rgba(220, 125, 22, 0.45);
+  --pfh-status-warning-bg: var(--pfh-status-warning-surface);
+  --pfh-status-warning-text: #ffd0a8;
+  --pfh-status-warning-border: rgba(220, 125, 22, 0.45);
+  --pfh-status-medium-bg: var(--pfh-status-info-surface);
+  --pfh-status-medium-text: #9fd0ff;
+  --pfh-status-medium-border: rgba(130, 201, 255, 0.35);
+  --pfh-status-info-bg: var(--pfh-status-info-surface);
+  --pfh-status-info-text: #9fd0ff;
+  --pfh-status-info-border: rgba(130, 201, 255, 0.35);
+  --pfh-status-low-bg: var(--pfh-status-neutral-surface);
+  --pfh-status-low-text: #c8d6e8;
+  --pfh-status-low-border: var(--pfh-status-neutral-border);
+  --pfh-status-success-bg: var(--pfh-status-success-surface);
+  --pfh-status-success-text: #9ce2b0;
+  --pfh-status-success-border: rgba(77, 184, 115, 0.45);
+  --pfh-status-ready-bg: var(--pfh-status-success-surface);
+  --pfh-status-ready-text: #9ce2b0;
+  --pfh-status-ready-border: rgba(77, 184, 115, 0.45);
+  --pfh-status-pending-bg: var(--pfh-status-warning-surface);
+  --pfh-status-pending-text: #ffd0a8;
+  --pfh-status-pending-border: rgba(220, 125, 22, 0.45);
+  --pfh-status-blocked-bg: var(--pfh-status-critical-surface);
+  --pfh-status-blocked-text: #ffb4bd;
+  --pfh-status-blocked-border: rgba(198, 49, 70, 0.48);
+  --pfh-status-closed-bg: var(--pfh-status-neutral-surface);
+  --pfh-status-closed-text: #aebbd0;
+  --pfh-status-closed-border: #365172;
+  --pfh-status-neutral-bg: var(--pfh-status-neutral-surface);
+  --pfh-status-neutral-text: #c8d6e8;
+  --pfh-status-neutral-border: #365172;
+  --pfh-status-unknown-bg: var(--pfh-status-neutral-surface);
+  --pfh-status-unknown-text: #aebbd0;
+  --pfh-status-unknown-border: #365172;
+  --pfh-status-indicator-border: var(--pfh-border-width-default) solid rgba(16, 26, 46, 0.9);
 
   --pfh-elevation-1: 0 1px 3px rgba(0, 0, 0, 0.24);
   --pfh-elevation-2: 0 1px 5px rgba(0, 0, 0, 0.28);
