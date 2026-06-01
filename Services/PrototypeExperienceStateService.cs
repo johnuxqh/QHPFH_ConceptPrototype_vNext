@@ -8,10 +8,10 @@ public sealed class PrototypeExperienceStateService
 
     private static readonly IReadOnlyList<PrototypeAccessViewOption> DefaultAccessViewOptions =
     [
-        new("Statewide Operations", "USP-EXEC-001"),
-        new("HHS Executive", "USP-HHS-001"),
-        new("Facility Operations", "USP-BED-001"),
-        new("Ward Clinical", "USP-WARD-001")
+        new("State Flow Coordinator", "USP-EXEC-001"),
+        new("HHS Coordinator", "USP-HHS-001"),
+        new("Facility Bed Manager", "USP-BED-001"),
+        new("Ward Clinician", "USP-WARD-001")
     ];
 
     public PrototypeExperienceStateService(PrototypeDataStore dataStore)

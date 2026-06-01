@@ -70,8 +70,8 @@
     [Parameter] public string? PrimaryBadge { get; set; }
     [Parameter] public string? SecondaryBadge { get; set; }
     [Parameter] public bool ShowPerspectiveBadge { get; set; } = true;
-    [Parameter] public bool ShowModeBadge { get; set; } = true;
-    [Parameter] public bool ShowLayoutBadge { get; set; } = true;
+    [Parameter] public bool ShowModeBadge { get; set; } = false;
+    [Parameter] public bool ShowLayoutBadge { get; set; } = false;
     [Parameter] public RenderFragment? HeaderActions { get; set; }
     [Parameter] public RenderFragment? Badges { get; set; }
     [Parameter] public RenderFragment? ToolbarContent { get; set; }
@@ -84,6 +84,7 @@
     {
         ContextAwareness.OnContextChanged += HandleShellContextChanged;
         WorkspaceDensity.OnChange += HandleShellContextChanged;
+        LayoutVariant.OnChange += HandleShellContextChanged;
         NavigationStateService.SetCurrentWorkspace(WorkspaceId);
         ContextAwareness.SetCurrentWorkspace(Title);
         ContextAwareness.SetCurrentPage(Title);
@@ -95,7 +96,6 @@
         return string.IsNullOrWhiteSpace(OperationalContext)
             ? contextSummary
             : $"{OperationalContext} · {contextSummary}";
-        LayoutVariant.OnChange += HandleShellContextChanged;
     }
 
     private string GetWorkspaceClasses()
