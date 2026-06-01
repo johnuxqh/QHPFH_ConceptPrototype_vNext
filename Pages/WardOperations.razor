@@ -5,149 +5,146 @@
 @inject NavigationManager Navigation
 
 <section class="page-shell-card bed-mgmt-page ward-ops ward-view-page" @onclick="CloseKpiInfo">
-    <header>
-        <h2>Ward View</h2>
+    <header class="ward-view-header">
+        <div>
+            <p class="ward-view-eyebrow">Ward operational workspace</p>
+            <h2>Ward View · Ward 10A General Surgery</h2>
+            <p>Bed status, incoming demand, clinical visibility and handover readiness for the ward team.</p>
+        </div>
+        <div class="ward-view-actions" aria-label="Ward support actions">
+            <button type="button" class="bm-ghost">Generate handover</button>
+            <button type="button" class="bm-ghost" @onclick='() => Navigation.NavigateTo("allocation-centre")'>View allocation queue</button>
+            <button type="button" class="bm-ghost">Request bed clean</button>
+            <button type="button" class="bm-ghost">Print downtime report</button>
+            <button type="button" class="bm-ghost">Contact bed manager</button>
+        </div>
     </header>
-
-    <div class="bm-view-row">
-        <button class="bm-ghost version @(WardVersion == "V1" ? "active" : null)" @onclick='() => WardVersion = "V1"'>Version 1</button>
-        <button class="bm-ghost version @(WardVersion == "V2" ? "active" : null)" @onclick='() => WardVersion = "V2"'>Version 2 (Interactive)</button>
-    </div>
 
     @if (WardVersion == "V1")
     {
-        <section class="bm-capacity-banner red">
-            <strong>HOSPITAL CAPACITY STATUS: RED</strong>
-            <span>High demand across ED and inpatient flow. Prioritise confirmed discharges before 11:00. Escalate blocked beds to NUM.</span>
+        <section class="bm-capacity-banner red ward-operational-banner">
+            <strong>Tier 2 ward escalation · PAH Ward 10A</strong>
+            <span>High demand across ED and inpatient flow. Prioritise confirmed discharges before 11:00, protect isolation capacity and escalate blocked beds to the NUM.</span>
         </section>
 
-        <section class="bm-overview-cards ward-summary-strip">
-            <SituationalKpiTile Title="Total Physical Beds" Value="24" Subtitle="All physical beds in this ward." IconName="open-bed-default" ColorClass="kpi-blue" InfoText="All physical beds configured in this ward." IsInfoOpen='@(OpenWardKpiInfo == "Total Physical Beds")' OnInfoClick='() => ToggleWardKpiInfo("Total Physical Beds")' AdditionalClasses="ward-kpi-card" />
-            <SituationalKpiTile Title="Open Beds" Value="20" Subtitle="Open beds refers to beds open for operational use today." IconName="open-bed-green" ColorClass="kpi-green" InfoText="Open beds are beds available for operational use today." IsInfoOpen='@(OpenWardKpiInfo == "Open Beds")' OnInfoClick='() => ToggleWardKpiInfo("Open Beds")' AdditionalClasses="ward-kpi-card" />
-            <SituationalKpiTile Title="Occupied Beds" Value="19" Subtitle="Beds currently occupied by patients." IconName="occupied-bed-default" ColorClass="kpi-gray" InfoText="Beds currently occupied by admitted patients receiving care." IsInfoOpen='@(OpenWardKpiInfo == "Occupied Beds")' OnInfoClick='() => ToggleWardKpiInfo("Occupied Beds")' AdditionalClasses="ward-kpi-card" />
-            <SituationalKpiTile Title="Pending Beds" Value="5" Subtitle="Total Beds Pending" IconName="cleaning-default" ColorClass="kpi-orange" TileType="breakdown" BreakdownItems="@WardPendingBreakdown" InfoText="Beds pending return due to cleaning, maintenance or closure." IsInfoOpen='@(OpenWardKpiInfo == "Pending Beds")' OnInfoClick='() => ToggleWardKpiInfo("Pending Beds")' AdditionalClasses="ward-kpi-card" />
-            <SituationalKpiTile Title="Isolation Beds Available" Value="0" Subtitle="Ward-level isolation capacity available now." IconName="isolation-bed-default" ColorClass="kpi-blue" InfoText="Isolation-enabled beds currently available in this ward." IsInfoOpen='@(OpenWardKpiInfo == "Isolation Beds Available")' OnInfoClick='() => ToggleWardKpiInfo("Isolation Beds Available")' AdditionalClasses="ward-kpi-card" />
+        <section class="bm-overview-cards ward-summary-strip ward-capacity-tiles" aria-label="Ward capacity">
+            <SituationalKpiTile Title="Physical beds" Value="24" Subtitle="Configured bed spaces in this ward." IconName="open-bed-default" ColorClass="kpi-blue" InfoText="Physical beds are fixed bed spaces. They may be open, occupied or unavailable for operational reasons." IsInfoOpen='@(OpenWardKpiInfo == "Physical beds")' OnInfoClick='() => ToggleWardKpiInfo("Physical beds")' AdditionalClasses="ward-kpi-card" />
+            <SituationalKpiTile Title="Open beds" Value="16" Subtitle="Open for operational use today." IconName="open-bed-green" ColorClass="kpi-green" InfoText="Open beds are physical beds available for ward operations today." IsInfoOpen='@(OpenWardKpiInfo == "Open beds")' OnInfoClick='() => ToggleWardKpiInfo("Open beds")' AdditionalClasses="ward-kpi-card" />
+            <SituationalKpiTile Title="Occupied beds" Value="14" Subtitle="Actual inpatients on the ward." IconName="occupied-bed-default" ColorClass="kpi-gray" InfoText="Occupied beds currently have an admitted inpatient physically on the ward." IsInfoOpen='@(OpenWardKpiInfo == "Occupied beds")' OnInfoClick='() => ToggleWardKpiInfo("Occupied beds")' AdditionalClasses="ward-kpi-card" />
+            <SituationalKpiTile Title="Pending beds" Value="8" Subtitle="Cleaning, maintenance, closure or planned use." IconName="cleaning-default" ColorClass="kpi-orange" TileType="breakdown" BreakdownItems="@WardPendingBreakdown" InfoText="Pending beds need an operational action before they are ready for the next patient." IsInfoOpen='@(OpenWardKpiInfo == "Pending beds")' OnInfoClick='() => ToggleWardKpiInfo("Pending beds")' AdditionalClasses="ward-kpi-card" />
+            <SituationalKpiTile Title="Isolation / specialist" Value="2" Subtitle="Specialist capability in use or protected." IconName="isolation-bed-default" ColorClass="kpi-blue" InfoText="Beds with isolation, telemetry or specialist capability that require active ward coordination." IsInfoOpen='@(OpenWardKpiInfo == "Isolation / specialist")' OnInfoClick='() => ToggleWardKpiInfo("Isolation / specialist")' AdditionalClasses="ward-kpi-card" />
+            <SituationalKpiTile Title="Expected admissions" Value="7" Subtitle="ED, elective, IHT, add-on and transfers." IconName="admission-default" ColorClass="kpi-orange" InfoText="Expected arrivals known to the ward but not all physically present yet." IsInfoOpen='@(OpenWardKpiInfo == "Expected admissions")' OnInfoClick='() => ToggleWardKpiInfo("Expected admissions")' AdditionalClasses="ward-kpi-card" />
         </section>
 
-        <section class="ward-allocation-highlight">
-            <div class="expected-admissions-box">
-                <p>Expected Admissions</p>
-                <strong>5</strong>
-            </div>
-
-            <div>
-                <h4>Incoming</h4>
-
-                <div class="bm-allocation-tabs">
-                    @foreach (var tab in IncomingTabs)
-                    {
-                        <button type="button" class="@(IncomingTab == tab ? "active" : null)" @onclick="() => IncomingTab = tab">
-                            @tab (@IncomingByTab[tab].Count)
-                        </button>
-                    }
+        <section class="ward-release-grid">
+            <section class="ward-bed-board" aria-label="Bed status board">
+                <div class="ward-section-heading">
+                    <div>
+                        <p>Bed status</p>
+                        <h3>Bed board</h3>
+                    </div>
+                    <span>Physical beds remain fixed; open status changes through the shift.</span>
                 </div>
 
-                <div class="bm-cards bm-cards-compact incoming-plan-list">
-                    @foreach (var card in IncomingByTab[IncomingTab])
+                <div class="ward-bed-board-grid">
+                    @foreach (var bed in BedRows.Take(12))
                     {
-                        <article class="bm-patient-card bm-patient-card-compact">
-                            <div class="bm-patient-row-top">
-                                <strong>@card.Source · @card.Code</strong>
-                                <span class="bm-priority">@card.Status</span>
+                        <article class="ward-bed-card state-@bed.StatusClass">
+                            <div class="ward-bed-card__top">
+                                <strong>@bed.BedLabel</strong>
+                                <span>@bed.BedType</span>
                             </div>
-
-                            <p class="bm-patient-name">@card.Name</p>
-                            <p class="bm-patient-reason">@card.Reason</p>
-
-                            <label class="future-bed-label">
-                                Future bed
-                                <select value="@card.FutureBed" @onchange="(e) => UpdateFutureBed(card, e.Value?.ToString())">
-                                    <option value="">Unallocated</option>
-                                    @for (var i = 1; i <= 24; i++)
-                                    {
-                                        <option value="Bed @i">Bed @i</option>
-                                    }
-                                </select>
-                            </label>
+                            <div class="bm-status-pill">
+                                <MudIcon Icon="@StatusIcon(bed.Status)" Size="Size.Small" />
+                                @bed.Status
+                            </div>
+                            <p>@bed.PatientStateLabel</p>
+                            @if (bed.HasPatient)
+                            {
+                                <small>@bed.PatientName</small>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(bed.FutureAllocation))
+                            {
+                                <em>@bed.FutureAllocation</em>
+                            }
                         </article>
                     }
                 </div>
-            </div>
+            </section>
+
+            <aside class="ward-demand-panel" aria-label="Incoming and allocation pressure">
+                <div class="ward-section-heading compact">
+                    <div>
+                        <p>Allocation pressure</p>
+                        <h3>Incoming demand</h3>
+                    </div>
+                </div>
+                <div class="ward-demand-list">
+                    @foreach (var item in IncomingPressure)
+                    {
+                        <div class="ward-demand-item">
+                            <span>@item.Source</span>
+                            <strong>@item.Count</strong>
+                            <small>@item.Note</small>
+                        </div>
+                    }
+                </div>
+            </aside>
         </section>
 
-        <section class="bm-ward-table-wrap">
+        <section class="bm-ward-table-wrap ward-clinical-grid" aria-label="Patient clinical visibility">
+            <div class="ward-section-heading table-heading">
+                <div>
+                    <p>Clinical visibility</p>
+                    <h3>Patient grid</h3>
+                </div>
+                <span>Actual inpatients and planned/virtual patients allocated to this ward.</span>
+            </div>
             <table class="bm-ward-table">
                 <thead>
                     <tr>
-                        <th>Bed</th>
-                        <th>Status</th>
-                        <th>Patient identifiers</th>
-                        <th>Team</th>
-                        <th>Allergies &amp; Alerts</th>
-                        <th>Referrals</th>
+                        <th>Patient banner</th>
+                        <th>Bed status</th>
+                        <th>Team / specialty</th>
                         <th>EDD</th>
-                        <th>Discharge progress</th>
-                        <th>Requests &amp; Results</th>
-                        <th>Diet</th>
-                        <th>EWS</th>
-                        <th>Waiting for</th>
-                        <th class="actions-col">Actions</th>
+                        <th>LOS</th>
+                        <th>Alerts / EWS</th>
+                        <th>Waiting for what</th>
+                        <th>Placement status</th>
+                        <th>Diet / referrals</th>
+                        <th class="actions-col">Handover</th>
                     </tr>
                 </thead>
-
                 <tbody>
-                    @foreach (var bed in BedRows)
+                    @foreach (var bed in BedRows.Where(b => b.HasPatient || !string.IsNullOrWhiteSpace(b.FutureAllocation)).Take(12))
                     {
                         <tr class="state-@bed.StatusClass">
-                            <td><strong>@bed.BedLabel</strong></td>
-
                             <td>
+                                <div class="patient-banner @(bed.HasPatient ? "actual" : "planned")">
+                                    <strong>@(bed.HasPatient ? bed.PatientName : "Planned admission")</strong>
+                                    <small>@(bed.HasPatient ? bed.Demographics : bed.FutureAllocation)</small>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>@bed.BedLabel</strong>
                                 <div class="bm-status-pill">
                                     <MudIcon Icon="@StatusIcon(bed.Status)" Size="Size.Small" />
                                     @bed.Status
                                 </div>
                             </td>
-
-                            <td>
-                                @if (bed.HasPatient)
-                                {
-                                    <div class="bm-bed-patient">@bed.PatientName</div>
-                                    <small>@bed.Demographics</small>
-                                }
-                                else
-                                {
-                                    <strong>—</strong>
-                                }
-
-                                @if (!string.IsNullOrWhiteSpace(bed.FutureAllocation))
-                                {
-                                    <div class="future-allocation-chip">Planned next: @bed.FutureAllocation</div>
-                                }
-                            </td>
-
                             <td>@bed.Team</td>
-                            <td>@bed.Allergies</td>
-                            <td>@bed.Referral</td>
                             <td>@bed.Edd</td>
-
-                            <td>
-                                <div class="progress">
-                                    <span style="@($"width:{bed.DischargeProgress}%")"></span>
-                                </div>
-                                @bed.DischargeProgress%
-                            </td>
-
-                            <td>@bed.Requests</td>
-                            <td>@bed.Diet</td>
-                            <td>@bed.Ews</td>
+                            <td>@bed.LosDays d</td>
+                            <td>@bed.Allergies · EWS @bed.Ews</td>
                             <td>@bed.WaitingFor</td>
-
+                            <td>@bed.PlacementStatus</td>
+                            <td>@bed.Diet · @bed.Referral</td>
                             <td>
                                 <div class="bm-inline-actions compact-actions">
-                                    <button type="button" title="View">
+                                    <button type="button" title="View patient">
                                         <MudIcon Icon="@Icons.Material.Outlined.Visibility" Size="Size.Small" />
                                     </button>
-                                    <button type="button" title="Note">
+                                    <button type="button" title="Handover note">
                                         <MudIcon Icon="@Icons.Material.Outlined.StickyNote2" Size="Size.Small" />
                                     </button>
                                 </div>
@@ -156,8 +153,7 @@
                     }
                 </tbody>
             </table>
-
-            <footer>Showing 1–24 of 24 beds</footer>
+            <footer>Showing ward-level clinical visibility for current and planned patients</footer>
         </section>
     }
     else
@@ -312,15 +308,25 @@
     private IncomingCard? _draggedIncoming;
     private BedRow? _draggedBed;
 
-    private static readonly string[] IncomingTabs = { "ED", "IHT", "Add On", "Ward Transfer" };
+    private static readonly string[] IncomingTabs = { "ED", "Elective", "IHT", "Add On", "Ward Transfer" };
     private static readonly string[] V2IncomingTabs = { "ED", "IHT", "OPD", "Other" };
 
     private readonly Dictionary<string, List<IncomingCard>> IncomingByTab = new()
     {
         ["ED"] = new(),
+        ["Elective"] = new(),
         ["IHT"] = new(),
         ["Add On"] = new(),
         ["Ward Transfer"] = new()
+    };
+
+    private IEnumerable<(string Source, int Count, string Note)> IncomingPressure => new[]
+    {
+        ("ED", IncomingByTab["ED"].Count, "Source location pending"),
+        ("Elective", IncomingByTab["Elective"].Count, "Booked admissions today"),
+        ("IHT", IncomingByTab["IHT"].Count, "Inter-hospital transfers"),
+        ("Add-on", IncomingByTab["Add On"].Count, "Post procedure / OPD"),
+        ("Ward transfer", IncomingByTab["Ward Transfer"].Count, "Internal ward moves")
     };
 
     private readonly Dictionary<string, List<IncomingCard>> V2IncomingByTab = new()
@@ -361,9 +367,10 @@
     private List<BedRow> V2BedRows = new();
     private static readonly IReadOnlyList<SituationalKpiTile.KpiBreakdownItem> WardPendingBreakdown = new[]
     {
-        new SituationalKpiTile.KpiBreakdownItem("Cleaning", "1"),
-        new SituationalKpiTile.KpiBreakdownItem("Maintenance", "1"),
-        new SituationalKpiTile.KpiBreakdownItem("Closed", "3")
+        new SituationalKpiTile.KpiBreakdownItem("Cleaning", "2"),
+        new SituationalKpiTile.KpiBreakdownItem("Maintenance", "2"),
+        new SituationalKpiTile.KpiBreakdownItem("Closed", "3"),
+        new SituationalKpiTile.KpiBreakdownItem("Planned", "1")
     };
 
     private void ToggleWardKpiInfo(string title) => OpenWardKpiInfo = OpenWardKpiInfo == title ? null : title;
@@ -375,22 +382,30 @@
 
         IncomingByTab["ED"] = new()
         {
-            new IncomingCard("ED001", "DEMO-PAT-ED-01", "Awaiting ward bed", "ED", "Future bed: Bed 5", "Bed 5"),
-            new IncomingCard("ED002", "DEMO-PAT-ED-02", "Awaiting ward bed", "ED", "Future bed: Bed 11", "Bed 11"),
-            new IncomingCard("ED003", "DEMO-PAT-ED-03", "Awaiting ward bed", "ED", "Future bed: Bed 19", "Bed 19")
+            new IncomingCard("ED001", "DEMO-PAT-ED-01", "Source location pending", "ED", "Future bed: Bed 12", "Bed 12"),
+            new IncomingCard("ED002", "DEMO-PAT-ED-02", "Awaiting ward bed", "ED", "Future bed: Unallocated", ""),
+            new IncomingCard("ED003", "DEMO-PAT-ED-03", "Admission review pending", "ED", "Future bed: Unallocated", "")
+        };
+
+        IncomingByTab["Elective"] = new()
+        {
+            new IncomingCard("ELEC001", "DEMO-PAT-ELEC-01", "Planned admission", "Elective", "Future bed: Unallocated", "")
         };
 
         IncomingByTab["IHT"] = new()
         {
-            new IncomingCard("IHT001", "DEMO-PAT-IHT-01", "Awaiting ward bed", "IHT", "Future bed: Unallocated", "")
+            new IncomingCard("IHT001", "DEMO-PAT-IHT-01", "Inter-hospital transfer", "IHT", "Future bed: Unallocated", "")
         };
 
         IncomingByTab["Add On"] = new()
         {
-            new IncomingCard("ADD001", "DEMO-PAT-ADD-01", "Awaiting ward bed", "Add On", "Future bed: Unallocated", "")
+            new IncomingCard("ADD001", "DEMO-PAT-ADD-01", "Post procedure add-on", "Add On", "Future bed: Unallocated", "")
         };
 
-        IncomingByTab["Ward Transfer"] = new();
+        IncomingByTab["Ward Transfer"] = new()
+        {
+            new IncomingCard("WTR001", "DEMO-PAT-WTR-01", "Ward transfer requested", "Ward Transfer", "Future bed: Unallocated", "")
+        };
 
         ReconcileFutureAllocations();
 
@@ -458,24 +473,51 @@
 
     private static BedRow CreateBed(int n)
     {
+        if (n == 8)
+        {
+            return new("Bed 8", "Open / Ready", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "—", "—", 0, "Available", bedType: "Standard");
+        }
+
+        if (n == 9)
+        {
+            return new("Bed 9", "Cleaning", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "Cleaning requested", "—", 0, "Awaiting cleaning", bedType: "Standard");
+        }
+
+        if (n == 10)
+        {
+            return new("Bed 10", "Maintenance", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "Engineering requested", "—", 0, "Closed for maintenance", bedType: "Bariatric");
+        }
+
+        if (n == 11)
+        {
+            return new("Bed 11", "Closed", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "—", "—", 0, "Operational closure", bedType: "Paediatric");
+        }
+
+        if (n == 12)
+        {
+            var planned = new BedRow("Bed 12", "Pending", string.Empty, string.Empty, "General Surgery", "—", "ED", "TBC", 0, "Admission review", "—", 0, "Source location pending", bedType: "Specialist");
+            planned.FutureAllocation = "Planned patient from ED";
+            return planned;
+        }
+
         if (n == 20)
         {
-            return new("Bed 20", "Open / Ready", string.Empty, string.Empty, "General Surgery", "—", "ED", "27 May", 0, "—", "Regular", 0, "Available");
+            return new("Bed 20", "Open / Ready", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "—", "—", 0, "Available", bedType: "Standard");
         }
 
         if (n == 21)
         {
-            return new("Bed 21", "Cleaning", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "Housekeeping", "—", 0, "Awaiting clean");
+            return new("Bed 21", "Cleaning", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "Cleaning requested", "—", 0, "Awaiting cleaning", bedType: "Isolation");
         }
 
         if (n == 22)
         {
-            return new("Bed 22", "Maintenance", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "Engineering", "—", 0, "Maintenance review");
+            return new("Bed 22", "Maintenance", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "Engineering requested", "—", 0, "Closed for maintenance", bedType: "Telemetry");
         }
 
         if (n == 23 || n == 24)
         {
-            return new($"Bed {n}", "Closed", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "—", "—", 0, "Closed operationally");
+            return new($"Bed {n}", "Closed", string.Empty, string.Empty, "General Surgery", "—", "Ward", "—", 0, "—", "—", 0, "Operational closure", bedType: n == 23 ? "Standard" : "Specialist");
         }
 
         var ews = (n % 5) + 1;
@@ -487,21 +529,31 @@
             "Katniss Everdeen","Bruce Banner","Selina Kyle","Luke Skywalker","Arthur Curry","Logan Howlett","Barry Allen","Padme Amidala"
         };
         var patientName = fictionalNames[(n - 1) % fictionalNames.Length];
+        var bedType = n switch
+        {
+            3 => "Isolation",
+            6 => "Telemetry",
+            15 => "Bariatric",
+            18 => "Specialist",
+            _ => "Standard"
+        };
 
         return new(
             $"Bed {n}",
             "Occupied",
             patientName,
             $"MRN DEMO{n:000} | {(30 + n % 35)}y | {(n % 2 == 0 ? "F" : "M")}",
-            "General Surgery",
+            n % 3 == 0 ? "General Medicine" : "General Surgery",
             n % 4 == 0 ? "Penicillin" : "NKA",
             n % 3 == 0 ? "IHT" : "ED",
             "26 May",
             20 + (n * 3 % 75),
-            "Bloods pending",
+            n % 5 == 0 ? "Imaging pending" : "Bloods pending",
             n % 2 == 0 ? "Diabetic" : "Regular",
             ews,
-            "Clinical review");
+            n % 5 == 0 ? "Waiting for what: imaging" : "Clinical review",
+            losDays: 1 + (n % 9),
+            bedType: bedType);
     }
 
     private static void AllowDrop(DragEventArgs _)
@@ -673,6 +725,8 @@
             "Open / Ready" => Icons.Material.Outlined.CheckCircle,
             "Cleaning" => Icons.Material.Outlined.CleaningServices,
             "Closed" => Icons.Material.Outlined.Lock,
+            "Pending" => Icons.Material.Outlined.PendingActions,
+            "Queued / planned" => Icons.Material.Outlined.EventAvailable,
             "Blocked" => Icons.Material.Outlined.Lock,
             "Maintenance" => Icons.Material.Outlined.Handyman,
             "Isolation / Specialist" => Icons.Material.Outlined.Shield,
@@ -721,7 +775,9 @@
             string requests,
             string diet,
             int ews,
-            string waitingFor)
+            string waitingFor,
+            int losDays = 0,
+            string bedType = "Standard")
         {
             BedLabel = bedLabel;
             Status = status;
@@ -736,6 +792,8 @@
             Diet = diet;
             Ews = ews;
             WaitingFor = waitingFor;
+            LosDays = losDays;
+            BedType = bedType;
         }
 
         public string BedLabel { get; }
@@ -751,9 +809,23 @@
         public string Diet { get; set; }
         public int Ews { get; set; }
         public string WaitingFor { get; set; }
+        public int LosDays { get; set; }
+        public string BedType { get; set; }
         public string FutureAllocation { get; set; } = string.Empty;
 
         public bool HasPatient => !string.IsNullOrWhiteSpace(PatientName);
+
+        public string PatientStateLabel => HasPatient
+            ? "Actual inpatient · on ward"
+            : !string.IsNullOrWhiteSpace(FutureAllocation)
+                ? "Planned admission · source location pending"
+                : "No patient allocated";
+
+        public string PlacementStatus => HasPatient
+            ? "On ward"
+            : !string.IsNullOrWhiteSpace(FutureAllocation)
+                ? "Allocated · source location pending"
+                : Status;
 
         public string StatusClass => Status
             .ToLowerInvariant()
@@ -772,6 +844,7 @@
             Ews = 1;
             WaitingFor = "Admission review";
             DischargeProgress = 0;
+            LosDays = 0;
             FutureAllocation = string.Empty;
         }
 
@@ -795,6 +868,7 @@
             Requests = "—";
             Diet = "—";
             Ews = 0;
+            LosDays = 0;
             FutureAllocation = string.Empty;
         }
     }
