@@ -1,13 +1,19 @@
 @page "/allocation-centre"
 @inject NavigationManager Navigation
-@using QHPFH_ConceptPrototype.Data
 
 <section class="page-shell-card bed-mgmt-page allocation-centre-page">
     <header class="ac-header">
-        <h2>Allocation Centre</h2>
-        <p>Multi-ward patient movement and transfer coordination.</p>
+        <div>
+            <p class="ac-eyebrow">Patient placement workspace</p>
+            <h2>Allocation Centre</h2>
+            <p>Coordinate incoming demand, source location, queue state and destination bed assignment.</p>
+        </div>
+        <button type="button" class="bm-primary ac-ward-link-inline" @onclick="OpenWardOperations">Open Ward Operations</button>
     </header>
 
+    <section class="bm-capacity-banner ac-operational-banner" aria-label="Allocation pressure">
+        <strong>Allocation pressure: Moderate</strong>
+        <span>Seven patients are awaiting placement today. Prioritise ED admissions with source-confirmed readiness and review queued patients waiting on occupied destination beds.</span>
     <section class="bm-filter-row bm-filter-row-compact ac-filter-row" aria-label="Allocation context filters">
         <div class="bm-filter"><span>HHS</span><button>All</button></div>
         <div class="bm-filter"><span>Facility</span><button>QCH</button></div>
@@ -15,109 +21,160 @@
         <div class="bm-filter"><span>Date</span><button>Today</button></div>
     </section>
 
-    <div class="ac-layout">
-        <section class="ac-lanes" aria-label="Allocation queues">
-            @foreach (var lane in QueueLanes)
+    <section class="bm-filter-row bm-filter-row-compact ac-filter-row" aria-label="Allocation context filters">
+        <div class="bm-filter"><span>HHS</span><button type="button">All</button></div>
+        <div class="bm-filter"><span>Facility</span><button type="button">QCH</button></div>
+        <div class="bm-filter"><span>Ward</span><button type="button">All destinations</button></div>
+        <div class="bm-filter"><span>Date</span><button type="button">Today</button></div>
+    </section>
+
+    <section class="ac-placement-summary" aria-label="Placement summary">
+        <article>
+            <span>Total awaiting placement</span>
+            <strong>@TotalAwaitingPlacement</strong>
+        </article>
+        <article>
+            <span>Planned today</span>
+            <strong>@PlannedToday</strong>
+        </article>
+        <article>
+            <span>Queued to occupied beds</span>
+            <strong>@QueuedToOccupiedBeds</strong>
+        </article>
+        <article>
+            <span>Needs bed manager review</span>
+            <strong>@NeedsReview</strong>
+        </article>
+        <article>
+            <span>Source pending / not arrived</span>
+            <strong>@SourcePending</strong>
+        </article>
+    </section>
+
+    <div class="ac-placement-layout">
+        <section class="ac-pathway-lanes" aria-label="Demand pathway lanes">
+            @foreach (var pathway in Pathways)
             {
-                <article class="ac-lane-card">
+                var pathwayPatients = GetPatientsForPathway(pathway).ToList();
+                <article class="ac-pathway-lane">
                     <header>
-                        <h3>@lane.Name</h3>
-                        <span>@lane.Patients.Count queued</span>
+                        <div>
+                            <p>Demand pathway</p>
+                            <h3>@pathway</h3>
+                        </div>
+                        <span>@pathwayPatients.Count waiting</span>
                     </header>
 
-                    <div class="ac-chip-list">
-                        @foreach (var patient in lane.Patients)
+                    <div class="ac-patient-list">
+                        @foreach (var patient in pathwayPatients)
                         {
-                            <div class="ac-chip">
-                                <strong>@patient.FirstName @patient.LastName</strong>
-                                <small>@patient.SourceType · ETA @patient.EstimatedArrivalTime</small>
-                            </div>
+                            <article class="ac-patient-banner state-@patient.StateClass">
+                                <div class="ac-patient-banner__top">
+                                    <strong>@patient.Name</strong>
+                                    <span>@patient.State</span>
+                                </div>
+                                <div class="ac-patient-banner__meta">
+                                    <span>@patient.Source</span>
+                                    <span>@patient.Eta</span>
+                                    <span>@patient.Team</span>
+                                </div>
+                                <p>@patient.Note</p>
+                                <div class="ac-target-line">
+                                    <span>Target</span>
+                                    <strong>@patient.Target</strong>
+                                </div>
+                                <div class="ac-placement-actions" aria-label="Placement actions for @patient.Name">
+                                    <button type="button">Assign</button>
+                                    <button type="button">Queue</button>
+                                    <button type="button">Review</button>
+                                </div>
+                            </article>
                         }
                     </div>
                 </article>
             }
         </section>
 
-        <aside class="ac-destination-panel">
-            <OperationalPanel Title="Destination Panel"
-                              Subtitle="Shared allocation destination options."
-                              StatusBadge="@($"{Destinations.Length} destinations")"
-                              PanelType="OperationalPanelType.Allocation"
-                              Priority="OperationalPanelPriority.Attention"
-                              AdditionalClasses="ac-destination-operational-panel">
-                <div class="bm-targets">
-                    @foreach (var destination in Destinations)
-                    {
-                        <div class="bm-move-target">@destination</div>
-                    }
+        <aside class="ac-placement-board" aria-label="Patient placement board">
+            <header>
+                <div>
+                    <p>Destination bed assignment</p>
+                    <h3>Placement board</h3>
                 </div>
-            </OperationalPanel>
+                <span>Drag/drop ready prototype</span>
+            </header>
+
+            <div class="ac-placement-slots">
+                @foreach (var patient in PlacementBoardPatients)
+                {
+                    <article class="ac-placement-slot state-@patient.StateClass">
+                        <div>
+                            <strong>@patient.Target</strong>
+                            <span>@patient.Name</span>
+                        </div>
+                        <p>@patient.State · @patient.Note</p>
+                    </article>
+                }
+            </div>
 
             <article class="ac-note">
-                <p>Future workspace for cross-ward and cross-facility allocation workflows.</p>
+                <p>Use Assign when a bed is ready, Queue when the destination is known but unavailable, and Review when ward or bed manager confirmation is required.</p>
             </article>
 
-            <button class="bm-primary ac-ward-link" @onclick="OpenWardOperations">Open Ward Operations</button>
+            <button type="button" class="bm-primary ac-ward-link" @onclick="OpenWardOperations">Open Ward Operations</button>
         </aside>
     </div>
 </section>
 
 @code {
-    private static readonly string[] LaneNames =
+    private static readonly string[] Pathways =
     [
-        "Elective Admissions",
-        "ED Admissions",
-        "Add On Patients",
+        "ED",
+        "Elective",
         "IHT",
-        "Pending Transfer",
-        "Discharge Pending"
+        "Add-on",
+        "Ward transfer"
     ];
 
-    private static readonly string[] Destinations =
+    private static readonly IReadOnlyList<PlacementPatient> Patients =
     [
-        "Ward 8A Surgical",
-        "Ward 2A General Medicine",
-        "ED Short Stay",
-        "ICU",
-        "Paeds",
-        "Respiratory",
-        "Cardiology"
+        new("AC-ED-001", "Alex Morgan", "ED", "ED Short Stay", "ETA 25 min", "General Surgery", "Ward 10A · Bed 12", "Actual/source-confirmed", "Ready to move when bed clean complete"),
+        new("AC-ED-002", "Jordan Lee", "ED", "Emergency Department", "Wait 3h 10m", "General Medicine", "Ward 8B · bed TBC", "Needs review", "Bed manager review for telemetry requirement"),
+        new("AC-ELEC-001", "Taylor Brooks", "Elective", "Admissions lounge", "Booked 14:30", "Orthopaedics", "Ward 8A · Bed 18", "Planned/virtual", "Planned admission, not yet physically on ward"),
+        new("AC-IHT-001", "Casey Nguyen", "IHT", "Logan Hospital", "ETA 50 min", "Respiratory", "Ward 6C · Bed 4", "Queued", "Destination known; current occupant discharge pending"),
+        new("AC-ADD-001", "Riley Patel", "Add-on", "Procedure unit", "ETA 40 min", "General Surgery", "Ward 10A · bed TBC", "Planned/virtual", "Post procedure add-on awaiting ward confirmation"),
+        new("AC-WTR-001", "Morgan Smith", "Ward transfer", "Ward 7B", "Ready now", "General Medicine", "Ward 10A · Bed 20", "Actual/source-confirmed", "Source ward ready; destination bed open"),
+        new("AC-WTR-002", "Jamie Wilson", "Ward transfer", "ICU stepdown", "Review now", "Cardiology", "Ward 5D · bed TBC", "Needs review", "Clinical suitability and monitoring level require review")
     ];
 
-    private readonly List<QueueLane> QueueLanes = [];
+    private static IEnumerable<PlacementPatient> PlacementBoardPatients => Patients
+        .Where(patient => !string.IsNullOrWhiteSpace(patient.Target));
 
-    protected override void OnInitialized()
-    {
-        var demoPatients = DemoHubData.BuildPatientAdmissions();
+    private int TotalAwaitingPlacement => Patients.Count;
+    private int PlannedToday => Patients.Count(patient => patient.State == "Planned/virtual");
+    private int QueuedToOccupiedBeds => Patients.Count(patient => patient.State == "Queued");
+    private int NeedsReview => Patients.Count(patient => patient.State == "Needs review");
+    private int SourcePending => Patients.Count(patient => patient.State is "Planned/virtual" or "Queued");
 
-        foreach (var lane in LaneNames)
-        {
-            var selectedPatients = demoPatients
-                .Where(x => LaneMatchesPatient(lane, x.SourceType, x.DelayedDischarge))
-                .Take(3)
-                .ToList();
-
-            if (selectedPatients.Count == 0)
-            {
-                selectedPatients = demoPatients.Take(3).ToList();
-            }
-
-            QueueLanes.Add(new QueueLane(lane, selectedPatients));
-        }
-    }
-
-    private static bool LaneMatchesPatient(string laneName, string sourceType, bool delayedDischarge) => laneName switch
-    {
-        "Elective Admissions" => sourceType == "Elective",
-        "ED Admissions" => sourceType == "ED",
-        "Add On Patients" => sourceType == "OPD",
-        "IHT" => sourceType == "IHT",
-        "Pending Transfer" => sourceType is "ED" or "IHT",
-        "Discharge Pending" => delayedDischarge,
-        _ => false
-    };
+    private static IEnumerable<PlacementPatient> GetPatientsForPathway(string pathway) => Patients
+        .Where(patient => string.Equals(patient.Pathway, pathway, StringComparison.OrdinalIgnoreCase));
 
     private void OpenWardOperations() => Navigation.NavigateTo("ward-operations");
 
-    private sealed record QueueLane(string Name, List<Models.PatientAdmission> Patients);
+    private sealed record PlacementPatient(
+        string Id,
+        string Name,
+        string Pathway,
+        string Source,
+        string Eta,
+        string Team,
+        string Target,
+        string State,
+        string Note)
+    {
+        public string StateClass => State
+            .ToLowerInvariant()
+            .Replace("/", "-")
+            .Replace(" ", "-");
+    }
 }
