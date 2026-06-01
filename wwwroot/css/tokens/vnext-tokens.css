@@ -216,6 +216,38 @@
   --pfh-card-accent-warning: var(--pfh-status-warning);
   --pfh-card-accent-critical: var(--pfh-status-critical);
 
+
+  /* Table framework */
+  --pfh-table-bg: var(--pfh-panel-background);
+  --pfh-table-border: var(--pfh-border-panel);
+  --pfh-table-radius: var(--pfh-radius-lg);
+  --pfh-table-header-bg: var(--pfh-surface-muted);
+  --pfh-table-header-text: var(--pfh-text-secondary);
+  --pfh-table-header-border: var(--pfh-border-subtle);
+  --pfh-table-row-bg: var(--pfh-panel-background);
+  --pfh-table-row-alt-bg: var(--pfh-workspace-background);
+  --pfh-table-row-border: var(--pfh-border-subtle);
+  --pfh-table-grid-border-width: 0.5px;
+  --pfh-table-row-hover-bg: var(--pfh-surface-subtle);
+  --pfh-table-row-selected-bg: var(--pfh-status-info-surface);
+  --pfh-table-row-disabled-opacity: 0.58;
+  --pfh-table-cell-padding: 5px 6px;
+  --pfh-table-cell-padding-compact: 3px 4px;
+  --pfh-table-cell-padding-comfortable: 8px 8px;
+  --pfh-table-cell-gap: var(--pfh-space-3);
+  --pfh-table-cell-font-size: var(--pfh-font-size-table-cell);
+  --pfh-table-cell-line-height: var(--pfh-line-height-tight);
+  --pfh-table-header-font-size: var(--pfh-font-size-table-header);
+  --pfh-table-header-line-height: var(--pfh-line-height-tight);
+  --pfh-table-action-gap: var(--pfh-space-2);
+  --pfh-table-status-gap: var(--pfh-space-2);
+  --pfh-table-status-padding-y: var(--pfh-space-1);
+  --pfh-table-status-padding-x: var(--pfh-space-3);
+  --pfh-table-empty-padding: var(--pfh-space-empty-state-padding);
+  --pfh-table-empty-text: var(--pfh-text-muted);
+  --pfh-table-sticky-top: 0;
+  --pfh-table-scrollbar-thumb: rgba(91, 111, 135, 0.28);
+
   /* Radii and borders */
   --pfh-radius-xs: 0.2rem;
   --pfh-radius-sm: 0.35rem;
@@ -362,6 +394,19 @@
   --pfh-card-selected-bg: var(--pfh-card-bg);
   --pfh-card-selected-border: var(--pfh-card-hover-border);
   --pfh-card-selected-shadow: var(--pfh-card-hover-shadow);
+
+  --pfh-table-bg: var(--pfh-panel-background);
+  --pfh-table-border: var(--pfh-border-panel);
+  --pfh-table-header-bg: var(--pfh-surface-muted);
+  --pfh-table-header-text: var(--pfh-text-secondary);
+  --pfh-table-header-border: var(--pfh-border-subtle);
+  --pfh-table-row-bg: var(--pfh-panel-background);
+  --pfh-table-row-alt-bg: var(--pfh-surface-inset);
+  --pfh-table-row-border: var(--pfh-border-subtle);
+  --pfh-table-row-hover-bg: rgba(64, 122, 189, 0.18);
+  --pfh-table-row-selected-bg: var(--pfh-status-info-surface);
+  --pfh-table-empty-text: var(--pfh-text-muted);
+  --pfh-table-scrollbar-thumb: rgba(157, 180, 207, 0.34);
 
   --pfh-text-primary: #e5ecf7;
   --pfh-text-secondary: #c8d6e8;

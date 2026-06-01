@@ -1367,6 +1367,76 @@ button, input { font: inherit; }
   }
 }
 
+/* Unified operational table framework */
+.pfh-table-shell {
+  background: var(--pfh-table-bg);
+  border: var(--pfh-border-width-default) solid var(--pfh-table-border);
+  border-radius: var(--pfh-table-radius);
+  overflow-x: auto;
+  scrollbar-color: var(--pfh-table-scrollbar-thumb) transparent;
+}
+.pfh-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--pfh-table-bg);
+  color: var(--pfh-text-primary);
+  font: var(--pfh-type-table-cell);
+}
+.pfh-table th,
+.pfh-table td {
+  border-bottom: var(--pfh-border-width-default) solid var(--pfh-table-row-border);
+  padding: var(--pfh-table-cell-padding);
+  text-align: left;
+  vertical-align: middle;
+}
+.pfh-table th {
+  background: var(--pfh-table-header-bg);
+  border-bottom-color: var(--pfh-table-header-border);
+  color: var(--pfh-table-header-text);
+  font: var(--pfh-type-table-header);
+}
+.pfh-table--compact th,
+.pfh-table--compact td {
+  padding: var(--pfh-table-cell-padding-compact);
+}
+.pfh-table--sticky-header thead th {
+  position: sticky;
+  top: var(--pfh-table-sticky-top);
+  z-index: 1;
+}
+.pfh-table tbody tr {
+  background: var(--pfh-table-row-bg);
+}
+.pfh-table tbody tr:nth-child(even) {
+  background: var(--pfh-table-row-alt-bg);
+}
+.pfh-table tbody tr:hover {
+  background: var(--pfh-table-row-hover-bg);
+}
+.pfh-table__row--selected {
+  background: var(--pfh-table-row-selected-bg) !important;
+}
+.pfh-table__row--disabled,
+.pfh-table__row--unavailable {
+  opacity: var(--pfh-table-row-disabled-opacity);
+}
+.pfh-table__status-cell,
+.pfh-table__actions-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pfh-table-status-gap);
+}
+.pfh-table__actions-cell {
+  gap: var(--pfh-table-action-gap);
+  white-space: nowrap;
+}
+.pfh-table__empty {
+  color: var(--pfh-table-empty-text);
+  font: var(--pfh-type-helper-text);
+  padding: var(--pfh-table-empty-padding);
+  text-align: center;
+}
+
 /* Unified operational card framework */
 .pfh-card {
   background: var(--pfh-card-bg);

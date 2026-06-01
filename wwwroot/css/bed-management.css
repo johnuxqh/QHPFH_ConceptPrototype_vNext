@@ -233,6 +233,107 @@
 .bm-overview-table th{white-space:normal;line-height:1.15;padding:5px 6px;vertical-align:middle;text-align:left;font-size:.71rem}
 .bm-overview-table td{white-space:nowrap;padding:5px 6px;vertical-align:middle;line-height:1.15}
 
+/* P4.05 proof-of-concept: Bed/Ward table views consume the shared operational table framework tokens without changing table markup or data. */
+.bm-ward-table-wrap,
+.bm-responsive-table{
+  scrollbar-color:var(--pfh-table-scrollbar-thumb) transparent;
+}
+.bm-ward-table-wrap{
+  border:var(--pfh-border-width-default) solid var(--pfh-table-border);
+  background:var(--pfh-table-bg);
+  border-radius:var(--pfh-table-radius);
+  overflow:hidden;
+}
+.bm-responsive-table{
+  overflow-x:auto;
+}
+.bm-ward-table,
+.bm-bay-table{
+  width:100%;
+  border-collapse:collapse;
+  background:var(--pfh-table-bg);
+  color:var(--pfh-text-primary);
+  font:var(--pfh-type-table-cell);
+}
+.bm-ward-table th,
+.bm-ward-table td,
+.bm-bay-table th,
+.bm-bay-table td{
+  border-bottom:var(--pfh-border-width-default) solid var(--pfh-table-row-border);
+  padding:var(--pfh-table-cell-padding-comfortable);
+  text-align:left;
+  vertical-align:top;
+}
+.bm-ward-table th,
+.bm-bay-table thead th{
+  background:var(--pfh-table-header-bg);
+  border-bottom-color:var(--pfh-table-header-border);
+  color:var(--pfh-table-header-text);
+  font:var(--pfh-type-table-header);
+}
+.bm-overview-table tbody tr:nth-child(even){
+  background:var(--pfh-table-row-alt-bg);
+}
+.bm-ward-table tbody tr:hover,
+.bm-bay-table tbody tr:hover{
+  background:var(--pfh-table-row-hover-bg);
+}
+.bm-overview-table th,
+.bm-overview-table td{
+  border:var(--pfh-table-grid-border-width) solid var(--pfh-table-row-border);
+  padding:var(--pfh-table-cell-padding);
+  line-height:var(--pfh-table-cell-line-height);
+}
+.bm-overview-table th{
+  color:var(--pfh-table-header-text);
+  font-size:var(--pfh-table-header-font-size);
+  line-height:var(--pfh-table-header-line-height);
+}
+.bm-overview-table td{
+  font-size:var(--pfh-table-cell-font-size);
+}
+.bm-overview-table.compact th,
+.bm-overview-table.compact td{
+  padding:var(--pfh-table-cell-padding-compact);
+}
+.bm-overview-table th.sorted{
+  color:var(--pfh-link);
+}
+.bm-inline-actions,
+.bm-toolbar-actions{
+  gap:var(--pfh-table-action-gap);
+}
+.bm-status-pill,
+.bm-status{
+  gap:var(--pfh-table-status-gap);
+}
+.theme-dark .bm-ward-table-wrap{
+  background:var(--pfh-table-bg);
+  border-color:var(--pfh-table-border);
+}
+.theme-dark .bm-ward-table,
+.theme-dark .bm-bay-table{
+  background:var(--pfh-table-bg);
+  color:var(--pfh-text-primary);
+}
+.theme-dark .bm-ward-table th,
+.theme-dark .bm-bay-table thead th{
+  background:var(--pfh-table-header-bg);
+  border-bottom-color:var(--pfh-table-header-border);
+  color:var(--pfh-table-header-text);
+}
+.theme-dark .bm-ward-table td,
+.theme-dark .bm-bay-table td{
+  border-bottom-color:var(--pfh-table-row-border);
+}
+.theme-dark .bm-overview-table tbody tr:nth-child(even){
+  background:var(--pfh-table-row-alt-bg);
+}
+.theme-dark .bm-ward-table tbody tr:hover,
+.theme-dark .bm-bay-table tbody tr:hover{
+  background:var(--pfh-table-row-hover-bg);
+}
+
 /* list view column efficiency */
 .bm-overview-table:not(.compact) th:nth-child(1),.bm-overview-table:not(.compact) td:nth-child(1){min-width:170px}
 .bm-overview-table:not(.compact) th:nth-child(2),.bm-overview-table:not(.compact) td:nth-child(2){min-width:120px}
