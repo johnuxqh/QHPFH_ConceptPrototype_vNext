@@ -11,6 +11,7 @@
 @inject FilterFrameworkService FilterFramework
 @inject FilterVisibilityService FilterVisibility
 @inject FilterEmptyStateService FilterEmptyStates
+@inject NavigationManager Navigation
 
 <WorkspaceShell WorkspaceId="bed-management"
                 Title="Bed Management"
@@ -103,6 +104,28 @@
 
     <OperationalFilterBreadcrumbs Context="@BedFilterContext" />
     <OperationalFilterChips Context="@BedFilterContext" />
+
+    <section class="bm-coordination-brief" aria-label="Operational coordination attention">
+        <div class="bm-coordination-brief__headline">
+            <span>Coordination attention</span>
+            <h3>Here is what needs attention now</h3>
+            <p>Prioritise pressure, bottlenecks and near-term capacity recovery before reviewing supporting metrics.</p>
+        </div>
+        <div class="bm-coordination-signals">
+            @foreach (var signal in CoordinationSignals)
+            {
+                <article class="bm-coordination-signal @signal.Tone">
+                    <span>@signal.Scope</span>
+                    <strong>@signal.Title</strong>
+                    <p>@signal.Detail</p>
+                </article>
+            }
+        </div>
+        <div class="bm-coordination-actions" aria-label="Coordination pathways">
+            <button type="button" class="bm-ghost" @onclick='() => Navigation.NavigateTo("ward-operations")'>Review affected wards</button>
+            <button type="button" class="bm-ghost" @onclick='() => Navigation.NavigateTo("allocation-centre")'>Open Allocation Centre</button>
+        </div>
+    </section>
 
     @if (SelectedVersion == "V2")
     {
@@ -576,17 +599,24 @@
         return ActiveInsights.Count > 0 ? OperationalPanelPriority.Watch : OperationalPanelPriority.Standard;
     }
 
+    private IReadOnlyList<CoordinationSignal> CoordinationSignals =>
+    [
+        new("Escalation", "PICU and ED SSTA need coordination", "3 PICU beds are unavailable and ED SSTA has delayed transfers over 90 minutes.", "critical"),
+        new("Capacity recovery", "12A and 11A discharge window", "Three likely discharges can recover capacity between 13:30 and 16:00 if barriers are cleared.", "opportunity"),
+        new("Incoming demand", "ED and elective demand remain active", "Coordinate Allocation Centre demand against open, cleaning and pending beds before 15:00.", "watch")
+    ];
+
     private IReadOnlyList<InsightRecord> ActiveInsights => BuildSituationalInsights(GetBaseScopedRows().ToList());
     private IReadOnlyList<InsightRecord> BuildSituationalInsights(List<BedOverviewRow> rows)
     {
         var insights = new List<InsightRecord>
         {
-            CreateInsight("wards-over-capacity", "Wards Over Capacity", "Wards operating above safe occupancy threshold and requiring immediate focus.", "critical", "capacity", rows.Where(r => r.OccupancyValue >= 95 || r.OpenBeds <= 1), Icons.Material.Filled.Warning, "View wards"),
-            CreateInsight("delayed-discharge-risk", "Delayed Discharge Risk", "Delayed flow and discharge barriers are constraining throughput.", "warning", "delayed-discharge", rows.Where(r => r.DelayedDischarge >= 3), Icons.Material.Filled.PersonOff, "Review delayed discharge"),
-            CreateInsight("high-ed-pressure", "High ED Admission Pressure", "Elevated ED admission activity is loading inpatient capacity.", "high", "ed-admissions", rows.Where(r => r.EdAddons >= 3), Icons.Material.Filled.LocalHospital, "View wards"),
-            CreateInsight("high-outlier-load", "Outlier Pressure", "Outlier cohorts are impacting placement flexibility.", "high", "outliers", rows.Where(r => r.Outliers >= 2), Icons.Material.Filled.SwapHoriz, "Review outliers"),
-            CreateInsight("predicted-discharge-opportunity", "Predicted Discharge Opportunity", "Wards with immediate discharge opportunities to recover capacity.", "info", "predicted-discharges", rows.Where(r => r.PredictedDischarges >= 4 && r.DelayedDischarge <= 3), Icons.Material.Filled.TrendingDown, "Review predicted discharges"),
-            CreateInsight("operational-escalation-risk", "Operational Escalation Risk", "Wards approaching Tier 3 pressure due to occupancy and constraints.", "critical", "escalation", rows.Where(r => (r.Pressure == "Critical" || r.Pressure == "High") && (r.OccupancyValue >= 92 || r.DelayedDischarge >= 4)), Icons.Material.Filled.CrisisAlert, "Open escalation")
+            CreateInsight("wards-over-capacity", "Capacity pressure requiring intervention", "Open beds are constrained in high-occupancy wards; confirm discharge, transfer or surge options.", "critical", "capacity", rows.Where(r => r.OccupancyValue >= 95 || r.OpenBeds <= 1), Icons.Material.Filled.Warning, "View wards"),
+            CreateInsight("delayed-discharge-risk", "Discharge barriers limiting flow", "Delayed flow is holding capacity that could recover today; review barriers and ownership.", "warning", "delayed-discharge", rows.Where(r => r.DelayedDischarge >= 3), Icons.Material.Filled.PersonOff, "Review barriers"),
+            CreateInsight("high-ed-pressure", "Incoming ED demand pressure", "ED admissions are loading inpatient capacity; match demand to open and pending beds.", "high", "ed-admissions", rows.Where(r => r.EdAddons >= 3), Icons.Material.Filled.LocalHospital, "Coordinate demand"),
+            CreateInsight("high-outlier-load", "Placement flexibility reduced", "Outlier load is reducing placement options; review affected cohorts and target wards.", "high", "outliers", rows.Where(r => r.Outliers >= 2), Icons.Material.Filled.SwapHoriz, "Review outliers"),
+            CreateInsight("predicted-discharge-opportunity", "Capacity recovery opportunity", "Predicted discharges could recover capacity if ward actions stay on track.", "info", "predicted-discharges", rows.Where(r => r.PredictedDischarges >= 4 && r.DelayedDischarge <= 3), Icons.Material.Filled.TrendingDown, "Confirm recovery"),
+            CreateInsight("operational-escalation-risk", "Emerging escalation risk", "High pressure and constraints indicate possible escalation if no capacity is recovered.", "critical", "escalation", rows.Where(r => (r.Pressure == "Critical" || r.Pressure == "High") && (r.OccupancyValue >= 92 || r.DelayedDischarge >= 4)), Icons.Material.Filled.CrisisAlert, "Open escalation")
         };
 
         return InsightFramework.PrioritizeInsights(insights.Where(x => x.AffectedCount > 0));
@@ -624,7 +654,8 @@
 
         var wardList = string.Join(", ", matchedRows.Take(4).Select(x => x.Ward));
         var suffix = matchedRows.Count > 4 ? $" and {matchedRows.Count - 4} more" : string.Empty;
-        return $"{title} affects {matchedRows.Count} ward{(matchedRows.Count == 1 ? string.Empty : "s")}: {wardList}{suffix}. Review the related wards and coordinate the next operational action.";
+        var facilityCount = matchedRows.Select(x => x.Facility).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        return $"{title} affects {matchedRows.Count} ward{(matchedRows.Count == 1 ? string.Empty : "s")} across {facilityCount} facilit{(facilityCount == 1 ? "y" : "ies")}: {wardList}{suffix}. Review affected wards and coordinate the next operational action.";
     }
 
     private static InsightCategory ResolveInsightCategory(string filterType) => filterType switch
@@ -839,6 +870,7 @@
         new("Overnight", "Likely capacity constraint without staffing uplift.", "warning")
     };
 
+    private record CoordinationSignal(string Scope, string Title, string Detail, string Tone);
     private record KpiItem(string Title, string Value, string Subtitle, string IconName, string ColorClass, string InfoText, bool ShowInfoIcon = true, string TileType = "standard", IReadOnlyList<SituationalKpiTile.KpiBreakdownItem>? BreakdownItems = null, IReadOnlyList<string>? Tabs = null)
     {
         public IReadOnlyList<SituationalKpiTile.KpiBreakdownItem> BreakdownItems { get; } = BreakdownItems ?? Array.Empty<SituationalKpiTile.KpiBreakdownItem>();
